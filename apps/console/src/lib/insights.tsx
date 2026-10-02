@@ -1,0 +1,116 @@
+/** Insights over whole UTC days (GET /v1/insights), and the window a screen reads them over, kept in its URL. */
+
+import { useEffect, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
+import { z } from "zod";
+
+import { GatewayError, read } from "@pinecall/core/api";
+import { useCredentials } from "@pinecall/core/credentials";
+import { Segmented } from "../ui";
+
+const ChannelsSchema = z.object({ phone: z.number(), web: z.number(), whatsapp: z.number() });
+
+// Runtime docs/protocol/console-api.md §2. Days are UTC. Loose so new fields don't fail parsing.
+const InsightsSchema = z.looseObject({
+  day: z.string(),
+  days: z.number(),
+  conversations: z.object({ now: z.number(), before: z.number() }),
+  resolved_rate: z.number().nullable(),
+  median_e2e_s: z.number().nullable(),
+  spend_usd: z.number(),
+  channels: ChannelsSchema,
+  judged: z.number(),
+  passed: z.number(),
+  escalated: z.number(),
+  mean_length_s: z.number().nullable(),
+  endings: z.array(z.object({ reason: z.string(), count: z.number() })),
+  series: z.array(ChannelsSchema.extend({ day: z.string(), spend_usd: z.number(), judged: z.number(), passed: z.number() })),
+  sessions_total: z.number(),
+  live: z.number(),
+  agents: z.array(z.object({ slug: z.string(), calls: z.number(), score: z.number().nullable() })),
+  budget: z.object({ limit_usd: z.number().nullable(), spent_usd_month: z.number() }),
+});
+export type Insights = z.infer<typeof InsightsSchema>;
+
+/** One UTC day of a window, as the door counts it. */
+export type InsightsDay = Insights["series"][number];
+
+/** The windows a screen offers, in whole UTC days: the door answers these and no other. */
+export const WINDOWS = [
+  { days: 1, label: "24 h", said: "today" },
+  { days: 7, label: "7 d", said: "the last 7 days" },
+  { days: 30, label: "30 d", said: "the last 30 days" },
+] as const;
+
+export type WindowDays = (typeof WINDOWS)[number]["days"];
+
+/** What is asked: the window's last day (today when absent), how many days, one agent or all. */
+export interface Asked {
+  day?: string | undefined;
+  days?: WindowDays | undefined;
+  agent?: string | undefined;
+}
+
+const EVERY_MS = 15000;
+
+/** Poll insights; null until loaded, or permanently if the gateway refuses with 403/404. */
+export function useInsights({ day, days = 1, agent }: Asked = {}): Insights | null {
+  const credentials = useCredentials();
+  const [insights, setInsights] = useState<Insights | null>(null);
+
+  useEffect(() => {
+    let stopped = false;
+    let again: number | undefined;
+    const params = { days, ...(day === undefined ? {} : { day }), ...(agent === undefined ? {} : { agent }) };
+    const ask = async (): Promise<void> => {
+      try {
+        const answered = InsightsSchema.parse(await read(credentials, "/v1/insights", params));
+        if (!stopped) setInsights(answered);
+      } catch (refused) {
+        // Missing door or no permission: stop polling.
+        if (refused instanceof GatewayError && [403, 404].includes(refused.status)) {
+          window.clearInterval(again);
+          if (!stopped) setInsights(null);
+        }
+      }
+    };
+    void ask();
+    again = window.setInterval(() => void ask(), EVERY_MS);
+    return () => {
+      stopped = true;
+      window.clearInterval(again);
+    };
+  }, [credentials, day, days, agent]);
+
+  return insights;
+}
+
+/** The window this screen is read over (`?days=` in its URL, a day when absent), and a way to pick another. */
+export function useWindowDays(): [WindowDays, (days: WindowDays) => void] {
+  const [search, setSearch] = useSearchParams();
+  const asked = Number(search.get("days"));
+  const days = WINDOWS.find((option) => option.days === asked)?.days ?? 1;
+  const pick = (chosen: WindowDays): void => {
+    const next = new URLSearchParams(search);
+    if (chosen === 1) next.delete("days");
+    else next.set("days", String(chosen));
+    setSearch(next, { replace: true });
+  };
+  return [days, pick];
+}
+
+/** How a window is said in a sentence: "today", "the last 7 days". */
+export function windowSaid(days: WindowDays): string {
+  return WINDOWS.find((option) => option.days === days)?.said ?? "today";
+}
+
+/** The three windows as one control. */
+export function WindowPicker({ days, onPick }: { days: WindowDays; onPick: (days: WindowDays) => void }): ReactNode {
+  return (
+    <Segmented
+      options={WINDOWS.map((option) => ({ value: String(option.days), label: option.label }))}
+      value={String(days)}
+      onChange={(chosen) => onPick(WINDOWS.find((option) => String(option.days) === chosen)?.days ?? 1)}
+    />
+  );
+}

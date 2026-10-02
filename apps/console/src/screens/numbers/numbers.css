@@ -1,0 +1,320 @@
+/* Numbers and Phone testing: a number and who answers it, adding one, the carrier. */
+
+.num-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line-3);
+  flex-wrap: wrap;
+}
+
+.num-number {
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.num-arrow {
+  color: var(--ink-6);
+  font-size: 13px;
+}
+
+.num-agent {
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.num-remove,
+.num-end {
+  margin-left: auto;
+}
+
+.num-foot {
+  padding: 11px 16px;
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+
+.num-ways {
+  margin-left: auto;
+}
+
+.num-ways .ui-segment:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.num-fields {
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.num-fields-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.num-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 14px;
+  flex-wrap: wrap;
+}
+
+.num-note {
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+
+.num-plan {
+  border-top: 1px solid var(--line-2);
+  padding: 14px 16px;
+  background: var(--ground-side);
+}
+
+.num-plan-done {
+  background: var(--ground);
+}
+
+.num-plan-title {
+  font-size: 13px;
+  font-weight: 550;
+  margin-bottom: 10px;
+}
+
+.num-steps {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.num-steps li {
+  display: flex;
+  gap: 10px;
+  font: 12.5px var(--face-fixed);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.num-step-kind {
+  flex: none;
+  min-width: 70px;
+  color: var(--accent-hover);
+  font-weight: 500;
+}
+
+.num-step-text {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.num-plan-moves {
+  display: flex;
+  gap: 8px;
+}
+
+.num-carrier {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.num-kind {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  padding: 3px 9px;
+  border-radius: 7px;
+}
+
+.num-carrier-standing {
+  flex: none;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.num-carrier-account {
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--ink-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.num-carrier-moves {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+
+
+.num-body {
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+@media (max-width: 720px) {
+  .num-fields,
+  .num-fields-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Outbound calls */
+.num-outbound-group {
+  padding: 0 16px 14px;
+}
+
+.num-outbound-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 3px;
+}
+
+.num-outbound-say {
+  font-size: 12.5px;
+  color: var(--ink-4);
+  margin-bottom: 10px;
+}
+
+.num-fields-4 {
+  grid-template-columns: minmax(0, 1.4fr) 110px minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.num-fields-flush {
+  padding: 0;
+}
+
+@media (max-width: 720px) {
+  .num-fields-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── adding, inside the numbers card ──────────────────────────────────────── */
+
+.num-add {
+  border-top: 1px solid var(--line-2);
+  background: var(--ground-side);
+}
+
+.num-add-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 0;
+}
+
+.num-add-close {
+  margin-left: auto;
+  color: var(--ink-4);
+}
+
+.num-added {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line-2);
+  font-size: 13px;
+  color: var(--green);
+}
+
+/* ── outbound ─────────────────────────────────────────────────────────────── */
+
+.num-hero {
+  padding: 28px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.num-hero-title {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+}
+
+.num-hero-say {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+
+.num-hero-missing {
+  margin: 0;
+  font-size: 13px;
+  color: var(--amber);
+  line-height: 1.6;
+}
+
+.num-hero-move {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.num-on {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.num-on b {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.num-placed {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.num-placed a {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.num-refused {
+  padding: 0 16px 14px;
+}
+
+.num-limits {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 2px 4px;
+}
+
+.num-limits > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.num-limits-say {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+
+.num-limits-who {
+  font-size: 12px;
+  color: var(--ink-5);
+  margin-top: 2px;
+}

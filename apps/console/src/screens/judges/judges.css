@@ -1,0 +1,66 @@
+/* Judges: the runtime's panel as a table, the agent's own judges, and the form one is written in. */
+
+.jdg-name {
+  font-family: var(--face-fixed);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.jdg-asks {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.jdg-rate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.jdg-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.jdg-pct-bad {
+  color: var(--amber);
+}
+
+.jdg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  max-width: 640px;
+}
+
+.jdg-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-4);
+}
+
+.jdg-form-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jdg-bad {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--red);
+}
+
+.jdg-drop {
+  display: flex;
+  justify-content: flex-end;
+}

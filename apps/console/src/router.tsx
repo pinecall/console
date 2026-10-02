@@ -1,0 +1,195 @@
+/** Every URL the console has. Append a route as a screen lands; never reorder — this file is a seam. */
+
+import type { ReactNode } from "react";
+import { createBrowserRouter, Navigate, useLocation, useParams, type RouteObject } from "react-router";
+
+import { BASE } from "./lib/base";
+import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, screensOf, WORLD, type Screen } from "./lib/mode";
+// One import line per screen, and it is the screen's directory, never a file inside it: a screen
+// that reorganises itself renames nothing here.
+import { Agents } from "./screens/agents";
+import { Apps } from "./screens/apps";
+import { BoxFleet, BoxOrg, BoxOrgs, BoxRoutes, BoxSettings, BoxTraceback, BoxUsage, OperatorOnly } from "./screens/box";
+import { OneCall } from "./screens/call";
+import { Chat } from "./screens/chat";
+import { Calls } from "./screens/calls";
+import { OrgEvals } from "./screens/org-evals";
+import { OrgMemory } from "./screens/org-memory";
+import { OrgBase, OrgDocs } from "./screens/org-docs";
+import { Evals } from "./screens/evals";
+import { Home } from "./screens/home";
+import { Inbox } from "./screens/inbox";
+import { Tokens } from "./screens/tokens";
+import { Lexicon } from "./screens/lexicon";
+import { Providers } from "./screens/providers";
+import { Secrets } from "./screens/secrets";
+import { Docs } from "./screens/docs";
+import { Memory } from "./screens/memory";
+import { Numbers, PhoneTesting } from "./screens/numbers";
+import { Overview } from "./screens/overview";
+import { Notifications } from "./screens/notifications";
+import { OrgData } from "./screens/org-data";
+import { Pipeline } from "./screens/pipeline";
+import { Personas } from "./screens/personas";
+import { Simulations } from "./screens/simulations";
+import { Settings } from "./screens/settings";
+import { Talk } from "./screens/talk";
+import { BillingHop } from "./screens/billing";
+import { Terminal } from "./screens/terminal";
+import { Team } from "./screens/team";
+import { Usage } from "./screens/usage";
+import { Judges } from "./screens/judges";
+import { Widget, WidgetPreview } from "./screens/widget";
+import { FirstTab } from "./shell/screen-tabs";
+import { Shell } from "./shell/shell";
+
+// The element of every screen, by the key lib/mode.ts lists it under. Which of them THIS console
+// has is that table's answer and not this file's: a row it leaves out gets no route, so a path
+// typed by hand lands on the front page and not on a screen whose doors would refuse.
+const ORG: Record<string, ReactNode> = {
+  home: <Home />,
+  agents: <Agents />,
+  calls: <Inbox />,
+  "calls-list": <Calls />,
+  "org-evals": <OrgEvals />,
+  "org-memory": <OrgMemory />,
+  "org-docs": <OrgDocs />,
+  // A row that is only a place for its tabs lands on the first one this key opens.
+  "org-settings": <FirstTab />,
+  numbers: <Numbers />,
+  phone: <PhoneTesting />,
+  tokens: <Tokens />,
+  providers: <Providers />,
+  apps: <Apps />,
+  secrets: <Secrets />,
+  team: <Team />,
+  usage: <Usage />,
+  notifications: <Notifications />,
+  "org-data": <OrgData />,
+};
+
+// The box's. They are routed for anybody on the gateway's page, because the router is built before
+// anybody has signed in, and drawn for an operator only: anyone else lands on the front page
+// before a door of the box's is ever knocked at.
+const BOX: Record<string, ReactNode> = {
+  "box-orgs": <OperatorOnly><BoxOrgs /></OperatorOnly>,
+  "box-fleet": <OperatorOnly><BoxFleet /></OperatorOnly>,
+  "box-routes": <OperatorOnly><BoxRoutes /></OperatorOnly>,
+  "box-usage": <OperatorOnly><BoxUsage /></OperatorOnly>,
+  "box-settings": <OperatorOnly><BoxSettings /></OperatorOnly>,
+  "box-traceback": <OperatorOnly><BoxTraceback /></OperatorOnly>,
+};
+
+const AGENT: Record<string, ReactNode> = {
+  "agent-overview": <Overview />,
+  talk: <Talk />,
+  devchat: <Chat />,
+  calls: <Calls />,
+  inbox: <Inbox />,
+  test: <FirstTab />,
+  personas: <Personas />,
+  judges: <Judges />,
+  simulations: <Simulations />,
+  evals: <Evals />,
+  knowledge: <FirstTab />,
+  docs: <Docs />,
+  memory: <Memory />,
+  settings: <Settings />,
+  pipeline: <Pipeline />,
+  lexicon: <Lexicon />,
+  widget: <Widget />,
+};
+
+// A call in the path is the call itself under Calls — the one page a call has, live or over — the
+// thread holding it under the Inbox, the conversation Dev chat is one of, the simulation watched,
+// or, under Personas, the caller open: the same screen one level deeper.
+const DEEPER: Record<string, ReactNode> = { devchat: <Chat />, calls: <OneCall />, inbox: <Inbox />, simulations: <Simulations />, personas: <Personas /> };
+// The org's, by the same rule: `/calls/:call` is the call named, shown beside every conversation.
+const ORG_DEEPER: Record<string, ReactNode> = { calls: <Inbox /> };
+
+// The URLs the console had before Calls and the Inbox replaced Live, Sessions and — for a day —
+// Conversations. A link somebody pasted, or an Evals verdict citing `#seq-93`, lands on what the
+// screen is called now, hash and query and all — nothing pasted before today stops working.
+// Personas, Simulations and the Lexicon were the org's and are an agent's now: a link to the org's
+// lands on Home, because no agent is named in it to land on.
+const GONE: readonly { path: string; to: string }[] = [
+  { path: "live", to: "/calls?status=live" },
+  { path: "live/:call", to: "/calls/:call" },
+  { path: "sessions", to: "/calls" },
+  { path: "sessions/:call", to: "/calls/:call" },
+  { path: "conversations", to: "/calls" },
+  { path: "c/:call", to: "/calls/:call" },
+  { path: "inbox", to: "/calls" },
+  { path: "inbox/:call", to: "/calls/:call" },
+  { path: "personas", to: "/" },
+  { path: "personas/:call", to: "/" },
+  { path: "simulations", to: "/" },
+  { path: "simulations/:call", to: "/" },
+  { path: "lexicon", to: "/" },
+];
+const AGENT_GONE: readonly { path: string; to: string }[] = [
+  { path: "sessions", to: "/a/:agent/calls" },
+  { path: "sessions/:call", to: "/calls/:call" },
+  { path: "conversations", to: "/a/:agent/calls" },
+];
+
+/** One old URL sent to the one it is now: the path's own words, and the query and hash it arrived with. */
+function To({ to }: { to: string }): ReactNode {
+  const params = useParams();
+  const { search, hash } = useLocation();
+  const path = to.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(params[name] ?? ""));
+  // A target that names its own query says what it is for (`?status=live`); every other one keeps
+  // the query the reader came with (`?agent=`), and the hash rides along either way.
+  return <Navigate to={`${path}${path.includes("?") ? "" : search}${hash}`} replace />;
+}
+
+function redirects(gone: readonly { path: string; to: string }[]): RouteObject[] {
+  return gone.map(({ path, to }) => ({ path, element: <To to={to} /> }));
+}
+
+function routesOf(table: readonly Screen[], elements: Record<string, ReactNode>): RouteObject[] {
+  return screensOf(table, WORLD, true).flatMap((screen): RouteObject[] => {
+    const element = elements[screen.key];
+    if (screen.path === "") return [{ index: true, element }];
+    const deeper = (elements === AGENT ? DEEPER : ORG_DEEPER)[screen.key];
+    return deeper === undefined ? [{ path: screen.path, element }] : [{ path: screen.path, element }, { path: `${screen.path}/:call`, element: deeper }];
+  });
+}
+
+// The URL is the state: which agent, which screen, and later which call. Nothing the console holds
+// in memory decides what is on screen, so a reload lands on exactly the same thing. The org's
+// screens sit at the root; an agent's under /a/<slug>.
+export const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <Shell />,
+      children: [
+        ...routesOf(ORG_SCREENS, ORG),
+        ...routesOf(BOX_SCREENS, BOX),
+        ...redirects(GONE),
+        // One call, whichever agent took it and whether or not it is over.
+        // One org of the box's, one level under its list.
+        ...(WORLD === "production" ? [{ path: "box/orgs/:org", element: <OperatorOnly><BoxOrg /></OperatorOnly> }] : []),
+        // Where `pinecall login` sends a person: the card that signs their terminal in. It is
+        // built from the gateway the terminal was pointed at (cli/login.ts), which is the box's
+        // own name, so the card is production's console and not the sandbox's.
+        ...(WORLD === "production" ? [{ path: "cli", element: <Terminal /> }] : []),
+        // Where billing.pinecall.io sends a person with no session: back there signed in, in this org.
+        ...(WORLD === "production" ? [{ path: "billing", element: <BillingHop /> }] : []),
+        // One base of the org's documents, its files read and edited one at a time.
+        { path: "docs/:base", element: <OrgBase /> },
+      ],
+    },
+    {
+      path: "/a/:agent",
+      element: <Shell />,
+      children: [{ index: true, element: <Navigate to="overview" replace /> }, ...routesOf(AGENT_SCREENS, AGENT), ...redirects(AGENT_GONE)],
+    },
+    // A blank page with nothing but the widget on it, the way a site would have it: outside the
+    // shell, the same key.
+    { path: "/a/:agent/widget/preview", element: <WidgetPreview /> },
+    { path: "*", element: <Navigate to="/" replace /> },
+  ],
+  { basename: BASE },
+);

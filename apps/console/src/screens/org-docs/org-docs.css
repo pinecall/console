@@ -1,0 +1,148 @@
+/* The org's Docs: a base's files, the editor under them, and the two ways a file arrives. */
+
+.od-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* A file input dressed as the button beside it: the input is there for the click and unseen. */
+.od-upload {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.od-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.od-busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.od-row-end {
+  text-align: right;
+}
+
+.od-open {
+  color: var(--accent);
+}
+
+.od-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.od-path {
+  max-width: 420px;
+}
+
+.od-text {
+  min-height: 420px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.od-editor-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.od-said {
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+
+/* A base begun from the page: its name, and its first documents. */
+
+.nb-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px;
+}
+
+.nb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 640px;
+}
+
+.nb-field .ui-segmented {
+  align-self: flex-start;
+  margin: 4px 0;
+}
+
+.nb-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.nb-hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-4);
+}
+
+.nb-bad {
+  font-size: 12.5px;
+  color: var(--red);
+}
+
+.nb-drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+  padding: 16px;
+  border: 1px dashed var(--line-control);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+  cursor: pointer;
+}
+
+.nb-drop:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.nb-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nb-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line-2);
+}
+
+/* What a half-made base says: the gateway's refusal, and which files are already under the name. */
+.nb-landed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 18px 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-4);
+}

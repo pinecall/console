@@ -1,0 +1,11 @@
+# The page and the core it stands on, each its own package: `apps/*` is what ships, `packages/*`
+# what it stands on. The wire's shapes are core's own (`packages/core/src/wire/`): no package of
+# the runtime's is read.
+packages:
+  - apps/*
+  - packages/*
+
+# esbuild's postinstall only re-checks the binary its platform package already brought, so no
+# dependency of this workspace runs a script at install.
+allowBuilds:
+  esbuild: false
