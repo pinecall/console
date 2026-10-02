@@ -146,7 +146,7 @@ which is where a judge's citation lands. **Attach a judge** scores a call nobody
 drawn.** Down the left, **one thread per person** — a contact who reached two agents is one thread,
 and the agent of its newest call is whose it is — each with the last thing said, when, and one
 mark: *live* (amber when the agent **asked for a person**, and that thread sits at the top of the
-list), what is unread, or a verdict that broke (`2/3`, red) — a call that held says nothing — and
+list), *new* (a dot, no count, gone the moment the thread is opened), or a verdict that broke (`2/3`, red) — and
 else, on the org's, whose agent. The one open is **the call, drawn exactly as *One call* draws it**:
 the person's head over it, then the call in the view kept for it — chat, transcript or log — the desk on a live
 call for a key that holds `supervise` (listen, whisper, say, take the line, transfer, end; typed on

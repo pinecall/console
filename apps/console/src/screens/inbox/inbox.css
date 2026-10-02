@@ -311,18 +311,13 @@
   font-weight: 550;
 }
 
-.ib-unread {
+/* Something came in the reader has not opened: a dot, not a count. */
+.ib-new {
   flex: none;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  width: 9px;
+  height: 9px;
   border-radius: 99px;
   background: var(--green-dot);
-  color: var(--on-accent);
-  font-size: 11px;
-  font-weight: 600;
-  display: grid;
-  place-items: center;
 }
 
 .ib-nothing {

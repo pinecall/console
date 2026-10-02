@@ -41,7 +41,7 @@ export function Inbox(): ReactNode {
   const pane = usePane({ name: "agent.conversations", initial: 292, min: 200, max: 520, side: "left" });
   const [dialling, setDialling] = useState(false);
   const outbound = useOutbound();
-  const door = useDoorThreads(agent, listed.length);
+  const [door, seen] = useDoorThreads(agent, listed.length);
   const [refused, setRefused] = useState<string | null>(null);
 
   const open = threads.find((thread) => chosen !== undefined && thread.lines.some((line) => line.call === chosen)) ?? threads[0];
@@ -52,10 +52,13 @@ export function Inbox(): ReactNode {
   const words = query.trim().toLowerCase();
   const shown = threads.filter((thread) => words === "" || `${nameOf(thread, door)} ${thread.handle} ${lastOf(thread)}`.toLowerCase().includes(words));
 
+  // The thread open is read the moment it is open, by a click or by the URL: its mark goes at once,
+  // and the gateway is told for this reader's next visit.
   useEffect(() => {
     if (open === undefined || door === null || (door.get(open.contact)?.unread ?? 0) === 0) return;
+    seen(open.contact);
     void markRead(credentials, agent, open.contact).catch(() => undefined);
-  }, [open?.contact, door, credentials, agent]);
+  }, [open?.contact, door, credentials, agent, seen]);
 
   // Whose thread this is: the agent of its newest call, which on the agent's own tab is that agent.
   const whose = open?.latest.agent ?? agent;
@@ -99,7 +102,7 @@ export function Inbox(): ReactNode {
               thread={thread}
               name={nameOf(thread, door)}
               whose={agent === "" ? thread.latest.agent : undefined}
-              unread={door?.get(thread.contact)?.unread ?? 0}
+              fresh={(door?.get(thread.contact)?.unread ?? 0) > 0}
               on={thread === open}
               onOpen={() => void navigate(hrefOf(thread.latest.call))}
             />
@@ -138,9 +141,17 @@ function nameOf(thread: Thread, door: Map<string, DoorThread> | null): string {
 // 404 once and is not asked again on this screen. The door is one agent's, so the org's inbox asks
 // nothing and names a thread the way its own log does — a name written down for one agent is not
 // the org's name for that person.
-function useDoorThreads(agent: string, moved: number): Map<string, DoorThread> | null {
+function useDoorThreads(agent: string, moved: number): [Map<string, DoorThread> | null, (contact: string) => void] {
   const credentials = useCredentials();
   const [threads, setThreads] = useState<Map<string, DoorThread> | null>(null);
+  // A thread opened is read here at once; the next read of the door says the same, from the gateway.
+  const seen = useCallback((contact: string) => {
+    setThreads((held) => {
+      const thread = held?.get(contact);
+      if (held === null || thread === undefined || (thread.unread ?? 0) === 0) return held;
+      return new Map(held).set(contact, { ...thread, unread: 0 });
+    });
+  }, []);
   const [absent, setAbsent] = useState(false);
   useEffect(() => {
     if (absent || agent === "") return;
@@ -157,14 +168,14 @@ function useDoorThreads(agent: string, moved: number): Map<string, DoorThread> |
       gone = true;
     };
   }, [credentials, agent, moved, absent]);
-  return threads;
+  return [threads, seen];
 }
 
 function ThreadRow({
   thread,
   name,
   whose,
-  unread,
+  fresh,
   on,
   onOpen,
 }: {
@@ -172,7 +183,8 @@ function ThreadRow({
   name: string;
   /** The agent of its newest call, on the org's list where threads of every agent sit together. */
   whose: string | undefined;
-  unread: number;
+  /** Something came in on it this reader has not opened yet. */
+  fresh: boolean;
   on: boolean;
   onOpen: () => void;
 }): ReactNode {
@@ -191,18 +203,19 @@ function ThreadRow({
           ) : (
             <span className={thread.latest.status !== "ended" ? "ib-row-last ib-row-last-live" : "ib-row-last"}>{lastOf(thread)}</span>
           )}
-          {/* One thing at the end, the one that matters: live, unread, a judge that broke — else whose it is. */}
-          {markOf(thread.latest, unread) ?? (whose !== undefined && <span className="ib-row-agent">{whose}</span>)}
+          {/* One thing at the end, the one that matters: live, new, a judge that broke — else whose it is. */}
+          {markOf(thread.latest, fresh) ?? (whose !== undefined && <span className="ib-row-agent">{whose}</span>)}
         </span>
       </span>
     </button>
   );
 }
 
-/** The row's mark, when there is one worth it: live, what is unread, or a verdict that broke. A call that held says nothing. */
-function markOf(line: Thread["latest"], unread: number): ReactNode | null {
+/** The row's mark, when there is one worth it: live, new, or a verdict that broke. A call that held says nothing. */
+function markOf(line: Thread["latest"], fresh: boolean): ReactNode | null {
   if (line.status !== "ended") return <span className={wantsAPerson(line) ? "ib-mark ib-mark-live ib-mark-asked" : "ib-mark ib-mark-live"} aria-label="live" />;
-  if (unread > 0) return <span className="ib-unread">{unread}</span>;
+  // New, not how many: the door counts calls and lines, which is not what a reader means by messages.
+  if (fresh) return <span className="ib-new" aria-label="new" />;
   const score = line.score;
   if (score === null || score === undefined || score.judged === 0 || score.passed) return null;
   return (
