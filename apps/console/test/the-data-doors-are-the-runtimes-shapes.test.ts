@@ -3,7 +3,7 @@
 import { expect, test } from "vitest";
 import { z } from "zod";
 
-import { readBoxNumbers, readTraceback } from "../src/screens/box/door-floor";
+import { readBoxCarriers, readBoxNumbers, readCarrierNetworks, readTraceback } from "../src/screens/box/door-floor";
 import { giveConsent, importDoNotCall, optOut, putPolicy, readConsent, readDoNotCall, readPolicy, readReads, readTrail } from "../src/screens/org-data/door";
 
 const CREDENTIALS = { base: "/", key: "pk_test" };
@@ -96,4 +96,21 @@ test("the box's numbers are read whole at one door, and a row without who answer
   expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/numbers");
   answering([{ ...A_BOX_NUMBER, answered_by: undefined }]);
   await expect(readBoxNumbers(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
+});
+
+// runtime wire/rest/ops.py: BoxCarriers and CarrierNetworkRow.
+const A_BOX_CARRIERS = {
+  carriers: [{ kind: "telnyx", name: "Telnyx", control: false, networks: ["192.76.120.10/32"], source: "https://sip.telnyx.com/", read_on: "2026-10-03", admitted: true, fixed: false, numbers: 1 }],
+  fence: { openings: [{ network: "192.76.120.10/32", reason: "telnyx" }], applied_at: 1758300000, applied: 1 },
+};
+const AN_ASK = { id: 7, org: "clinica", source: "pbx", network: "45.60.12.7/32", state: "waiting", asked_at: 1758300000, decided_by: null, decided_at: null };
+
+test("the box's carriers and the addresses orgs asked for are read at their doors, a state renamed refused", async () => {
+  const asked = answering(A_BOX_CARRIERS);
+  expect((await readBoxCarriers(CREDENTIALS)).fence.openings[0]?.reason).toBe("telnyx");
+  expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/carriers");
+  answering([AN_ASK]);
+  expect((await readCarrierNetworks(CREDENTIALS))[0]?.network).toBe("45.60.12.7/32");
+  answering([{ ...AN_ASK, state: "pending" }]);
+  await expect(readCarrierNetworks(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
 });

@@ -9,7 +9,7 @@ import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, screensOf, WORLD, type Screen 
 // that reorganises itself renames nothing here.
 import { Agents } from "./screens/agents";
 import { Apps } from "./screens/apps";
-import { BoxFleet, BoxOrg, BoxOrgs, BoxRoutes, BoxSettings, BoxTraceback, BoxUsage, OperatorOnly } from "./screens/box";
+import { BoxCarriers, BoxFleet, BoxOrg, BoxOrgs, BoxRoutes, BoxSettings, BoxTraceback, BoxUsage, OperatorOnly } from "./screens/box";
 import { OneCall } from "./screens/call";
 import { Chat } from "./screens/chat";
 import { Calls } from "./screens/calls";
@@ -74,6 +74,7 @@ const ORG: Record<string, ReactNode> = {
 const BOX: Record<string, ReactNode> = {
   "box-orgs": <OperatorOnly><BoxOrgs /></OperatorOnly>,
   "box-fleet": <OperatorOnly><BoxFleet /></OperatorOnly>,
+  "box-carriers": <OperatorOnly><BoxCarriers /></OperatorOnly>,
   "box-routes": <OperatorOnly><BoxRoutes /></OperatorOnly>,
   "box-usage": <OperatorOnly><BoxUsage /></OperatorOnly>,
   "box-settings": <OperatorOnly><BoxSettings /></OperatorOnly>,

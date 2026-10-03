@@ -1,8 +1,8 @@
-/** Operator doors: fleet, the box's numbers, usage and a number's traceback. */
+/** Operator doors: fleet, the box's numbers, its carriers and the fence, usage and a number's traceback. */
 
 import { z } from "zod";
 
-import { drop, post, read, type Credentials } from "@pinecall/core/api";
+import { drop, post, put, read, type Credentials } from "@pinecall/core/api";
 
 const OPS = "/v1/ops";
 
@@ -64,6 +64,62 @@ export async function readFleet(credentials: Credentials): Promise<TheFleet> {
 export async function cordon(credentials: Credentials, worker: Worker, wanted: boolean): Promise<void> {
   const path = `${OPS}/fleet/${encodeURIComponent(worker.worker)}/cordon?fleet=${encodeURIComponent(worker.fleet)}`;
   await (wanted ? post(credentials, path, {}) : drop(credentials, path));
+}
+
+// Runtime wire/rest/ops.py `BoxCarriers`: the catalog, each carrier admitted or not, and the fence now.
+const BoxCarriersSchema = z.looseObject({
+  carriers: z.array(
+    z.looseObject({
+      kind: z.string(),
+      name: z.string(),
+      control: z.boolean(),
+      networks: z.array(z.string()),
+      source: z.string(),
+      read_on: z.string(),
+      admitted: z.boolean(),
+      fixed: z.boolean(),
+      numbers: z.number(),
+    }),
+  ),
+  fence: z.looseObject({
+    openings: z.array(z.looseObject({ network: z.string(), reason: z.string() })),
+    applied_at: z.number().nullable(),
+    applied: z.number().nullable(),
+  }),
+});
+export type BoxCarriers = z.infer<typeof BoxCarriersSchema>;
+
+// Runtime `CarrierNetworkRow`: a network an org asked 5060 to open to, and the operator's answer.
+const CarrierNetworkSchema = z.looseObject({
+  id: z.number(),
+  org: z.string(),
+  source: z.string(),
+  network: z.string(),
+  state: z.enum(["waiting", "approved", "refused"]),
+  asked_at: z.number(),
+  decided_by: z.string().nullable(),
+  decided_at: z.number().nullable(),
+});
+export type CarrierNetwork = z.infer<typeof CarrierNetworkSchema>;
+
+/** The catalog of carriers, each admitted or not with the numbers it brings, and the fence. */
+export async function readBoxCarriers(credentials: Credentials): Promise<BoxCarriers> {
+  return BoxCarriersSchema.parse(await read(credentials, `${OPS}/carriers`));
+}
+
+/** Admit a carrier of the catalog, or stop admitting it; Twilio is admitted always. */
+export async function admitCarrier(credentials: Credentials, kind: string, admitted: boolean): Promise<void> {
+  await put(credentials, `${OPS}/carriers/${encodeURIComponent(kind)}`, { admitted });
+}
+
+/** Every network an org asked for, oldest first. */
+export async function readCarrierNetworks(credentials: Credentials): Promise<CarrierNetwork[]> {
+  return z.array(CarrierNetworkSchema).parse(await read(credentials, `${OPS}/carrier-networks`));
+}
+
+/** Approve or refuse a network an org asked for; the org's trunks follow at once. */
+export async function decideNetwork(credentials: Credentials, ask: number, answer: "approve" | "refuse"): Promise<void> {
+  await post(credentials, `${OPS}/carrier-networks/${ask}/${answer}`, {});
 }
 
 /** Every number of the box, every org and world, by number. */

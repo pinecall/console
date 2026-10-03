@@ -47,7 +47,7 @@ describe("production's console", () => {
 // rows are marked, so nobody else is drawn one — and the sandbox's console has none at all.
 describe("the box's screens", () => {
   it("are an operator's, on production's console", () => {
-    expect(screensOf(BOX_SCREENS, "production", true).map((screen) => screen.name)).toEqual(["Organizations", "Fleet", "Routes", "Traceback", "Box usage", "Box settings"]);
+    expect(screensOf(BOX_SCREENS, "production", true).map((screen) => screen.name)).toEqual(["Organizations", "Fleet", "Carriers", "Routes", "Traceback", "Box usage", "Box settings"]);
     expect(BOX_SCREENS.every((screen) => screen.operator === true && screen.under === undefined && screen.path.startsWith("box/"))).toBe(true);
   });
 

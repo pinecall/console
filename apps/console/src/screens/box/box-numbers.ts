@@ -9,7 +9,9 @@ const CAME_IN: Record<string, string> = {
   twilio: "its Twilio",
   sip: "its SIP peer",
   whatsapp: "its WhatsApp",
-  hooked: "hooked by hand",
+  imported: "an account since removed",
+  hooked: "hooked by the org",
+  typed: "typed by an operator",
 };
 
 /** How the number reached the box, in the screen's words. */

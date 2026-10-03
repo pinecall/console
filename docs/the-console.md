@@ -246,17 +246,27 @@ developer and without a deploy. The org's `/lexicon` of before lands on Home: it
 
 ## Numbers, Tokens, Providers, Team, Usage
 
-**Numbers** is three tabs — the numbers and which agent each rings, the outbound calls your agents
-place, and the carrier. **This screen is where a door comes from**: a class declares none, so a
-number reaching one agent is a row here (or `pinecall numbers import`), moved by adding it again,
-nothing deployed; the web needs no row. Adding a number and turning outbound on are **planned
-first** — the gateway's steps, in its words, then the button. **Tokens**, open to every key: your
-keys at this instance and the org's server tokens, shown once as `PINECALL_KEY=…`, made in this
-console's world (`POST /v1/keys` refuses the other). **Providers**: the vendors this build runs and
-the keys the org brought here. **Team**: people, roles and single sign-on. **Usage**: what the org
-consumed, by day, by agent and call by call; it and Home show **Minutes used · n of N** where minutes
-are limited, *Upgrade* only where the box bills (`lib/limits.tsx`). The sandbox's console has
-**Phone testing** instead: which number reaches your copy, and how to tell which phone is yours.
+**Numbers** lists each number with **what a call to it does now** — *Rings the agent*, *Not reaching
+us yet*, *Not answered* (`GET /v1/numbers`'s `rings`) — where it comes through, and who wrote its
+row, *added by the box operator* among them. A row opens to its **path** (`GET
+/v1/numbers/{number}/path`): carrier, fence, world, agent, each with what would fix it, the last
+call, and Move and Remove. **Add a number** is a sheet that asks one question first, where the
+number lives, and offers only what the box allows (`GET /v1/carriers/catalog`): **automatic**
+(buying, Twilio, WhatsApp: the account connected in the sheet, the gateway's steps shown before
+anything is written), **guided** (a carrier the operator admits: the address to paste in its portal,
+then *waiting for the first call* until one reaches the box), **reviewed** (an own PBX: the console
+mints its password and shows it once, and the number waits for the operator to approve its
+addresses). **Accounts** shows what each account can do, a peer's addresses with the operator's
+answer to each; **Calling out** is turned on with a plan first. **This screen is where a door comes
+from**: a class declares none, so a number reaching one agent is a row here (or `pinecall numbers
+import`), moved by adding it again, nothing deployed; the web needs no row. **Tokens**, open to
+every key: your keys at this instance and the org's server tokens, shown once as `PINECALL_KEY=…`,
+made in this console's world (`POST /v1/keys` refuses the other). **Providers**: the vendors this
+build runs and the keys the org brought here. **Team**: people, roles and single sign-on. **Usage**:
+what the org consumed, by day, by agent and call by call; it and Home show **Minutes used · n of N**
+where minutes are limited, *Upgrade* only where the box bills (`lib/limits.tsx`). The sandbox's
+console has **Phone testing** instead: which number reaches your copy, and how to tell which phone
+is yours.
 
 **Notifications** is reached from every screen by the **bell in the top bar**, which reads *Turn on
 notifications* while this browser is not told (`shell/notices-button.tsx`): a supervisor who misses
@@ -377,8 +387,10 @@ loads.
 
 ## The box's screens
 
-A person the box made an operator gets six more, under **Box**: every organization and one of them
-whole, the fleet of workers and its cordon, **Routes** (every number of every org and world in one
+A person the box made an operator gets seven more, under **Box**: every organization and one of
+them whole, the fleet of workers and its cordon, **Carriers** (the carriers of the box's catalog
+with a switch each, Twilio always on; the addresses orgs asked for, approved or refused; and the
+fence as nftables holds it: `GET /v1/ops/carriers`, `/v1/ops/carrier-networks`), **Routes** (every number of every org and world in one
 table — whose it is, how it came, and what a call to it does now: picked up, nobody runs the agent,
 or another org's older row takes it; read-only, since a number is added, moved or let go from its
 org's Numbers screen; `GET /v1/ops/numbers`, and a row opens the number's Traceback), a number's

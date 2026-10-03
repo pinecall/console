@@ -129,6 +129,7 @@ export const ORG_SCREENS: readonly Screen[] = [
 export const BOX_SCREENS: readonly Screen[] = [
   { key: "box-orgs", path: "box/orgs", name: "Organizations", in: PRODUCTIONS, icon: "building", operator: true },
   { key: "box-fleet", path: "box/fleet", name: "Fleet", in: PRODUCTIONS, icon: "server", operator: true },
+  { key: "box-carriers", path: "box/carriers", name: "Carriers", in: PRODUCTIONS, icon: "phone", operator: true },
   { key: "box-routes", path: "box/routes", name: "Routes", in: PRODUCTIONS, icon: "route", operator: true },
   { key: "box-traceback", path: "box/traceback", name: "Traceback", in: PRODUCTIONS, icon: "phone", operator: true },
   { key: "box-usage", path: "box/usage", name: "Box usage", in: PRODUCTIONS, icon: "chart", operator: true },
