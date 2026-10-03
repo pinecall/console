@@ -3,7 +3,7 @@
 import { expect, test } from "vitest";
 import { z } from "zod";
 
-import { readTraceback } from "../src/screens/box/door-floor";
+import { readBoxNumbers, readTraceback } from "../src/screens/box/door-floor";
 import { giveConsent, importDoNotCall, optOut, putPolicy, readConsent, readDoNotCall, readPolicy, readReads, readTrail } from "../src/screens/org-data/door";
 
 const CREDENTIALS = { base: "/", key: "pk_test" };
@@ -25,6 +25,9 @@ const A_TRACEBACK = {
   calls: [{ call: "CA_1", org: "org_a", env: "production", direction: "outbound", from_number: "+14155550100", to_number: "+14155550142", started_at: 1758300000, ended_at: 1758300072, end_reason: "agent_hung_up", erased: true }],
   dials: [{ org: "org_a", env: "production", agent: "agenda", call: null, shown: "+14155550100", asked_by: "m_ana", refused: "do_not_call", at: 1758303600 }],
 };
+
+// runtime wire/rest/ops.py: BoxNumber, a number another org's older row answers.
+const A_BOX_NUMBER = { number: "+14155550142", channel: "phone", org: "otra", env: "production", agent: "agenda", came_in: "hooked", running: false, answered_by: "clinica" };
 
 /** Answers every request with the body, and keeps what was asked. */
 function answering(body: unknown): { method: string; url: string; body: string | null }[] {
@@ -85,4 +88,12 @@ test("a traceback is asked by number and day and read as the runtime's calls and
   expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/traceback?number=%2B14155550142&since=1700000000");
   answering({ ...A_TRACEBACK, calls: [{ ...A_TRACEBACK.calls[0], erased: "yes" }] });
   await expect(readTraceback(CREDENTIALS, "+14155550142", null)).rejects.toBeInstanceOf(z.ZodError);
+});
+
+test("the box's numbers are read whole at one door, and a row without who answers it is refused", async () => {
+  const asked = answering([A_BOX_NUMBER]);
+  expect(await readBoxNumbers(CREDENTIALS)).toEqual([A_BOX_NUMBER]);
+  expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/numbers");
+  answering([{ ...A_BOX_NUMBER, answered_by: undefined }]);
+  await expect(readBoxNumbers(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
 });

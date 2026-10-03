@@ -378,12 +378,15 @@ loads.
 ## The box's screens
 
 A person the box made an operator gets six more, under **Box**: every organization and one of them
-whole, the fleet of workers and its cordon, the routes a number takes, a number's **Traceback** (its
-phone calls in every org, kept or erased with the record the erasure left, and every dial to it,
-placed or refused: `GET /v1/ops/traceback`, what a carrier asks for), what every org consumed, and
-what the gateway itself is set to — sign-in, mail and brand. They are drawn only once `GET /v1/ops/whoami`
-has answered that this person runs the box, and every door under them is the operator's own
-(the runtime's `docs/protocol/operator-api.md`).
+whole, the fleet of workers and its cordon, **Routes** (every number of every org and world in one
+table — whose it is, how it came, and what a call to it does now: picked up, nobody runs the agent,
+or another org's older row takes it; read-only, since a number is added, moved or let go from its
+org's Numbers screen; `GET /v1/ops/numbers`, and a row opens the number's Traceback), a number's
+**Traceback** (its phone calls in every org, kept or erased with the record the erasure left, and
+every dial to it, placed or refused: `GET /v1/ops/traceback`, what a carrier asks for), what every
+org consumed, and what the gateway itself is set to — sign-in, mail and brand. They are drawn only
+once `GET /v1/ops/whoami` has answered that this person runs the box, and every door under them is
+the operator's own (the runtime's `docs/protocol/operator-api.md`).
 
 ## The way in
 

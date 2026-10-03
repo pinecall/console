@@ -1,6 +1,7 @@
 /** Traceback: a number's phone calls in every org, kept or erased, and every dial to it — what a carrier asks for. */
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
 
 import { useCredentials } from "@pinecall/core/credentials";
 import { prettyNumber } from "@pinecall/core/calls";
@@ -21,16 +22,27 @@ const lasted = (from: number | null, until: number | null): string => (from === 
  */
 export function BoxTraceback(): ReactNode {
   const credentials = useCredentials();
-  const [number, setNumber] = useState("");
+  const [search] = useSearchParams();
+  // Opened from a row of Routes, `?number=` is looked up on arrival.
+  const [number, setNumber] = useState(() => search.get("number") ?? "");
   const [day, setDay] = useState("");
   const [found, setFound] = useState<Traceback | null>(null);
   const acting = useMove();
 
-  const look = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
+  const lookUp = async (): Promise<void> => {
     const since = day === "" ? null : Date.parse(`${day}T00:00:00Z`) / 1000;
     await acting.move(async () => setFound(await readTraceback(credentials, number.trim(), since)));
   };
+
+  const look = async (event: FormEvent): Promise<void> => {
+    event.preventDefault();
+    await lookUp();
+  };
+
+  // Once, with the number the page opened with; every later look-up is the form's.
+  useEffect(() => {
+    if (number.trim() !== "") void lookUp();
+  }, []);
 
   return (
     <Page>

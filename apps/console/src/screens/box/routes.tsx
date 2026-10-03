@@ -1,157 +1,70 @@
-/** Routes: the doors one org answers at in one world, which table said so, and a number typed or forgotten. */
+/** Routes: every number the box answers at, of every org and world — how it came, and what a call to it does now. */
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 
 import { useCredentials } from "@pinecall/core/credentials";
 import { prettyNumber } from "@pinecall/core/calls";
-import { Button, Card, CardHead, Empty, Field, Input, Page, PageHead, Pill, Refused, Select, SelectItem, TableHead, TableRow, TextAction } from "../../ui";
-import { readOrgs } from "./door";
-import { addRoute, readRoutes, removeRoute } from "./door-floor";
-import { useDoor, useMove } from "./use-door";
+import { Card, CardFoot, CardHead, Empty, Input, Page, PageHead, Pill, Refused, TableHead, TableRow } from "../../ui";
+import { cameIn, matching, whenItRings } from "./box-numbers";
+import { readBoxNumbers } from "./door-floor";
+import { useDoor } from "./use-door";
 import "./box.css";
 
-const WORLDS = ["production", "sandbox"] as const;
-const CHANNELS = ["phone", "whatsapp"] as const;
-const COLUMNS = "minmax(0,1.1fr) 110px minmax(0,1fr) 150px 80px";
+const COLUMNS = "minmax(0,1.1fr) minmax(0,1fr) 100px minmax(0,1fr) 84px minmax(0,1fr) minmax(0,1.2fr)";
 
 /**
- * The screen. Two tables answer for an org: the rows an operator typed, and the doors the apps
- * holding its agents declared. A typed row outranks a declaration, and moving a number is one row
- * and no deploy.
+ * The screen. It changes nothing: a number is added, moved or let go from its org's Numbers screen,
+ * which writes the carrier, the SFU and the route together. A row opens the number's Traceback.
  */
 export function BoxRoutes(): ReactNode {
   const credentials = useCredentials();
-  const orgs = useDoor(useCallback(() => readOrgs(credentials), [credentials]));
-  const [org, setOrg] = useState("");
-  const [env, setEnv] = useState<string>(WORLDS[0]);
-  const routes = useDoor(useCallback(() => (org === "" ? Promise.resolve(undefined) : readRoutes(credentials, org, env)), [credentials, org, env]));
-  const acting = useMove();
-  const [adding, setAdding] = useState(false);
-  const [number, setNumber] = useState("");
-  const [agent, setAgent] = useState("");
-  const [channel, setChannel] = useState<string>(CHANNELS[0]);
-  const [said, setSaid] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (org === "" && orgs.value !== undefined) setOrg(orgs.value.find((one) => one.slug !== "default")?.slug ?? orgs.value[0]?.slug ?? "");
-  }, [org, orgs.value]);
-
-  const add = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
-    setSaid(null);
-    const typed = await acting.move(async () => {
-      const from = await addRoute(credentials, { org, number: number.trim(), agent: agent.trim(), channel, env });
-      setSaid(from === null ? `${number.trim()} now rings ${agent.trim()}.` : `${number.trim()} now rings ${agent.trim()}, taken from ${from}.`);
-      await routes.reread();
-    });
-    if (typed) {
-      setNumber("");
-      setAgent("");
-      setAdding(false);
-    }
-  };
+  const numbers = useDoor(useCallback(() => readBoxNumbers(credentials), [credentials]));
+  const [words, setWords] = useState("");
+  const shown = matching(numbers.value ?? [], words);
 
   return (
     <Page width={1060} tight>
-      <PageHead title="Routes" lede="Every door one org answers at, in one world. A row typed here outranks whatever an app declared." />
+      <PageHead title="Routes" lede="Every number this box answers at, of every org and world, and what a call to it does now." />
 
-      <div className="box-pick">
-        <Select size="sm" value={org} onValueChange={(value) => setOrg(value)} aria-label="Organization">
-          {(orgs.value ?? []).map((one) => (
-            <SelectItem key={one.id} value={one.slug}>
-              {one.slug}
-            </SelectItem>
-          ))}
-        </Select>
-        <Select size="sm" value={env} onValueChange={(value) => setEnv(value)} aria-label="World">
-          {WORLDS.map((world) => (
-            <SelectItem key={world} value={world}>
-              {world}
-            </SelectItem>
-          ))}
-        </Select>
-      </div>
+      <Refused>{numbers.refused}</Refused>
 
-      <Refused>{orgs.refused ?? routes.refused ?? acting.refused}</Refused>
-
-      {routes.value !== undefined && (
+      {numbers.value !== undefined && (
         <Card>
           <CardHead
-            title={`${org} · ${env}`}
-            meta={`${routes.value.length} ${routes.value.length === 1 ? "door" : "doors"}`}
+            title="On this box"
+            meta={`${numbers.value.length} ${numbers.value.length === 1 ? "number" : "numbers"}`}
             action={
-              adding ? undefined : (
-                <Button kind="primary" size="sm" className="ui-card-action" onClick={() => setAdding(true)}>
-                  Type a number
-                </Button>
-              )
+              <span className="box-head-moves">
+                <Input value={words} placeholder="Search a number, org or agent" aria-label="Search numbers" onChange={(event) => setWords(event.target.value)} />
+              </span>
             }
           />
-          {adding && (
-            <div className="box-inline">
-              <form className="ui-form" onSubmit={(event) => void add(event)}>
-                <Field label="Number" minWidth={170}>
-                  <Input value={number} placeholder="+34910000000" onChange={(event) => setNumber(event.target.value)} required autoFocus />
-                </Field>
-                <Field label="Agent" grow minWidth={170}>
-                  <Input value={agent} placeholder="clinica-norte" onChange={(event) => setAgent(event.target.value)} required />
-                </Field>
-                <Field label="Channel" minWidth={120}>
-                  <Select value={channel} onValueChange={(value) => setChannel(value)}>
-                    {CHANNELS.map((one) => (
-                      <SelectItem key={one} value={one}>
-                        {one}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                </Field>
-                <Button kind="primary" size="form" type="submit" disabled={acting.busy}>
-                  {acting.busy ? "Typing…" : "Add"}
-                </Button>
-              </form>
-              <div className="box-inline-foot">
-                A row and nothing else: the carrier and the SFU trunk are the org's Numbers screen.
-                <span className="box-inline-close">
-                  <TextAction onClick={() => setAdding(false)}>Close</TextAction>
-                </span>
-              </div>
-            </div>
-          )}
-          {said !== null && <div className="box-done box-done-row">{said}</div>}
-          {routes.value.length === 0 ? (
-            <Empty>No door in this world: nothing typed, and no app holding an agent here.</Empty>
+          {numbers.value.length === 0 ? (
+            <Empty>No number on this box yet: an org adds one from its Numbers screen.</Empty>
+          ) : shown.length === 0 ? (
+            <Empty>No number, org or agent matches “{words.trim()}”.</Empty>
           ) : (
             <>
-              <TableHead columns={COLUMNS} labels={["Number", "Channel", "Agent", "Said by", ""]} />
-              {routes.value.map((door) => (
-                <TableRow key={`${door.route.channel}-${door.route.number ?? door.route.agent}`} columns={COLUMNS}>
-                  <span className="ui-cell-strong">{door.route.number ? prettyNumber(door.route.number) : "—"}</span>
-                  <span className="ui-cell-ink">{door.route.channel}</span>
-                  <span className="ui-cell-ink ui-clip">{door.route.agent}</span>
-                  <span className="box-line">
-                    <Pill tone={door.source === "operator" ? "indigo" : "gray"}>{door.source === "operator" ? "typed" : door.source}</Pill>
-                    {door.route.managed === true && <Pill tone="violet">bought</Pill>}
-                  </span>
-                  <span className="ui-cell-end">
-                    {door.source === "operator" && typeof door.route.number === "string" && (
-                      <TextAction
-                        danger
-                        disabled={acting.busy}
-                        onClick={() =>
-                          void acting.move(async () => {
-                            await removeRoute(credentials, org, door.route.number ?? "");
-                            await routes.reread();
-                          })
-                        }
-                      >
-                        Forget
-                      </TextAction>
-                    )}
-                  </span>
-                </TableRow>
-              ))}
+              <TableHead columns={COLUMNS} labels={["Number", "Org", "World", "Agent", "Channel", "Came in", "If it rings now"]} />
+              {shown.map((row) => {
+                const rings = whenItRings(row);
+                return (
+                  <TableRow key={`${row.org}-${row.channel}-${row.number}`} columns={COLUMNS} to={`/box/traceback?number=${encodeURIComponent(row.number)}`}>
+                    <span className="ui-cell-strong">{prettyNumber(row.number)}</span>
+                    <span className="ui-cell-ink ui-clip">{row.org}</span>
+                    <span className="ui-cell-ink">{row.env}</span>
+                    <span className="ui-cell-ink ui-clip">{row.agent}</span>
+                    <span className="ui-cell-ink">{row.channel}</span>
+                    <span className="ui-cell-ink ui-clip">{cameIn(row)}</span>
+                    <span className="box-line">
+                      <Pill tone={rings.tone}>{rings.text}</Pill>
+                    </span>
+                  </TableRow>
+                );
+              })}
             </>
           )}
+          <CardFoot>To add, move or let go a number, open its org&apos;s Numbers screen: it writes the carrier, the SFU and the route together.</CardFoot>
         </Card>
       )}
     </Page>

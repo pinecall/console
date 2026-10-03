@@ -1,4 +1,4 @@
-/** Operator doors: fleet, org routes, usage and a number's traceback. */
+/** Operator doors: fleet, the box's numbers, usage and a number's traceback. */
 
 import { z } from "zod";
 
@@ -23,17 +23,18 @@ export type Worker = z.infer<typeof WorkerSchema>;
 const FleetSchema = z.looseObject({ now: z.number(), stale_after_s: z.number(), workers: z.array(WorkerSchema) });
 export type TheFleet = z.infer<typeof FleetSchema>;
 
-const AnsweringSchema = z.looseObject({
-  route: z.looseObject({
-    agent: z.string(),
-    channel: z.string(),
-    number: z.string().nullish(),
-    env: z.string(),
-    managed: z.boolean().nullish(),
-  }),
-  source: z.string(),
+// Mirrors runtime wire/rest/ops.py `BoxNumber`: `org` is the slug, `answered_by` the org whose older row answers instead.
+const BoxNumberSchema = z.looseObject({
+  number: z.string(),
+  channel: z.string(),
+  org: z.string(),
+  env: z.string(),
+  agent: z.string(),
+  came_in: z.string(),
+  running: z.boolean(),
+  answered_by: z.string().nullable(),
 });
-export type Answering = z.infer<typeof AnsweringSchema>;
+export type BoxNumber = z.infer<typeof BoxNumberSchema>;
 
 const UsageRowSchema = z.looseObject({
   cursor: z.number(),
@@ -65,22 +66,9 @@ export async function cordon(credentials: Credentials, worker: Worker, wanted: b
   await (wanted ? post(credentials, path, {}) : drop(credentials, path));
 }
 
-/** An org's routes in one world, each with its source table. */
-export async function readRoutes(credentials: Credentials, org: string, env: string): Promise<Answering[]> {
-  return z.array(AnsweringSchema).parse(await read(credentials, `${OPS}/routes`, { org, env }));
-}
-
-/** Assign a number to an agent; returns the previous agent, if any. */
-export async function addRoute(
-  credentials: Credentials,
-  wanted: { org: string; number: string; agent: string; channel: string; env: string },
-): Promise<string | null> {
-  return z.looseObject({ overrides: z.string().nullish() }).parse(await post(credentials, `${OPS}/routes`, wanted)).overrides ?? null;
-}
-
-/** Remove a manually assigned number; 404 if it was never assigned. */
-export async function removeRoute(credentials: Credentials, org: string, number: string): Promise<void> {
-  await drop(credentials, `${OPS}/routes/${encodeURIComponent(number)}?org=${encodeURIComponent(org)}`);
+/** Every number of the box, every org and world, by number. */
+export async function readBoxNumbers(credentials: Credentials): Promise<BoxNumber[]> {
+  return z.array(BoxNumberSchema).parse(await read(credentials, `${OPS}/numbers`));
 }
 
 /** One page of usage rows (oldest first), per-org totals and the next cursor. */
