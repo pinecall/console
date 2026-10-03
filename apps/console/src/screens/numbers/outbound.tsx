@@ -8,7 +8,7 @@ import { GatewayError } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { prettyNumber } from "@pinecall/core/calls";
 import { Button, Card, CardHead, Dot, Input, Label, Refused, Select, SelectItem, TextAction } from "../../ui";
-import { Steps } from "./adding";
+import { Steps } from "./add-parts";
 import { dial, type Outbound, type Provisioned } from "./door";
 
 /** What the tab is told: the standing (null: no carrier yet), the agents, and the one move — planned first, then made. */
@@ -29,7 +29,7 @@ function missing(step: string): ReactNode {
   if (said.includes("carrier")) {
     return (
       <>
-        Connect a carrier first — <Link to="/numbers?tab=carrier">Carrier</Link>.
+        Connect a carrier first — <Link to="/numbers?add=">Add a number</Link>.
       </>
     );
   }
@@ -62,7 +62,7 @@ export function OutboundPanel({ outbound, agents, busy, onProvision }: OutboundP
         <div className="num-hero">
           <div className="num-hero-title">Let your agents call people back</div>
           <p className="num-hero-say">
-            Calls go out from your own numbers through your carrier account. Connect a carrier first — <Link to="/numbers?tab=carrier">Carrier</Link>.
+            Calls go out from your own numbers through your carrier account. Connect a carrier first — <Link to="/numbers?add=">Add a number</Link>.
           </p>
         </div>
       </Card>

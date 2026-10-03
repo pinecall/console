@@ -1,28 +1,60 @@
-/** Numbers doors: routes, the org's accounts, available numbers, import, purchase, release and outbound. */
+/** Numbers doors: the org's numbers and their path, its accounts, the catalog, import, purchase, release and outbound. */
 
 import { z } from "zod";
 
 import { drop, post, put, read, type Credentials } from "@pinecall/core/api";
 
-// Runtime `Answering`. `managed` means the box bought it; those count against the `numbers` quota.
+const RouteSchema = z.object({
+  org: z.string(),
+  agent: z.string(),
+  channel: z.enum(["phone", "web", "whatsapp"]),
+  number: z.string().nullable(),
+  label: z.string().nullable(),
+  env: z.enum(["production", "sandbox"]),
+  managed: z.boolean().default(false),
+});
+
+/** What a call to a number does now: works, waits on someone, or stops (runtime `StepState`). */
+const RingsSchema = z.enum(["ok", "waiting", "broken"]);
+export type Rings = z.infer<typeof RingsSchema>;
+
+// Runtime wire/rest/numbers.py `NumberRow`. `managed` means the box bought it; `origin` who wrote the row.
 const AnsweringSchema = z.object({
-  route: z.object({
-    org: z.string(),
-    agent: z.string(),
-    channel: z.enum(["phone", "web", "whatsapp"]),
-    number: z.string().nullable(),
-    label: z.string().nullable(),
-    env: z.enum(["production", "sandbox"]),
-    managed: z.boolean().default(false),
-  }),
+  route: RouteSchema,
+  origin: z.enum(["bought", "imported", "hooked", "typed"]).default("imported"),
+  rings: RingsSchema.default("ok"),
+  last_call_at: z.number().nullish(),
+  via: z.string().nullish(),
+  account: z.string().nullish(),
 });
 export type Answering = z.infer<typeof AnsweringSchema>;
+
+// Runtime `NumberPath`: the four steps of a call's way to its agent, each with what would fix it.
+const PathSchema = z.object({
+  number: z.string(),
+  steps: z.array(z.object({ step: z.enum(["carrier", "fence", "world", "agent"]), state: RingsSchema, says: z.string(), fix: z.string().nullish() })),
+  rings: RingsSchema,
+  last_call_at: z.number().nullish(),
+});
+export type NumberPath = z.infer<typeof PathSchema>;
+
+// Runtime `CarrierCatalog`: the carriers this box admits, automatic (its API) or guided (SIP terms).
+const CatalogSchema = z.object({
+  carriers: z.array(z.object({ kind: z.string(), name: z.string(), how: z.enum(["automatic", "guided"]), networks: z.array(z.string()) })),
+  sells: z.boolean(),
+});
+export type Catalog = z.infer<typeof CatalogSchema>;
 
 /** The kinds of account an org holds: a Twilio account, a SIP peer, a WhatsApp number at Meta. */
 export type CarrierKind = "twilio" | "sip" | "whatsapp";
 
-// GET /v1/carrier and /v1/carriers: kind, account and label, never a secret.
-const CarrierSchema = z.object({ kind: z.enum(["twilio", "sip", "whatsapp"]), account: z.string(), label: z.string().default("") });
+// GET /v1/carrier and /v1/carriers: kind, account and label, never a secret; a peer's networks and the operator's answer.
+const CarrierSchema = z.object({
+  kind: z.enum(["twilio", "sip", "whatsapp"]),
+  account: z.string(),
+  label: z.string().default(""),
+  networks: z.array(z.object({ network: z.string(), state: z.enum(["waiting", "approved", "refused"]) })).default([]),
+});
 export type Carrier = z.infer<typeof CarrierSchema>;
 const CarriersSchema = z.object({ carriers: z.array(CarrierSchema) });
 
@@ -34,7 +66,7 @@ export type Available = z.infer<typeof AvailableSchema>;
 
 // Shared by import and purchase. With `?dry_run=true` nothing is written.
 const WiredSchema = z.object({
-  route: AnsweringSchema.shape.route,
+  route: RouteSchema,
   steps: z.array(z.string()),
   dry_run: z.boolean(),
 });
@@ -66,8 +98,10 @@ export interface WantedNumber {
   account?: string;
   /** The org points the number at the gateway itself: nothing outside is touched. */
   hooked?: boolean;
-  /** A self-hooked number's own networks; the carrier's when unsaid. */
+  /** A self-hooked number's own networks, which the box's operator approves. */
   networks?: string[];
+  /** A self-hooked number's carrier from the box's catalog; Twilio's networks when unsaid. */
+  via?: string;
 }
 
 export interface WantedPurchase {
@@ -80,6 +114,21 @@ export interface WantedPurchase {
 /** The org's routes in this world, in worker order. */
 export async function readNumbers(credentials: Credentials): Promise<Answering[]> {
   return z.array(AnsweringSchema).parse(await read(credentials, "/v1/numbers"));
+}
+
+/** What a call to the number goes through now, step by step. */
+export async function readPath(credentials: Credentials, number: string): Promise<NumberPath> {
+  return PathSchema.parse(await read(credentials, `/v1/numbers/${encodeURIComponent(number)}/path`));
+}
+
+/** The carriers this box admits, and whether it sells numbers. */
+export async function readCatalog(credentials: Credentials): Promise<Catalog> {
+  return CatalogSchema.parse(await read(credentials, "/v1/carriers/catalog"));
+}
+
+/** Move a number into the other world: its row and the two rules. */
+export async function moveNumber(credentials: Credentials, number: string, env: "production" | "sandbox"): Promise<void> {
+  await put(credentials, `/v1/numbers/${encodeURIComponent(number)}/env`, { env });
 }
 
 /** Every account of the org, oldest first; a gateway that lists none answers the one it knows. */

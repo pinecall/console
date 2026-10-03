@@ -1,4 +1,4 @@
-/* Numbers and Phone testing: a number and who answers it, adding one, the carrier. */
+/* Numbers and Phone testing: each number and what a call to it does, its path, the accounts, the sheet that adds one. */
 
 .num-row {
   display: flex;
@@ -24,7 +24,6 @@
   color: var(--ink-2);
 }
 
-.num-remove,
 .num-end {
   margin-left: auto;
 }
@@ -33,15 +32,6 @@
   padding: 11px 16px;
   font-size: 12.5px;
   color: var(--ink-4);
-}
-
-.num-ways {
-  margin-left: auto;
-}
-
-.num-ways .ui-segment:disabled {
-  cursor: default;
-  opacity: 0.5;
 }
 
 .num-fields {
@@ -72,10 +62,6 @@
   border-top: 1px solid var(--line-2);
   padding: 14px 16px;
   background: var(--ground-side);
-}
-
-.num-plan-done {
-  background: var(--ground);
 }
 
 .num-plan-title {
@@ -118,46 +104,6 @@
   gap: 8px;
 }
 
-.num-carrier {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-}
-
-.num-kind {
-  flex: none;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--accent-hover);
-  background: var(--accent-soft);
-  padding: 3px 9px;
-  border-radius: 7px;
-}
-
-.num-carrier-standing {
-  flex: none;
-  font-size: 13.5px;
-  font-weight: 500;
-}
-
-.num-carrier-account {
-  min-width: 0;
-  font-size: 12.5px;
-  color: var(--ink-4);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.num-carrier-moves {
-  margin-left: auto;
-  flex: none;
-  display: flex;
-  gap: 8px;
-}
-
-
 .num-body {
   padding: 14px 16px;
   font-size: 13.5px;
@@ -177,51 +123,11 @@
   padding: 0 16px 14px;
 }
 
-.num-outbound-title {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-  margin-bottom: 3px;
-}
-
-.num-outbound-say {
-  font-size: 12.5px;
-  color: var(--ink-4);
-  margin-bottom: 10px;
-}
-
-.num-fields-4 {
-  grid-template-columns: minmax(0, 1.4fr) 110px minmax(0, 1fr) minmax(0, 1fr);
-}
-
 .num-fields-flush {
   padding: 0;
 }
 
-@media (max-width: 720px) {
-  .num-fields-4 {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* ── adding, inside the numbers card ──────────────────────────────────────── */
-
-.num-add {
-  border-top: 1px solid var(--line-2);
-  background: var(--ground-side);
-}
-
-.num-add-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px 0;
-}
-
-.num-add-close {
-  margin-left: auto;
-  color: var(--ink-4);
-}
+/* ── a number added ───────────────────────────────────────────────────────── */
 
 .num-added {
   padding: 12px 16px;
@@ -317,4 +223,120 @@
   font-size: 12px;
   color: var(--ink-5);
   margin-top: 2px;
+}
+
+/* ── the list: a number, its agent, where it comes through, what a call does ─ */
+
+.num-table-head,
+.num-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1.4fr) 16px;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line-3);
+}
+
+.num-table-head { font-size: 11.5px; color: var(--ink-4); padding-block: 8px; }
+.num-table-row { width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line-3); cursor: pointer; font: inherit; color: inherit; }
+.num-table-row:hover { background: var(--ground-3); }
+.num-cell-number { font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-cell-agent { color: var(--ink-2); }
+.num-cell-sub { display: block; font-size: 11.5px; color: var(--ink-4); font-weight: 400; }
+.num-cell-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.num-caret { color: var(--ink-5); transition: transform 0.15s; }
+.num-table-row[aria-expanded="true"] .num-caret { transform: rotate(90deg); }
+
+/* ── a number opened: its path ───────────────────────────────────────────── */
+
+.num-path { padding: 4px 16px 14px; background: var(--ground-3); border-bottom: 1px solid var(--line-3); }
+.num-path-title { font-size: 12px; color: var(--ink-4); margin: 8px 0 10px; }
+.num-path-reading { font-size: 12.5px; color: var(--ink-4); }
+.num-steps-path { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.num-step-path { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.num-step-mark { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+.num-step-ok { background: var(--green-soft); color: var(--green); }
+.num-step-waiting { background: var(--amber-soft); color: var(--amber); }
+.num-step-broken { background: var(--red-soft); color: var(--red); }
+.num-step-name { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-4); margin-top: 6px; }
+.num-step-says { font-size: 12.5px; color: var(--ink-2); }
+.num-step-fix { font-size: 12px; color: var(--accent); }
+.num-path-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: 12.5px; color: var(--ink-3); }
+.num-path-moves { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── the accounts, by what each can do ───────────────────────────────────── */
+
+.num-accounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.num-account { border: 1px solid var(--line); border-radius: 12px; background: var(--ground); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.num-account-top { display: flex; gap: 10px; align-items: center; }
+.num-account-name { display: block; font-weight: 600; }
+.num-account-id { display: block; font-size: 11.5px; color: var(--ink-4); font-family: var(--face-fixed); }
+.num-account-foot { border-top: 1px solid var(--line-2); padding-top: 10px; display: flex; justify-content: flex-end; }
+.num-caps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+.num-cap { display: flex; align-items: center; gap: 7px; color: var(--ink-2); }
+.num-cap-no { color: var(--ink-5); }
+.num-cap-off { width: 6px; height: 6px; border-radius: 50%; background: var(--line-hover); }
+.num-logo { flex: none; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 600; font-size: 12px; background: var(--ground-4); color: var(--ink-2); border: 1px solid var(--line); }
+.num-logo-buy { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.num-logo-twilio { background: var(--red-soft); color: var(--red); border-color: transparent; }
+.num-logo-whatsapp { background: var(--green-soft); color: var(--green); border-color: transparent; }
+
+/* ── the sheet: Add a number ─────────────────────────────────────────────── */
+
+.num-scrim { position: fixed; inset: 0; z-index: 60; background: var(--scrim); }
+.num-sheet { position: fixed; top: 0; right: 0; bottom: 0; z-index: 61; width: min(620px, 100%); display: flex; flex-direction: column; background: var(--ground); border-left: 1px solid var(--line); box-shadow: var(--shadow-pop); }
+.num-sheet-head { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.num-sheet-title { font-weight: 600; font-size: 15px; }
+.num-sheet-world { font-size: 12.5px; color: var(--ink-4); margin-right: auto; }
+.num-sheet-body { flex: 1; overflow-y: auto; padding: 18px 20px 28px; display: flex; flex-direction: column; gap: 18px; }
+.num-wizard { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--ink-4); }
+.num-wizard b { font-weight: 500; color: var(--ink); }
+.num-wizard i { font-style: normal; color: var(--ink-5); }
+.num-q { font-weight: 600; font-size: 14px; }
+.num-q-sub { font-size: 12.5px; color: var(--ink-4); }
+.num-choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.num-choice { display: flex; gap: 11px; align-items: flex-start; text-align: left; padding: 12px; border: 1px solid var(--line-field); border-radius: 11px; background: var(--ground); cursor: pointer; font: inherit; color: inherit; }
+.num-choice:hover { border-color: var(--line-hover); }
+.num-choice[aria-pressed="true"] { border-color: var(--accent); background: var(--ground-tint); box-shadow: var(--accent-ring); }
+.num-choice-name { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-weight: 600; }
+.num-choice-says { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.num-how { font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; padding: 1px 6px; border-radius: 5px; }
+.num-how-automatic { background: var(--green-soft); color: var(--green); }
+.num-how-guided { background: var(--indigo-soft); color: var(--indigo); }
+.num-how-reviewed { background: var(--amber-soft); color: var(--amber); }
+.num-section-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+.num-way,
+.num-connect { display: flex; flex-direction: column; gap: 14px; }
+.num-fields-flush { padding: 0; }
+.num-actions-flush { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0; }
+.num-list { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.num-list-row { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--line-2); }
+.num-list-row:last-child { border-bottom: 0; }
+.num-list-number { font-weight: 600; font-variant-numeric: tabular-nums; }
+.num-list-name { color: var(--ink-4); }
+.num-list-note { margin-left: auto; font-size: 11.5px; color: var(--ink-4); }
+.num-list-empty { padding: 10px 12px; font-size: 12.5px; color: var(--ink-4); }
+.num-setup { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.num-setup-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 11px 14px; border-bottom: 1px solid var(--line-2); }
+.num-setup-title { font-weight: 600; font-size: 13.5px; }
+.num-setup-meta { font-size: 12px; color: var(--ink-4); }
+.num-setup-list { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 12px; align-items: center; padding: 12px 14px; margin: 0; font-size: 12.5px; }
+.num-setup-list dt { color: var(--ink-4); }
+.num-setup-list dd { margin: 0; min-width: 0; }
+.num-copy { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 6px 5px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--ground-3); }
+.num-copy code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-family: var(--face-fixed); font-size: 12.5px; }
+.num-mono { font-family: var(--face-fixed); font-size: 12px; }
+.num-waiting { display: flex; gap: 11px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--ground-3); }
+.num-waiting > :first-child { margin-top: 6px; }
+.num-waiting-title { display: block; font-weight: 600; }
+.num-waiting-say { display: block; font-size: 12.5px; color: var(--ink-3); }
+
+@media (max-width: 720px) {
+  .num-table-head { display: none; }
+  .num-table-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .num-cell-agent,
+  .num-cell-through,
+  .num-caret { display: none; }
+  .num-steps-path { grid-template-columns: minmax(0, 1fr); }
+  .num-setup-list { grid-template-columns: minmax(0, 1fr); }
 }

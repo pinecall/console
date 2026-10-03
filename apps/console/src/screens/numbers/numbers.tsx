@@ -1,6 +1,6 @@
-/** Numbers screen: inbound routes, outbound calling and the org's accounts. */
+/** Numbers screen: each number and whether a call to it rings the agent now, the org's accounts, calling out. */
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 
 import { GatewayError } from "@pinecall/core/api";
@@ -9,63 +9,66 @@ import { prettyNumber } from "@pinecall/core/calls";
 import { useOrg } from "../../lib/org";
 import { useWorld } from "../../lib/world";
 import { Button, Card, CardHead, Dot, Empty, Page, PageHead, Pill, Refused, Select, SelectItem, Tabs } from "../../ui";
-import { Adding } from "./adding";
-import { CarrierPanel } from "./carrier";
-import { OutboundPanel } from "./outbound";
+import { Accounts } from "./accounts";
+import { AddNumber } from "./add-number";
 import {
-  bringCarrier,
-  buyNumber,
   dropCarrier,
-  importNumber,
+  moveNumber,
   provisionOutbound,
   readAvailable,
   readCarriers,
+  readCatalog,
   readNumbers,
   readOutbound,
   releaseNumber,
   type Answering,
   type Available,
   type Carrier,
+  type Catalog,
   type Outbound,
-  type Wired,
 } from "./door";
+import { OutboundPanel } from "./outbound";
+import { Path } from "./path";
+import { ORIGIN_SAID, RINGS_SAID, comesThrough, countRings } from "./ways";
 import "./numbers.css";
 
-type Tab = "numbers" | "outbound" | "carrier";
+type Tab = "numbers" | "accounts" | "outbound";
 
 const TABS: readonly { tab: Tab; name: string }[] = [
   { tab: "numbers", name: "Numbers" },
-  { tab: "outbound", name: "Outbound calls" },
-  { tab: "carrier", name: "Accounts" },
+  { tab: "accounts", name: "Accounts" },
+  { tab: "outbound", name: "Calling out" },
 ];
 
-/** The tab is kept in `?tab=`. Phone testing for developers is a separate screen (phone.tsx). */
+/** The tab is kept in `?tab=`, the open sheet's way in `?add=`. Phone testing for developers is phone.tsx. */
 export function Numbers(): ReactNode {
   const credentials = useCredentials();
   const { agents } = useOrg();
+  const { world } = useWorld();
   const [params, setParams] = useSearchParams();
   const tab: Tab = TABS.some((one) => one.tab === params.get("tab")) ? (params.get("tab") as Tab) : "numbers";
+  const adding = params.has("add");
   const [carriers, setCarriers] = useState<Carrier[] | undefined>(undefined);
   const [doors, setDoors] = useState<Answering[] | null>(null);
   const [available, setAvailable] = useState<Available | null>(null);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [outbound, setOutbound] = useState<Outbound | null>(null);
   // Calls go out through one account: the first that places calls, unless another is picked.
   const [via, setVia] = useState<string | null>(null);
-  const { world } = useWorld();
+  const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState<Wired | null>(null);
+  const [added, setAdded] = useState<string | null>(null);
 
   const reread = useCallback(async (): Promise<void> => {
-    const [brought, answering] = await Promise.all([readCarriers(credentials), readNumbers(credentials)]);
+    const [brought, answering, offered] = await Promise.all([readCarriers(credentials), readNumbers(credentials), readCatalog(credentials).catch(() => null)]);
     setCarriers(brought);
     setDoors(answering);
+    setCatalog(offered);
     setAvailable(brought.length === 0 ? null : await readAvailable(credentials).catch(() => null));
     const dialling = brought.filter((one) => one.kind !== "whatsapp");
     const through = dialling.find((one) => one.account === via) ?? dialling[0];
     setVia(through?.account ?? null);
-    // Outbound needs an account that places calls; older gateways lack the door.
     setOutbound(through === undefined ? null : await readOutbound(credentials, dialling.length > 1 ? through.account : undefined).catch(() => null));
   }, [credentials, via]);
 
@@ -79,12 +82,12 @@ export function Numbers(): ReactNode {
     };
   }, [reread]);
 
-  // Run one action at a time, show its refusal inline, then reload.
-  const moved = async <T,>(move: () => Promise<T>): Promise<T> => {
+  // One request at a time: its refusal shown inline, the screen read again after.
+  const move = async <T,>(work: () => Promise<T>): Promise<T> => {
     setBusy(true);
     setRefused(null);
     try {
-      const answered = await move();
+      const answered = await work();
       await reread();
       return answered;
     } catch (failed) {
@@ -95,101 +98,101 @@ export function Numbers(): ReactNode {
     }
   };
 
-  const numbered = doors ?? [];
+  const pick = (changes: Record<string, string | null>): void => {
+    const next = new URLSearchParams(params);
+    for (const [name, value] of Object.entries(changes)) {
+      if (value === null) next.delete(name);
+      else next.set(name, value);
+    }
+    setParams(next);
+  };
+
+  const rows = doors ?? [];
+  const counted = countRings(rows);
   const dialling = (carriers ?? []).filter((one) => one.kind !== "whatsapp");
 
   return (
     <Page width={900}>
-      <PageHead title="Phone numbers" lede="The numbers people call or write to, which agent picks up, and the calls your agents place." />
-
+      <PageHead
+        title="Phone numbers"
+        lede="The numbers people call or write to, and which agent picks up."
+        actions={
+          <Button kind="primary" onClick={() => pick({ add: "", tab: null })} disabled={catalog === null}>
+            Add a number
+          </Button>
+        }
+      />
       <Tabs
         label="Phone numbers"
-        tabs={TABS.map((one) =>
-          one.tab === "outbound" && carriers !== undefined ? { ...one, mark: <Dot tone={outbound?.ready ? "green" : "amber"} small /> } : one,
-        )}
+        tabs={TABS.map((one) => (one.tab === "numbers" && counted.waiting + counted.broken > 0 ? { ...one, mark: <Dot tone="amber" small /> } : one))}
         on={tab}
-        onPick={(picked) => setParams(picked === "numbers" ? {} : { tab: picked })}
+        onPick={(picked) => pick({ tab: picked === "numbers" ? null : picked })}
       />
-
       <Refused>{refused}</Refused>
 
       {tab === "numbers" && doors !== null && carriers !== undefined && (
         <Card>
-          <CardHead
-            title={`Numbers in ${world}`}
-            action={
-              !adding ? (
-                <Button
-                  kind="primary"
-                  size="sm"
-                  className="ui-card-action"
-                  onClick={() => {
-                    setAdded(null);
-                    setAdding(true);
-                  }}
-                >
-                  Add a number
-                </Button>
-              ) : undefined
-            }
-          />
-          {numbered.length === 0 && <Empty>No number rings or writes to an agent in {world} yet.</Empty>}
-          {numbered.map((door) => (
-            <div key={`${door.route.channel}:${door.route.number}`} className="num-row">
-              <span className="num-number">{prettyNumber(door.route.number)}</span>
-              {door.route.channel === "whatsapp" && (
-                <span title="messages on WhatsApp">
-                  <Pill tone="green">WhatsApp</Pill>
-                </span>
-              )}
-              <span className="num-arrow" aria-hidden>
-                →
-              </span>
-              <span className="num-agent">{door.route.agent}</span>
-              {door.route.managed && (
-                <span title="bought by the box for this org">
-                  <Pill tone="violet">bought</Pill>
-                </span>
-              )}
-              <Button
-                kind="danger"
-                size="xs"
-                className="num-remove"
-                disabled={busy}
-                title="The number stops reaching this agent. It stays in your account."
-                onClick={() => void moved(() => releaseNumber(credentials, door.route.number ?? "")).catch(() => undefined)}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-          {added !== null && (
-            <div className="num-added">
-              Done. {prettyNumber(added.route.number)} now reaches {added.route.agent}.
-            </div>
+          <CardHead title={`Numbers in ${world}`} meta={`${rows.length} · ${counted.ok} ring the agent${counted.waiting > 0 ? ` · ${counted.waiting} not reaching us yet` : ""}${counted.broken > 0 ? ` · ${counted.broken} not answered` : ""}`} />
+          {rows.length === 0 ? (
+            <Empty>No number rings or writes to an agent in {world} yet.</Empty>
+          ) : (
+            <>
+              <div className="num-table-head">
+                <span>Number</span>
+                <span>Agent</span>
+                <span>Comes through</span>
+                <span>If it rings now</span>
+              </div>
+              {rows.map((row) => {
+                const number = row.route.number ?? "";
+                const through = comesThrough(row, carriers, catalog);
+                const rings = RINGS_SAID[row.rings];
+                const origin = ORIGIN_SAID[row.origin];
+                const isOpen = open === number;
+                return (
+                  <Fragment key={`${row.route.channel}:${number}`}>
+                    <button type="button" className="num-table-row" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : number)}>
+                      <span className="num-cell-number">
+                        {prettyNumber(number)}
+                        {row.route.channel === "whatsapp" && <span className="num-cell-sub">WhatsApp</span>}
+                      </span>
+                      <span className="num-cell-agent">→ {row.route.agent}</span>
+                      <span className="num-cell-through">
+                        {through.name}
+                        <span className="num-cell-sub">{through.sub}</span>
+                      </span>
+                      <span className="num-cell-pills">
+                        <Pill tone={rings.tone} small>
+                          {rings.text}
+                        </Pill>
+                        <Pill tone={origin.tone} small>
+                          {origin.text}
+                        </Pill>
+                      </span>
+                      <span className="num-caret" aria-hidden>
+                        ›
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <Path
+                        row={row}
+                        busy={busy}
+                        onMove={() => void move(() => moveNumber(credentials, number, row.route.env === "production" ? "sandbox" : "production")).catch(() => undefined)}
+                        onRemove={() => void move(() => releaseNumber(credentials, number)).then(() => setOpen(null), () => undefined)}
+                      />
+                    )}
+                  </Fragment>
+                );
+              })}
+            </>
           )}
-          {adding && (
-            <Adding
-              carriers={carriers}
-              agents={agents}
-              available={available}
-              busy={busy}
-              onImport={(wanted, dryRun) => moved(() => importNumber(credentials, wanted, dryRun))}
-              onBuy={(wanted, dryRun) => moved(() => buyNumber(credentials, wanted, dryRun))}
-              onDone={(wired) => {
-                setAdded(wired);
-                setAdding(false);
-              }}
-              onClose={() => setAdding(false)}
-            />
-          )}
-          <div className="num-foot">
-            Every agent is on the web, with no number and nothing to turn on: this page is the
-            telephone and WhatsApp. An agent answers at as many numbers as you route to it, from
-            any of your accounts. A number here is a row you keep — move it to another agent by
-            adding it again, and it moves on the next call, with nothing deployed.
-          </div>
+          {added !== null && <div className="num-added">Done. {prettyNumber(added)} is added; open it to see what a call to it goes through.</div>}
+          <div className="num-foot">Every agent is on the web with nothing to turn on: this page is the telephone and WhatsApp. Move a number to another agent by adding it again; it moves on the next call, with nothing deployed.</div>
         </Card>
+      )}
+
+      {tab === "accounts" && carriers !== undefined && (
+        <Accounts carriers={carriers} outbound={outbound} busy={busy} onDrop={(account) => move(() => dropCarrier(credentials, account)).catch(() => undefined)} />
       )}
 
       {tab === "outbound" && carriers !== undefined && (
@@ -207,24 +210,26 @@ export function Numbers(): ReactNode {
               </div>
             </div>
           )}
-          <OutboundPanel
-            outbound={outbound}
-            agents={agents}
-            busy={busy}
-            onProvision={(dryRun) => moved(() => provisionOutbound(credentials, dryRun, dialling.length > 1 ? (via ?? undefined) : undefined))}
-          />
+          <OutboundPanel outbound={outbound} agents={agents} busy={busy} onProvision={(dryRun) => move(() => provisionOutbound(credentials, dryRun, dialling.length > 1 ? (via ?? undefined) : undefined))} />
         </>
       )}
 
-      {tab === "carrier" && carriers !== undefined && (
-        <CarrierPanel
+      {adding && catalog !== null && carriers !== undefined && (
+        <AddNumber
+          catalog={catalog}
+          world={world}
+          way={params.get("add") || null}
+          onWay={(way) => pick({ add: way ?? "" })}
+          onClose={() => pick({ add: null })}
           carriers={carriers}
+          agents={agents}
+          available={available}
           busy={busy}
-          onBring={async (wanted) => {
-            await moved(() => bringCarrier(credentials, wanted)).catch(() => undefined);
-          }}
-          onDrop={async (account) => {
-            await moved(() => dropCarrier(credentials, account)).catch(() => undefined);
+          move={move}
+          onAdded={(number) => {
+            setAdded(number);
+            setOpen(number);
+            pick({ add: null });
           }}
         />
       )}

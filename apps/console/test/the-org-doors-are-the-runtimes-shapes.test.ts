@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { z } from "zod";
 
 // Schemas are module-private, so they are tested through each door's functions with a stub fetch.
-import { readNumbers } from "../src/screens/numbers/door";
+import { readCatalog, readNumbers, readPath } from "../src/screens/numbers/door";
 import { readMembers } from "../src/screens/team/door";
 import { readUsage } from "../src/screens/usage/door";
 
@@ -47,6 +47,33 @@ test("a number is a route, and a member is who they are with what their role ope
   expect((await readMembers(CREDENTIALS))[0]?.production).toBe(true);
   answering({ members: [{ ...A_MEMBER, role: "owner" }] });
   await expect(readMembers(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
+});
+
+// runtime wire/rest/numbers.py: NumberRow with what a call to it does, NumberPath, CarrierCatalog.
+const A_ROW = { ...A_DOOR, origin: "typed", rings: "waiting", last_call_at: null, via: "telnyx", account: null };
+const A_PATH = {
+  number: "+34910000000",
+  steps: [
+    { step: "carrier", state: "waiting", says: "Waiting for the first call to +34910000000", fix: null },
+    { step: "fence", state: "ok", says: "Admitted from Telnyx's networks", fix: null },
+    { step: "world", state: "ok", says: "The production rule sends it to the production fleet", fix: null },
+    { step: "agent", state: "broken", says: "Nobody runs clinica-norte in the production", fix: "Run pinecall start in the agent's folder, or deploy it" },
+  ],
+  rings: "broken",
+  last_call_at: null,
+};
+const A_CATALOG = { carriers: [{ kind: "twilio", name: "Twilio", how: "automatic", networks: ["54.172.60.0/30"] }], sells: false };
+
+test("a number says who wrote it and what a call to it does, its path says why, and the catalog what may be added", async () => {
+  answering([A_ROW]);
+  const [row] = await readNumbers(CREDENTIALS);
+  expect([row?.origin, row?.rings, row?.via]).toEqual(["typed", "waiting", "telnyx"]);
+  answering(A_PATH);
+  expect((await readPath(CREDENTIALS, "+34910000000")).steps.map((step) => step.state)).toEqual(["waiting", "ok", "ok", "broken"]);
+  answering(A_CATALOG);
+  expect((await readCatalog(CREDENTIALS)).carriers[0]?.how).toBe("automatic");
+  answering({ ...A_PATH, steps: [{ ...A_PATH.steps[0], state: "fine" }] });
+  await expect(readPath(CREDENTIALS, "+34910000000")).rejects.toBeInstanceOf(z.ZodError);
 });
 
 // runtime api/numbers.py and api/managed.py: carrier, owned numbers, and the import/purchase answer.

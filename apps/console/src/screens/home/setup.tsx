@@ -42,7 +42,7 @@ export function Setup(): ReactNode {
       const found: Step[] = [];
       if (numbers) {
         const [accounts, routes] = await Promise.all([readCarriers(credentials).catch(() => []), readNumbers(credentials).catch(() => [])]);
-        found.push({ done: accounts.length > 0, name: "Connect a carrier account", action: "Connect", to: "/numbers?tab=carrier" });
+        found.push({ done: accounts.length > 0, name: "Connect a carrier account", action: "Connect", to: "/numbers?add=" });
         const pointed = routes.filter((one) => one.route.number !== null).length;
         found.push({ done: pointed > 0, name: pointed > 1 ? `Point ${pointed} numbers at an agent` : "Point a number at an agent", action: "Add", to: "/numbers" });
       }
