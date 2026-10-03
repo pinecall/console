@@ -4,7 +4,7 @@
 import { type SessionLine } from "@pinecall/core/wire/rest";
 import { describe, expect, it } from "vitest";
 
-import { callsOn, daysOf, worthALook } from "../src/screens/overview/counted.js";
+import { callsOn, daysOf, windowWithCalls, worthALook } from "../src/screens/overview/counted.js";
 
 const day = (date: string, phone: number, web: number) => ({ day: date, phone, web, whatsapp: 0, spend_usd: 0.05, judged: 2, passed: 1 });
 
@@ -18,6 +18,14 @@ describe("an agent's overview", () => {
 
   it("reads a day's judges as the calls a judge answered and those none broke", () => {
     expect(daysOf([day("2026-09-26", 1, 0)])[0]).toMatchObject({ judged: 2, held: 1, spend: 0.05 });
+  });
+
+  it("opens on today, else the last 7 days, else the last 30: the first window that holds a call", () => {
+    const month = (quietFor: number) => daysOf(Array.from({ length: 30 }, (_, at) => day(`d${String(at)}`, at === 29 - quietFor ? 1 : 0, 0)));
+    expect(windowWithCalls(month(0))).toBe(1);
+    expect(windowWithCalls(month(6))).toBe(7);
+    expect(windowWithCalls(month(7))).toBe(30);
+    expect(windowWithCalls(month(30))).toBe(30);
   });
 
   it("lists first the newest calls a reviewer should open, six at most", () => {

@@ -14,7 +14,7 @@ import { Card, CardHead, Empty, Page, PageHead, Pill, Refused, Stat, Stats } fro
 import { LATENCY_NAMES } from "../call";
 import { readPipeline, type Report } from "../pipeline/door";
 import { CallsByDay, CHANNEL_NAME, Legend, Shares, SpendByDay } from "./charts";
-import { CHANNELS, daysOf, worthALook } from "./counted";
+import { CHANNELS, daysOf, windowWithCalls, worthALook } from "./counted";
 import "./overview.css";
 
 // The numbers are the gateway's count over the window, however many calls it holds; the newest
@@ -83,8 +83,13 @@ export function Overview(): ReactNode {
   const base = `/a/${encodeURIComponent(agent)}`;
   const { lines, refused } = useNewestCalls(agent);
   const { report, refused: unmeasured } = usePipeline(agent);
-  const [range, pickRange] = useWindowDays();
-  const counted = useInsights({ agent, days: range });
+  // Unpicked, the window is the shortest that holds a call, read off the last 30 days.
+  const month = useInsights({ agent, days: 30 });
+  const busiest = month === null ? undefined : windowWithCalls(daysOf(month.series));
+  const [range, pickRange, picked] = useWindowDays(busiest ?? 1);
+  const answered = useInsights({ agent, days: range });
+  // Nothing is drawn until the window is known, nor a count of another window than the one shown.
+  const counted = (picked || busiest !== undefined) && answered?.days === range ? answered : null;
   const days = useMemo(() => daysOf(counted?.series ?? []), [counted]);
   const flagged = useMemo(() => worthALook(lines ?? []), [lines]);
   const last = lines?.[0];

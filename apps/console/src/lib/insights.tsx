@@ -85,18 +85,18 @@ export function useInsights({ day, days = 1, agent }: Asked = {}): Insights | nu
   return insights;
 }
 
-/** The window this screen is read over (`?days=` in its URL, a day when absent), and a way to pick another. */
-export function useWindowDays(): [WindowDays, (days: WindowDays) => void] {
+/** The window this screen is read over (`?days=` in its URL, `fallback` when absent), a way to pick another, and whether one was picked. */
+export function useWindowDays(fallback: WindowDays = 1): [WindowDays, (days: WindowDays) => void, boolean] {
   const [search, setSearch] = useSearchParams();
   const asked = Number(search.get("days"));
-  const days = WINDOWS.find((option) => option.days === asked)?.days ?? 1;
+  const picked = WINDOWS.find((option) => option.days === asked)?.days;
   const pick = (chosen: WindowDays): void => {
     const next = new URLSearchParams(search);
-    if (chosen === 1) next.delete("days");
+    if (chosen === fallback) next.delete("days");
     else next.set("days", String(chosen));
     setSearch(next, { replace: true });
   };
-  return [days, pick];
+  return [picked ?? fallback, pick, picked !== undefined];
 }
 
 /** How a window is said in a sentence: "today", "the last 7 days". */

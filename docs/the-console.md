@@ -280,14 +280,15 @@ conversations with the agent fixed — and **List**, its table; **Test** (above)
 
 ### Overview
 
-The agent over the same window as Home's picker (24 h, 7 d, 30 d, in the URL), counted by the
-gateway (`GET /v1/insights?agent=&days=`) over every call of it, however many: calls and how many
-are live, the share whose judges all held, the mean length, what they cost, how often a person took
-part; **calls a day** by channel and **spend a day**, a bar for each day of the window, a hover
-giving the day's numbers; how calls end, where they come in, the pipeline's median latencies; and the
-newest calls a reviewer should open first, off its newest calls (`/v1/sessions?agent=`). Nothing is
-estimated: a day with no calls is a zero bar, a measure nobody took is a dash, a door the key does
-not open says so. What the door answers is read for the charts in `overview/counted.ts`.
+The agent over the same window as Home's picker (24 h, 7 d, 30 d, in the URL); unpicked, the
+shortest that holds a call, else 30 d. Counted by the gateway (`GET /v1/insights?agent=&days=`) over
+every call of it, however many: calls and how many are live, the share whose judges all held, the
+mean length, what they cost, how often a person took part; **calls a day** by channel and **spend a
+day**, a bar for each day of the window, a hover giving the day's numbers; how calls end, where they
+come in, the pipeline's median latencies; and the newest calls a reviewer should open first, off its
+newest calls (`/v1/sessions?agent=`). Nothing is estimated: a day with no calls is a zero bar, a
+measure nobody took is a dash, a door the key does not open says so. What the door answers is read
+for the charts in `overview/counted.ts`.
 
 ### Chat
 
