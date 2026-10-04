@@ -8,7 +8,7 @@ import { readHeldAgents } from "../src/agents";
 const CREDENTIALS = { base: "/", key: "pk_test" };
 
 function answering(body: unknown): void {
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async () => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } })) as typeof fetch;
 }
 

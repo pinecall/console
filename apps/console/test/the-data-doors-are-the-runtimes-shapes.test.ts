@@ -32,7 +32,7 @@ const A_BOX_NUMBER = { number: "+14155550142", channel: "phone", org: "otra", en
 /** Answers every request with the body, and keeps what was asked. */
 function answering(body: unknown): { method: string; url: string; body: string | null }[] {
   const asked: { method: string; url: string; body: string | null }[] = [];
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
     asked.push({ method: init?.method ?? "GET", url: door.toString(), body: typeof init?.body === "string" ? init.body : null });
     return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
@@ -44,7 +44,7 @@ test("the policy is read whole and written back whole with one field changed", a
   const asked = answering(A_POLICY);
   expect((await readPolicy(CREDENTIALS)).policy.calling_hours).toEqual({ from: 9, until: 20 });
   await putPolicy(CREDENTIALS, A_POLICY.policy, { recording_notice: false });
-  expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual(["GET https://box.pinecall.io/v1/org/policy", "PUT https://box.pinecall.io/v1/org/policy"]);
+  expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual(["GET https://cloud.pinecall.io/v1/org/policy", "PUT https://cloud.pinecall.io/v1/org/policy"]);
   expect(JSON.parse(asked[1]?.body ?? "{}")).toEqual({ ...A_POLICY.policy, recording_notice: false });
   answering({ ...A_POLICY, policy: { ...A_POLICY.policy, calling_hours: { from: 9, till: 20 } } });
   await expect(readPolicy(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
@@ -55,7 +55,7 @@ test("the trail and the reads are the runtime's rows, and one call's reads are a
   expect((await readTrail(CREDENTIALS))[0]?.recordings).toBe(3);
   const asked = answering({ reads: [A_READ] });
   expect((await readReads(CREDENTIALS, "CA_1"))[0]?.reader).toBe("m_ana");
-  expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/org/reads?subject=CA_1");
+  expect(asked[0]?.url).toBe("https://cloud.pinecall.io/v1/org/reads?subject=CA_1");
   answering({ reads: [{ ...A_READ, what: "state" }] });
   await expect(readReads(CREDENTIALS, null)).rejects.toBeInstanceOf(z.ZodError);
 });
@@ -66,13 +66,13 @@ test("a number's consent is read, given and taken away at the consent doors, and
   await giveConsent(CREDENTIALS, { number: "+14155550142", kind: "written", source: "a signed form", text: null });
   await optOut(CREDENTIALS, "+14155550142");
   expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual([
-    "GET https://box.pinecall.io/v1/org/consents/%2B14155550142",
-    "POST https://box.pinecall.io/v1/org/consents",
-    "DELETE https://box.pinecall.io/v1/org/consents/%2B14155550142",
+    "GET https://cloud.pinecall.io/v1/org/consents/%2B14155550142",
+    "POST https://cloud.pinecall.io/v1/org/consents",
+    "DELETE https://cloud.pinecall.io/v1/org/consents/%2B14155550142",
   ]);
   const listed = answering(A_LIST);
   expect((await readDoNotCall(CREDENTIALS, A_LIST.next)).numbers[0]?.source).toBe("our list");
-  expect(listed[0]?.url).toBe("https://box.pinecall.io/v1/org/dnc?after=1758300000%3A%2B14155550142");
+  expect(listed[0]?.url).toBe("https://cloud.pinecall.io/v1/org/dnc?after=1758300000%3A%2B14155550142");
   const imported = answering({ added: 2, refused: ["x"] });
   expect((await importDoNotCall(CREDENTIALS, ["+14155550142", "+14155550143", "x"], "scrub")).refused).toEqual(["x"]);
   expect(JSON.parse(imported[0]?.body ?? "{}")).toEqual({ numbers: ["+14155550142", "+14155550143", "x"], source: "scrub" });
@@ -85,7 +85,7 @@ test("a traceback is asked by number and day and read as the runtime's calls and
   const found = await readTraceback(CREDENTIALS, "+14155550142", 1700000000);
   expect(found.calls[0]?.erased).toBe(true);
   expect(found.dials[0]?.refused).toBe("do_not_call");
-  expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/traceback?number=%2B14155550142&since=1700000000");
+  expect(asked[0]?.url).toBe("https://cloud.pinecall.io/v1/ops/traceback?number=%2B14155550142&since=1700000000");
   answering({ ...A_TRACEBACK, calls: [{ ...A_TRACEBACK.calls[0], erased: "yes" }] });
   await expect(readTraceback(CREDENTIALS, "+14155550142", null)).rejects.toBeInstanceOf(z.ZodError);
 });
@@ -93,7 +93,7 @@ test("a traceback is asked by number and day and read as the runtime's calls and
 test("the box's numbers are read whole at one door, and a row without who answers it is refused", async () => {
   const asked = answering([A_BOX_NUMBER]);
   expect(await readBoxNumbers(CREDENTIALS)).toEqual([A_BOX_NUMBER]);
-  expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/numbers");
+  expect(asked[0]?.url).toBe("https://cloud.pinecall.io/v1/ops/numbers");
   answering([{ ...A_BOX_NUMBER, answered_by: undefined }]);
   await expect(readBoxNumbers(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
 });
@@ -108,7 +108,7 @@ const AN_ASK = { id: 7, org: "clinica", source: "pbx", network: "45.60.12.7/32",
 test("the box's carriers and the addresses orgs asked for are read at their doors, a state renamed refused", async () => {
   const asked = answering(A_BOX_CARRIERS);
   expect((await readBoxCarriers(CREDENTIALS)).fence.openings[0]?.reason).toBe("telnyx");
-  expect(asked[0]?.url).toBe("https://box.pinecall.io/v1/ops/carriers");
+  expect(asked[0]?.url).toBe("https://cloud.pinecall.io/v1/ops/carriers");
   answering([AN_ASK]);
   expect((await readCarrierNetworks(CREDENTIALS))[0]?.network).toBe("45.60.12.7/32");
   answering([{ ...AN_ASK, state: "pending" }]);

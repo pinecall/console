@@ -16,5 +16,5 @@ test("crossing keeps the screen and carries the one-use code that signs the othe
 });
 
 test("crossing with no code lands on the other name's own sign-in card", () => {
-  expect(crossing("https://box.pinecall.io", "/calls", null)).toBe("https://box.pinecall.io/calls");
+  expect(crossing("https://cloud.pinecall.io", "/calls", null)).toBe("https://cloud.pinecall.io/calls");
 });

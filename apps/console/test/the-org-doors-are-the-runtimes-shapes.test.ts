@@ -26,7 +26,7 @@ const A_DOOR = { route: { org: "clinica", agent: "clinica-norte", channel: "phon
 const A_MEMBER = { id: "m_1", email: "ana@clinica.uy", name: "Ana", role: "supervisor", agents: ["clinica-norte"], status: "active", scopes: ["calls", "evals", "supervise", "talk"], production: true };
 
 function answering(body: unknown): void {
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async () => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } })) as typeof fetch;
 }
 
@@ -114,7 +114,7 @@ const A_RUN = {
 test("the runs pane asks one agent's caller's door, pages with the gateway's own cursor, and parses a run whole", async () => {
   const { readRuns } = await import("../src/screens/personas/door");
   const asked: string[] = [];
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL) => {
     asked.push(door.toString());
     return new Response(JSON.stringify({ runs: [A_RUN], total: 21, next: "call_older" }), { status: 200, headers: { "content-type": "application/json" } });
@@ -125,8 +125,8 @@ test("the runs pane asks one agent's caller's door, pages with the gateway's own
   expect(page.runs[0]?.score?.passed).toBe(false);
   await readRuns(CREDENTIALS, "front desk", "office manager", { before: page.next ?? undefined });
   expect(asked).toEqual([
-    "https://box.pinecall.io/v1/agents/front%20desk/personas/office%20manager/runs",
-    "https://box.pinecall.io/v1/agents/front%20desk/personas/office%20manager/runs?before=call_older",
+    "https://cloud.pinecall.io/v1/agents/front%20desk/personas/office%20manager/runs",
+    "https://cloud.pinecall.io/v1/agents/front%20desk/personas/office%20manager/runs?before=call_older",
   ]);
 
   answering({ runs: [{ ...A_RUN, turns: "six" }], total: 1, next: null });
@@ -159,7 +159,7 @@ test("the personas list asks the agent's own door, and a row naming agents is no
   }) as unknown as typeof fetch;
 
   expect((await readPersonas(CREDENTIALS, "front-desk"))[0]?.name).toBe("office-manager");
-  expect(asked).toEqual(["https://box.pinecall.io/v1/agents/front-desk/personas"]);
+  expect(asked).toEqual(["https://cloud.pinecall.io/v1/agents/front-desk/personas"]);
 
   answering({ personas: [{ ...A_PERSONA, agents: ["front-desk"] }] });
   await expect(readPersonas(CREDENTIALS, "front-desk")).rejects.toBeInstanceOf(z.ZodError);
@@ -179,7 +179,7 @@ test("the voice picker parses the vendor's voices as the wire says them, and ref
 test("a sample is the WAV handed to the player as a blob, with the vendor's wait read off Server-Timing", async () => {
   const { heard } = await import("../src/screens/settings/voice-doors");
   const sent: { url: string; body: string; type: string | null }[] = [];
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
     sent.push({ url: door.toString(), body: String(init?.body), type: new Headers(init?.headers).get("content-type") });
     return new Response(new Uint8Array([82, 73, 70, 70]), { status: 200, headers: { "content-type": "audio/wav", "server-timing": "first-audio;dur=271, total;dur=955" } });
@@ -190,7 +190,7 @@ test("a sample is the WAV handed to the player as a blob, with the vendor's wait
   expect(said.firstAudioMs).toBe(271);
   expect(said.url.startsWith("blob:")).toBe(true);
   URL.revokeObjectURL(said.url);
-  expect(sent[0]?.url).toBe("https://box.pinecall.io/v1/voices/sample");
+  expect(sent[0]?.url).toBe("https://cloud.pinecall.io/v1/voices/sample");
   expect(sent[0]?.type).toBe("application/json");
   expect(JSON.parse(sent[0]!.body)).toEqual({ tts: "cartesia", voice: MARTA.id, model: "sonic-3", language: "es" });
 });
@@ -201,7 +201,7 @@ const A_JUDGE = { name: "offers-next-slot", question: "The agent offered the nex
 test("an agent's own judges are read, written and dropped at the agent's door, and a renamed field is refused", async () => {
   const { dropJudge, readJudges, writeJudge } = await import("../src/screens/judges/door");
   const asked: { method: string; url: string; body: string | undefined }[] = [];
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
     asked.push({ method: init?.method ?? "GET", url: door.toString(), body: init?.body === undefined ? undefined : String(init.body) });
     return new Response(JSON.stringify({ judges: [A_JUDGE] }), { status: 200, headers: { "content-type": "application/json" } });
@@ -211,9 +211,9 @@ test("an agent's own judges are read, written and dropped at the agent's door, a
   await writeJudge(CREDENTIALS, "clinica-norte", "offers-next-slot", { question: A_JUDGE.question, runs_on: "simulations" });
   await dropJudge(CREDENTIALS, "clinica-norte", "offers-next-slot");
   expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual([
-    "GET https://box.pinecall.io/v1/agents/clinica-norte/judges",
-    "PUT https://box.pinecall.io/v1/agents/clinica-norte/judges/offers-next-slot",
-    "DELETE https://box.pinecall.io/v1/agents/clinica-norte/judges/offers-next-slot",
+    "GET https://cloud.pinecall.io/v1/agents/clinica-norte/judges",
+    "PUT https://cloud.pinecall.io/v1/agents/clinica-norte/judges/offers-next-slot",
+    "DELETE https://cloud.pinecall.io/v1/agents/clinica-norte/judges/offers-next-slot",
   ]);
   expect(JSON.parse(asked[1]?.body ?? "{}")).toEqual({ question: A_JUDGE.question, runs_on: "simulations" });
 
@@ -226,7 +226,7 @@ test("an agent's own judges are read, written and dropped at the agent's door, a
 test("the org's judges are read, written and dropped at the org's door, the same shape as an agent's", async () => {
   const { dropJudge, readJudges, writeJudge } = await import("../src/screens/judges/door");
   const asked: { method: string; url: string }[] = [];
-  globalThis.window = { location: { origin: "https://box.pinecall.io" } } as unknown as Window & typeof globalThis;
+  globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
     asked.push({ method: init?.method ?? "GET", url: door.toString() });
     return new Response(JSON.stringify({ judges: [A_JUDGE] }), { status: 200, headers: { "content-type": "application/json" } });
@@ -235,8 +235,8 @@ test("the org's judges are read, written and dropped at the org's door, the same
   await writeJudge(CREDENTIALS, null, "never-medical-advice", { question: "No medical advice.", runs_on: "every-call" });
   await dropJudge(CREDENTIALS, null, "never-medical-advice");
   expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual([
-    "GET https://box.pinecall.io/v1/org/judges",
-    "PUT https://box.pinecall.io/v1/org/judges/never-medical-advice",
-    "DELETE https://box.pinecall.io/v1/org/judges/never-medical-advice",
+    "GET https://cloud.pinecall.io/v1/org/judges",
+    "PUT https://cloud.pinecall.io/v1/org/judges/never-medical-advice",
+    "DELETE https://cloud.pinecall.io/v1/org/judges/never-medical-advice",
   ]);
 });

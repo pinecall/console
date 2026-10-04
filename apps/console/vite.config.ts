@@ -3,7 +3,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-const BOX = process.env["PINECALL_BOX"] ?? "https://box.pinecall.io";
+const BOX = process.env["PINECALL_BOX"] ?? "https://cloud.pinecall.io";
 
 // The page's own directory is the root — `src/index.html` is the document — and the build lands in
 // this app's `dist/`, which the runtime's `scripts/console` copies into the gateway as package data.
