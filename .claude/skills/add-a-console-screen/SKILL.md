@@ -1,6 +1,6 @@
 ---
 name: add-a-console-screen
-description: Add or change a screen of the console — the one at the box's own name (production) or at its second name (the sandbox) — Chat, Calls, Sessions, Settings, Personas, Simulations, Tokens, Team and the rest. Use for any edit under apps/console/src — a route, a panel, a stylesheet, a door the page reads.
+description: Add or change a screen of the console — production's at the root of the box's name, or the sandbox's under `/sandbox` — Chat, Calls, Sessions, Settings, Personas, Simulations, Tokens, Team and the rest. Use for any edit under apps/console/src — a route, a panel, a stylesheet, a door the page reads.
 ---
 
 # A screen of the console
@@ -17,17 +17,17 @@ without a package are the console's (`apps/console/src/`); `core/` is `packages/
   browser, and a build that pulled a TypeScript parser into the bundle is a build nobody notices.
 - **Never touch a key outside `lib/session-key.ts`, and never write a header by hand.** A console
   keeps ONE key — the person's — in `localStorage`, through that file alone; `core/api.ts:headersFor`
-  puts it on every request as a Bearer, with the world (`pinecall-env`) and the corner. Each of the
-  box's names is its own origin and so its own key: signing in at one signs in at one.
+  puts it on every request as a Bearer, with the world (`pinecall-env`) and the corner. Both worlds
+  are one origin and so one key: signing in once signs in at both.
   `signing-out-forgets-the-key.test.ts` pins the sign-out.
-- **Never ask which world a screen is in to decide what it may do.** The NAME is the world
-  (`lib/mode.ts`, off the mark the gateway wrote into the page): production's console edits
+- **Never ask which world a screen is in to decide what it may do.** The PATH is the world
+  (`lib/mode.ts`, off its first segment: `/sandbox/…` is the sandbox's): production's console edits
   production's corner — Settings and Lexicon included, with history and rollback, and no promote
   anywhere — while the sandbox's edits your corner or the team's. A person without production access is stopped at the way in
   (`screens/login/no-production.tsx`), not screen by screen.
 - **Never build a URL by hand.** `core/api.ts` is the only place a request to the gateway is
-  built (`read`, `put`, and the SSE in `core/stream.ts`). Everything is relative to `BASE`, the path
-  the console was opened at.
+  built (`read`, `put`, and the SSE in `core/stream.ts`). Everything is relative to `API_BASE`
+  (`lib/base.ts`), the origin's root — never to the router's base, which is the world's.
 - **Never rename or reorder a route in `router.tsx`.** It is a seam: append, never reshuffle. And
   import a screen by its **directory** (`./screens/evals`), never a file inside it.
 - **Never invent a metric name or a verdict word.** `core/metrics.ts` is the only file that names a

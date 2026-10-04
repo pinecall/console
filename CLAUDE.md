@@ -1,7 +1,7 @@
 # pinecall/console
 
-The console: ONE browser page, built here and served by the runtime's gateway at its name, both
-worlds in it — production and the sandbox — on one sign-in.
+The console: ONE browser page, built here and served by the runtime's gateway at its one name,
+both worlds in it — production at the root, the sandbox under `/sandbox` — on one sign-in.
 Reply to the human in Spanish; code, comments, commit messages and this file in English.
 
 This repo builds a bundle and publishes nothing to npm; it has no version and no tag.
@@ -56,7 +56,9 @@ was deployed with, whatever this checkout says.
 - **What an app tells the core at its boot**, and nothing else is configured: WHERE THE GATEWAY IS —
   `Credentials.base`, the value every hook reads from context, and the same string handed to the
   doors that take no key (`login.ts`, `the-floor.ts`); `api.ts:gatewayUrl` builds every URL from
-  it. The console says `"/"` (`lib/base.ts`), resolved against the page's own origin. WHERE THE KEY
+  it. The console says `"/"` (`lib/base.ts:API_BASE`), resolved against the page's own origin: the
+  doors are at the root whichever world the page is, while the ROUTER's base is the world's
+  (`lib/mode.ts:WORLD_BASE`, `/sandbox` on the sandbox's page) — two bases, never one string. WHERE THE KEY
   IS KEPT — `sessionKeyIn(storage)`, a `KeyStorage` of three async calls (the console's is
   `localStorage`, in `lib/session-key.ts`). WHAT IT CALLS ITSELF — the `device` every login takes,
   the label the key carries in the org's key list (`lib/device.ts`: `"console"`).
@@ -72,18 +74,19 @@ another is a tab of that row, drawn by the tab bar over it (`shell/screen-tabs.t
 and the tab bar draw that table and the router routes it, so a screen a console does not have is
 neither linked nor reachable by typing its path. A redesign moves rows there and nothing else.
 
-**The world is this browser's choice, read once per page.** One gateway holds both worlds and a
-person's key opens both (production only where their org lets them). `lib/mode.ts` reads the world
-this browser last chose (`production` until it chose), every request names it in `pinecall-env`,
-and the switcher's chips keep the other and open the page again at its root — so no screen holds
-one world's data under the other's name. One sign-in, one card, for both.
+**The world is the path's first segment, read once per page.** One gateway, one name, holds both
+worlds and a person's key opens both (production only where their org lets them). `/…` is
+production's console and `/sandbox/…` the sandbox's — the same screens under the prefix, which is
+the router's base; `lib/mode.ts` reads it off `window.location`, every request names it in
+`pinecall-env`, and the switcher's chips open the same screen in the other world (`inTheOtherWorld`),
+at the same origin, on the same key. One sign-in, one card, for both.
 
 ## Rules the tests enforce
 
 - **No key outside the console's `lib/session-key.ts`, and no header written by hand.** One key —
   the person's — in `localStorage`, through that file alone (core's `session-key.ts` names it and
   never touches a storage); core's `api.ts:headersFor` puts it on every request
-  with the world and the corner. Each of the box's names is its own origin and so its own key.
+  with the world and the corner. Both worlds are one origin and so one key.
 - **The bundle carries no credential.** `apps/console/test/pages/the-key-is-never-in-the-page.test.ts` builds
   the page and greps what vite wrote: a key-shaped string or an environment key's name fails it.
 - One stylesheet per screen directory, and one class prefix per stylesheet.
@@ -115,9 +118,8 @@ sentences, and there are no UI suites: `tsc` against the DOM and a clean build a
   passed. `noUnusedLocals` is on in
   every package, so tsc refuses the next one.
 - **The widget tag and the SSO redirect must never name the sandbox.** Both ask
-  `lib/mode.ts:theBoxsOwnName()`, which is this origin on production's console and the other
-  console's on the sandbox's — a site handed the sandbox's name would load its widget from the
-  workshop.
+  `lib/mode.ts:theBoxsOwnName()`, which is this page's origin and never a path under it — a site
+  handed `/sandbox/…` would load its widget from the workshop.
 - **The bundle is not reproducible across installs.** vite's minifier (rolldown) is a transitive
   dependency, and a fresh install resolved 1.2.9 where the agents repo had 1.2.7: same sources,
   same production build, output 7% larger and shaped differently. Measured 2026-09-21. The

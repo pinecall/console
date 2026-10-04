@@ -1,61 +1,53 @@
-/** Which world this page is — production's name or the sandbox's — and the one table of what each has. */
-
-import type { Credentials } from "@pinecall/core/api";
-import { aLoginCode } from "@pinecall/core/login";
+/** Which world this page is — production at the root, the sandbox under `/sandbox` — and the one table of what each has. */
 
 /** The two worlds a gateway holds. The page names its world on every request (@pinecall/core/api). */
 export type World = "production" | "sandbox";
 
-// One gateway, two names: production's and the sandbox's. The name a page is served at is its
-// world, and the gateway writes that world into the page (`<meta name="pinecall-world">`) with the
-// other name beside it (`pinecall-elsewhere`), so the switch is a link to the other name. A page
-// nobody marked is production's: a box of one name serves both worlds at it.
-const WORLD_MARK = 'meta[name="pinecall-world"]';
-const ELSEWHERE_MARK = 'meta[name="pinecall-elsewhere"]';
+// One gateway, one name, two worlds: the world of a page is the first segment of its path.
+// `https://<name>/calls` is production's Calls and `https://<name>/sandbox/calls` the sandbox's —
+// the same screens under the `/sandbox` prefix, at the same origin, on the same key. Only the
+// router moves: the doors stay at the origin's root (`/v1/...`, lib/base.ts) whichever world the
+// page is, and every request names its world in `pinecall-env`.
+const THE_SANDBOXS_SEGMENT = "sandbox";
 
-/** Read once, when the page loads: the world this name is. */
-export const WORLD: World = marked(WORLD_MARK) === "sandbox" ? "sandbox" : "production";
-
-/** The other world's address, or null on a box of one name. */
-export function elsewhere(): string | null {
-  const said = marked(ELSEWHERE_MARK);
-  return said === undefined || said === "" ? null : said.replace(/\/$/, "");
+/** The world a page at that path is: `/sandbox` and everything under it is the sandbox's. */
+export function worldOf(pathname: string): World {
+  return pathname.split("/").filter(Boolean)[0] === THE_SANDBOXS_SEGMENT ? "sandbox" : "production";
 }
 
-/** The same screen at the other world's name, carrying a one-use login code so it opens signed in. */
-export function crossing(other: string, pathname: string, code: string | null): string {
-  const there = new URL(`${other}${pathname}`);
-  if (code !== null) there.searchParams.set("login", code);
-  return there.toString();
+/** The router's base in that world: production's screens at the root, the sandbox's under `/sandbox`. */
+export function baseOf(world: World): string {
+  return world === "sandbox" ? `/${THE_SANDBOXS_SEGMENT}` : "/";
 }
 
-/**
- * Leave for the same screen at the other name, signed in as this person: a one-use code is minted
- * first; if minting fails the other name's own sign-in card asks. Same tab, so two worlds are
- * never open side by side.
- */
-export function crossOver(other: string, pathname: string, credentials: Credentials): void {
-  aLoginCode(credentials).then(
-    (code) => window.location.assign(crossing(other, pathname, code)),
-    () => window.location.assign(crossing(other, pathname, null)),
-  );
+/** A router path (`/calls/call_9f`) as the browser's own, in that world. */
+export function inTheWorld(world: World, pathname: string): string {
+  const base = baseOf(world);
+  return base === "/" ? pathname : `${base}${pathname}`;
 }
+
+/** The same screen in the other world: the browser's path with `/sandbox` taken off or put on. */
+export function inTheOtherWorld(pathname: string): string {
+  const here = worldOf(pathname);
+  const bare = here === "sandbox" ? pathname.slice(baseOf("sandbox").length) || "/" : pathname;
+  return inTheWorld(here === "sandbox" ? "production" : "sandbox", bare);
+}
+
+// The tests import this module in node, where there is no window at all: a page that was never
+// rendered is production's, as a page at the root is in a browser.
+/** Read once, when the page loads: the world this path is. */
+export const WORLD: World = typeof window === "undefined" ? "production" : worldOf(window.location.pathname);
+
+/** The router's base for this page's world (never an API URL's: those are lib/base.ts's). */
+export const WORLD_BASE: string = baseOf(WORLD);
 
 /**
  * The name this box is known by from OUTSIDE: what a widget tag pasted into a customer's site
- * loads from, and what an identity provider is registered with. Production's name, never the
- * sandbox's: a site handed that one would load its widget from the workshop.
+ * loads from, and what an identity provider is registered with. One name serves both worlds, so
+ * it is this page's origin and never a path under it: a site is handed the box, not a world.
  */
 export function theBoxsOwnName(): string {
-  const here = window.location.origin.replace(/\/$/, "");
-  return WORLD === "production" ? here : (elsewhere() ?? here);
-}
-
-// The tests import this module in node, where there is no document at all: a page that was never
-// rendered is production's, which is the same answer an unmarked page gives in a browser.
-function marked(selector: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  return document.querySelector(selector)?.getAttribute("content") ?? undefined;
+  return window.location.origin;
 }
 
 /** The sidebar's icons, by name (ui/icon.tsx). */

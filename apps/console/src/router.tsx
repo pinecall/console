@@ -3,8 +3,7 @@
 import type { ReactNode } from "react";
 import { createBrowserRouter, Navigate, useLocation, useParams, type RouteObject } from "react-router";
 
-import { BASE } from "./lib/base";
-import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, screensOf, WORLD, type Screen } from "./lib/mode";
+import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, screensOf, WORLD, WORLD_BASE, type Screen } from "./lib/mode";
 // One import line per screen, and it is the screen's directory, never a file inside it: a screen
 // that reorganises itself renames nothing here.
 import { Agents } from "./screens/agents";
@@ -192,5 +191,6 @@ export const router = createBrowserRouter(
     { path: "/a/:agent/widget/preview", element: <WidgetPreview /> },
     { path: "*", element: <Navigate to="/" replace /> },
   ],
-  { basename: BASE },
+  // The world's base, not the API's: the sandbox's screens live under `/sandbox`, its doors do not.
+  { basename: WORLD_BASE },
 );

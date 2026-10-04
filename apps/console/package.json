@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The console: one page, served by the gateway at each of the box's two names.",
+  "description": "The console: one page, served by the gateway at its one name, the sandbox under /sandbox.",
   "license": "UNLICENSED",
   "scripts": {
     "dev": "vite",

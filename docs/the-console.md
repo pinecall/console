@@ -1,14 +1,16 @@
 # The console
 
-The console is one bundle the runtime's gateway serves at its name, with **both worlds** in it.
+The console is one bundle the runtime's gateway serves at its one name, with **both worlds** in it.
 **Production** is what customers reach. **The sandbox** is where things are tried: your copies of the
 agents, your calls, your corner of the settings. One gateway, one database and one sign-in hold both;
 what keeps a test call off a production process is the worker fleet each world has.
 
-**The world is this browser's choice**: `lib/mode.ts` reads the one it last chose (production until it
-chose) when the page loads, and every request names it in `pinecall-env`. The switcher's two chips
-keep the other world and open the page again at its root, so no screen ever holds one world's data
-under the other's name. Which screens each console has is a table in that file —
+**The world is the path**: `https://<name>/…` is production's console and `https://<name>/sandbox/…`
+the sandbox's, the same screens under the `/sandbox` prefix. `lib/mode.ts` reads the first segment
+when the page loads, and every request names that world in `pinecall-env`; the doors stay at the
+root (`/v1/…`) whichever world the page is. The switcher's two chips open the same screen in the
+other world — `/sandbox` put on or taken off, same origin, same key, no second sign-in — so no
+screen ever holds one world's data under the other's path. Which screens each console has is a table in that file —
 the org's, the box's, an agent's — which the sidebar and the tab bar draw and the router routes, so
 a screen a console lacks is neither linked nor reachable by its path.
 
@@ -276,8 +278,8 @@ a call waiting on a person misses the one thing this is for. It is a person's ow
 person on by default, every incoming call off; the sandbox's for the sandbox's, both off until
 turned on), and their devices — and it is not the gateway's: the doors are Pinecall's notifier
 (`notify.pinecall.io`; `VITE_PINECALL_NOTIFY` names another), through `core/src/notify.ts`, and
-the world is the one the page names. A notice clicked opens `/calls/:call?org=` at its own world's
-name (the worker asks this name's `/.well-known/pinecall` for the other), in its org first
+the world is the one the page names. A notice clicked opens `/calls/:call?org=` in its own world —
+the sandbox's under `/sandbox` — in a tab of this origin if one is open, in its org first
 (`lib/from-a-notice.tsx`). *Send a test* sends one notice to every device of the person and prints
 what came of each. **Data & privacy**, the org's rules, consent, export, erasure and who read what,
 is its own page: [data-and-privacy.md](data-and-privacy.md).
@@ -405,9 +407,9 @@ the operator's own (the runtime's `docs/protocol/operator-api.md`).
 **Production is where a person signs in**: email and password, the workspaces it opens, **Continue
 with Google** where the operator wired a client, **Continue with SSO** where the gateway has the
 discovery door; an invitation or a reset is a one-use link to a card that sets a password. A
-person's **one** key per origin rides a header, never a URL; signing out forgets it. A person their
-org keeps out of production (whoami's `production: false`) meets *No production access* there, with
-a button that opens the sandbox on the same key.
+person's **one** key, for both worlds, rides a header, never a URL; signing out forgets it. A person
+their org keeps out of production (whoami's `production: false`) meets *No production access* at the
+root, with a button that opens the sandbox — `/sandbox/` — on the same key.
 
 `pinecall console` skips the card: it mints the code for the key in the project's `.env`, and the
 page spends it for a key of that browser's own — the project's key never reaches the browser.

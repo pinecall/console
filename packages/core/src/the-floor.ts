@@ -10,9 +10,6 @@ const DiscoveredSchema = z.looseObject({
   cloud: z.boolean().optional(),
   signup: z.boolean(),
   min_password: z.number(),
-  /** This instance's world, and the other instance's URL (null when none). */
-  world: z.string().optional(),
-  elsewhere: z.string().nullable().optional(),
   /** The box can send mail (password reset is available). */
   mail: z.boolean().optional(),
   /** Google sign-in is configured. */

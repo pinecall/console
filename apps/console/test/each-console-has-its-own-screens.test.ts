@@ -1,7 +1,7 @@
-// One bundle, two consoles: production and the sandbox are two instances of the runtime, each
-// serving the same files and marking the page with its own world (the runtime's api/pages.py).
-// Production's console runs the org; the sandbox's is the workshop, with its own tokens and
-// provider keys. Which screens each has is ONE table (lib/mode.ts), and this pins it.
+// One bundle, two consoles: production at the root of the gateway's one name, the sandbox under
+// `/sandbox`, the world read off the path (lib/mode.ts). Production's console runs the org; the
+// sandbox's is the workshop, with its own tokens and provider keys. Which screens each has is ONE
+// table (lib/mode.ts), and this pins it.
 
 import { describe, expect, it } from "vitest";
 
@@ -104,9 +104,9 @@ describe("an agent's screens", () => {
   });
 });
 
-// Both consoles hold a key of that browser's, and every request names the world of the page it
-// came from: not a choice any more — an instance is one world — but the assertion the instance
-// checks, refusing a request that believes it is talking to the other (the runtime's auth/world.py).
+// Both consoles ride one key of that browser's, and every request names the world of the page it
+// came from — the path's — so the gateway serves the world the page is looking at and refuses a
+// request that believes it is talking to the other (the runtime's auth/world.py).
 describe("either console", () => {
   it("names its world and its key on every request", () => {
     expect(headersFor({ base: "/", key: "pk_1", world: "sandbox" })).toEqual({ authorization: "Bearer pk_1", "pinecall-env": "sandbox" });

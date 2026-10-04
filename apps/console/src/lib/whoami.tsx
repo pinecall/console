@@ -46,7 +46,7 @@ export function WhoamiProvider({ children }: { children: ReactNode }): ReactNode
     };
   }, [credentials]);
 
-  if (kept !== null) return <NoProduction said={kept} keyHeld={credentials.key} />;
+  if (kept !== null) return <NoProduction said={kept} />;
   return <Held value={whose}>{children}</Held>;
 }
 

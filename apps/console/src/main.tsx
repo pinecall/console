@@ -6,13 +6,13 @@ import { RouterProvider } from "react-router";
 
 import { onUnauthorized } from "@pinecall/core/api";
 import { followTheSystemTheme } from "@pinecall/core/theme";
-import { BASE } from "./lib/base";
+import { API_BASE } from "./lib/base";
 import { DEVICE } from "./lib/device";
 import { CredentialsProvider } from "@pinecall/core/credentials";
 import { loginToOrg, loginWithCode, type Signed } from "@pinecall/core/login";
 import { forgetThisBrowser } from "./lib/notifier";
 import { LeavingProvider } from "./lib/leaving";
-import { WORLD } from "./lib/mode";
+import { inTheWorld, WORLD, WORLD_BASE } from "./lib/mode";
 import { forgetKey, keepCorner, keepKey, keptCorner, keptKey } from "./lib/session-key";
 import { WhoamiProvider } from "./lib/whoami";
 import { WorldProvider } from "./lib/world";
@@ -48,7 +48,7 @@ async function theKeyToStartWith(): Promise<string | null> {
     address.searchParams.delete(LOGIN);
     window.history.replaceState(null, "", address.toString());
     try {
-      const signed = await loginWithCode(BASE, code, DEVICE);
+      const signed = await loginWithCode(API_BASE, code, DEVICE);
       await keepKey(signed.key);
       return signed.key;
     } catch {
@@ -73,24 +73,25 @@ function Console({ startingWith }: { startingWith: string | null }): ReactNode {
   });
 
   // Org switch: exchange the key for one in the target org (POST /v1/login/org) and reload at the
-  // root, since the current URL belongs to the old org.
+  // root, since the current URL belongs to the old org. `landing` is the router's path, so it is
+  // placed in this world before the browser is sent there.
   const moveTo = useCallback(
-    async (org: string, landing: string = BASE): Promise<void> => {
+    async (org: string, landing = "/"): Promise<void> => {
       if (key === null) return;
-      const signed = await loginToOrg({ base: BASE, key }, org);
+      const signed = await loginToOrg({ base: API_BASE, key }, org);
       keepCorner(null);
       await keepKey(signed.key);
-      window.location.assign(landing);
+      window.location.assign(inTheWorld(WORLD, landing));
     },
     [key],
   );
   const worlds = useMemo(() => ({ world: WORLD, moveTo, corner, lookInto }), [moveTo, corner, lookInto]);
   // Every request carries its world; the gateway gates production per person (auth/world.py).
-  const credentials = useMemo(() => ({ base: BASE, key: key ?? "", corner, world: WORLD }), [key, corner]);
+  const credentials = useMemo(() => ({ base: API_BASE, key: key ?? "", corner, world: WORLD }), [key, corner]);
 
   const leave = useCallback((): void => {
     // Unregister push while the key still exists.
-    if (key !== null) void forgetThisBrowser({ base: BASE, key });
+    if (key !== null) void forgetThisBrowser({ base: API_BASE, key });
     void forgetKey();
     keepCorner(null);
     setCorner(null);
@@ -107,17 +108,17 @@ function Console({ startingWith }: { startingWith: string | null }): ReactNode {
     if (token !== null) {
       return (
         <Accept
-          base={BASE}
+          base={API_BASE}
           token={token}
           onSigned={(proof) => {
-            // Drop the spent token from the URL.
-            window.history.replaceState(null, "", BASE);
+            // Drop the spent token from the URL: the page lands on this world's home.
+            window.history.replaceState(null, "", WORLD_BASE);
             signed(proof);
           }}
         />
       );
     }
-    return <Login base={BASE} onSigned={signed} />;
+    return <Login base={API_BASE} onSigned={signed} />;
   }
   return (
     <CredentialsProvider value={credentials}>

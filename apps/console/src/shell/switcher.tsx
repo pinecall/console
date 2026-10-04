@@ -5,9 +5,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { GatewayError } from "@pinecall/core/api";
-import { useCredentials } from "@pinecall/core/credentials";
 import { meIn, somebodyElses } from "../lib/corners";
-import { AGENT_SCREENS, crossOver, elsewhere } from "../lib/mode";
+import { AGENT_SCREENS, inTheOtherWorld } from "../lib/mode";
 import { useOrg } from "../lib/org";
 import { orgOf, useWhoami } from "../lib/whoami";
 import { useWorld } from "../lib/world";
@@ -18,12 +17,12 @@ import { Avatar, Choice, Dot, Pill } from "../ui";
 const FLEET_SCREENS = new Set(AGENT_SCREENS.map((screen) => screen.path));
 
 /**
- * The agent the page looks at, the org, the world and who is signed in. Each world is a name of
- * the box (lib/mode.ts): the other world's chip is the same screen at the other name, signed in.
+ * The agent the page looks at, the org, the world and who is signed in. Each world is a path of
+ * the one name (lib/mode.ts): the other world's chip is the same screen with `/sandbox` put on or
+ * taken off, at the same origin, on the same key.
  */
 export function Switcher({ agent }: { agent: string }): ReactNode {
   const whose = useWhoami();
-  const credentials = useCredentials();
   const me = meIn(whose);
   const { world, corner, lookInto } = useWorld();
   const { held, agentsLoaded } = useOrg();
@@ -69,15 +68,8 @@ export function Switcher({ agent }: { agent: string }): ReactNode {
   );
   const lookingAt = corner === null ? undefined : held.find((one) => holderOf(one) === corner);
 
-  const theOtherWorld = elsewhere();
-  const [leaving, setLeaving] = useState(false);
-  const cross =
-    theOtherWorld === null
-      ? undefined
-      : (): void => {
-          setLeaving(true);
-          crossOver(theOtherWorld, pathname, credentials);
-        };
+  // The browser's own path, not the router's: the router's has this world's base stripped off.
+  const cross = (): void => window.location.assign(inTheOtherWorld(window.location.pathname));
 
   return (
     <div ref={box} style={{ position: "relative" }}>
@@ -127,23 +119,21 @@ export function Switcher({ agent }: { agent: string }): ReactNode {
             <div>
               <div className="switch-label">Environment</div>
               <div className="switch-choices">
-                <Choice on={production} disabled={leaving} onClick={production ? undefined : cross}>
+                <Choice on={production} onClick={production ? undefined : cross}>
                   production
                 </Choice>
-                <Choice on={!production} disabled={leaving} onClick={production ? cross : undefined}>
+                <Choice on={!production} onClick={production ? cross : undefined}>
                   sandbox
                 </Choice>
               </div>
               <div className="switch-note">
-                {theOtherWorld === null ? (
-                  <>This box answers to one name, and this is its console.</>
-                ) : production ? (
+                {production ? (
                   <>
-                    What the public reaches. The sandbox is at <span className="ui-fixed">{hostOf(theOtherWorld)}</span>, signed in as you.
+                    What the public reaches. The sandbox is this page under <span className="ui-fixed">/sandbox</span>, signed in as you.
                   </>
                 ) : (
                   <>
-                    Where things are tried. Production is at <span className="ui-fixed">{hostOf(theOtherWorld)}</span>, signed in as you.
+                    Where things are tried. Production is this page without <span className="ui-fixed">/sandbox</span>, signed in as you.
                   </>
                 )}
               </div>
@@ -202,11 +192,6 @@ export function Switcher({ agent }: { agent: string }): ReactNode {
       )}
     </div>
   );
-}
-
-/** Console origin without the scheme, e.g. `sandbox.pinecall.io`. */
-function hostOf(origin: string): string {
-  return origin.replace(/^https?:\/\//, "");
 }
 
 /** The person's orgs, shown only when there are two or more. */

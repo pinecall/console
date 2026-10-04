@@ -24,8 +24,8 @@ export async function loginWithCode(base: string, code: string, device: string):
   return login(base, { code, device });
 }
 
-// One-use code valid five minutes: moves a sign-in between the box's two origins without putting
-// the key in a URL.
+// One-use code valid five minutes: carries a sign-in to another origin of the box's — its billing
+// page — without putting the key in a URL.
 const CodeSchema = z.object({ code: z.string() });
 
 /** Mint a one-use login code for this browser's key. */

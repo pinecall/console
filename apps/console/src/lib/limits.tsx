@@ -7,7 +7,6 @@ import { type Credentials, GatewayError, read } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { aLoginCode } from "@pinecall/core/login";
 import { Stat } from "../ui";
-import { crossing } from "./mode";
 
 const EVERY_MS = 60000;
 
@@ -62,9 +61,10 @@ export function minutesMeter(limits: Limits | null): MinutesMeter | null {
 export function openBilling(billing: string, credentials: Credentials): void {
   const tab = window.open("about:blank", "_blank");
   const go = (code: string | null): void => {
-    const there = crossing(billing.replace(/\/$/, ""), "/", code);
-    if (tab === null) window.location.assign(there);
-    else tab.location.href = there;
+    const there = new URL(billing);
+    if (code !== null) there.searchParams.set("login", code);
+    if (tab === null) window.location.assign(there.toString());
+    else tab.location.href = there.toString();
   };
   aLoginCode(credentials).then(go, () => go(null));
 }
