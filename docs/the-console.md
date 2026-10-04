@@ -257,7 +257,7 @@ anything is written), **guided** (a carrier the operator admits: the address to 
 then *waiting for the first call* until one reaches the box), **reviewed** (an own PBX: the console
 mints its password and shows it once, and the number waits for the operator to approve its
 addresses). **Accounts** shows what each account can do, a peer's addresses with the operator's
-answer to each; **Calling out** is turned on with a plan first. **This screen is where a door comes
+answer to each — the same accounts `pinecall carriers` adds, lists and drops from a terminal; **Calling out** is turned on with a plan first. **This screen is where a door comes
 from**: a class declares none, so a number reaching one agent is a row here (or `pinecall numbers
 import`), moved by adding it again, nothing deployed; the web needs no row. **Tokens**, open to
 every key: your keys at this instance and the org's server tokens, shown once as `PINECALL_KEY=…`,
