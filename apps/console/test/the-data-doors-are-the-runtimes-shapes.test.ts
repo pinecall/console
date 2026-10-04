@@ -101,7 +101,7 @@ test("the box's numbers are read whole at one door, and a row without who answer
 // runtime wire/rest/ops.py: BoxCarriers and CarrierNetworkRow.
 const A_BOX_CARRIERS = {
   carriers: [{ kind: "telnyx", name: "Telnyx", control: false, networks: ["192.76.120.10/32"], source: "https://sip.telnyx.com/", read_on: "2026-10-03", admitted: true, fixed: false, numbers: 1 }],
-  fence: { openings: [{ network: "192.76.120.10/32", reason: "telnyx" }], applied_at: 1758300000, applied: 1 },
+  fence: { openings: [{ network: "192.76.120.10/32", reason: "telnyx" }], networks: ["54.172.60.0/30", "192.76.120.10/32"] },
 };
 const AN_ASK = { id: 7, org: "clinica", source: "pbx", network: "45.60.12.7/32", state: "waiting", asked_at: 1758300000, decided_by: null, decided_at: null };
 

@@ -83,8 +83,7 @@ const BoxCarriersSchema = z.looseObject({
   ),
   fence: z.looseObject({
     openings: z.array(z.looseObject({ network: z.string(), reason: z.string() })),
-    applied_at: z.number().nullable(),
-    applied: z.number().nullable(),
+    networks: z.array(z.string()),
   }),
 });
 export type BoxCarriers = z.infer<typeof BoxCarriersSchema>;

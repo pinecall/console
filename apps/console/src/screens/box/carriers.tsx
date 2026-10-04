@@ -17,7 +17,7 @@ const STATE_TONE = { waiting: "amber", approved: "green", refused: "red" } as co
 
 /**
  * The screen. Port 5060 opens to the carriers admitted here and to the addresses approved here,
- * and to nothing else: the root helper writes them into nftables within a minute. A carrier off
+ * and to nothing else: the cloud's firewall admits the list once Terraform applies it. A carrier off
  * is offered to no org; an address waiting fences no number until it is approved.
  */
 export function BoxCarriers(): ReactNode {
@@ -83,7 +83,7 @@ export function BoxCarriers(): ReactNode {
 
       {fence !== undefined && (
         <Card>
-          <CardHead title="The fence right now" meta={fence.applied_at === null ? "never written on this box: 5060 opens to Twilio alone" : `nftables, written ${ago(fence.applied_at)} with ${fence.applied ?? 0} networks`} />
+          <CardHead title="The fence right now" meta={`${fence.networks.length} networks for the cloud's firewall, Twilio's with them`} />
           {fence.openings.length === 0 ? (
             <Empty>Twilio's networks alone: nothing else is admitted.</Empty>
           ) : (
@@ -95,7 +95,7 @@ export function BoxCarriers(): ReactNode {
               ))}
             </div>
           )}
-          <CardFoot>On a GCP box the cloud's firewall stands in front: `pinecall-runtime fence export` and `make tf-apply` bring it level.</CardFoot>
+          <CardFoot>The cloud's firewall admits what Terraform last applied: `pinecall-runtime fence export` into the environment's `sip_sources.auto.tfvars.json`, then `make tf-plan` and `make tf-apply`, bring it level with this list.</CardFoot>
         </Card>
       )}
     </Page>
