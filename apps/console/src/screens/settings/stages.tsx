@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { doing, named, type Provider } from "../../lib/catalogue";
 import { Label, Select, SelectItem } from "../../ui";
 import type { Knob, Modality } from "./typed";
+import { VoiceById } from "./voice-by-id";
 import { VoicePicker } from "./voice-picker";
 
 const NOT_HERE = "not on this box";
@@ -104,9 +105,15 @@ export function VoiceField({
   if (vendor === null) return <VoiceNote>Asking the gateway which vendor speaks…</VoiceNote>;
   if (named(providers, vendor)?.voices_listed === true) return <VoicePicker vendor={vendor} model={model} language={language} opening={opening} voice={voice} onChange={onChange} />;
   return (
-    <VoiceNote>
-      {voice === "" ? `${vendor} speaks in its model's own voice.` : `${vendor} speaks as ${voice}, set from the terminal.`} The gateway lists no voices for {vendor}: set its own id with pinecall agent set --voice.
-    </VoiceNote>
+    <div className="set-row">
+      <div className="set-field">
+        <Label>Voice</Label>
+        <p className="set-help">
+          {voice === "" ? `${vendor} speaks in its model's own voice.` : `${vendor} speaks as ${voice}.`} {vendor} lists no voices here: write the id {vendor} gives the one you want, listen to it, and use it.
+        </p>
+        <VoiceById vendor={vendor} model={model} language={language} opening={opening} voice={voice} onChange={onChange} label="A voice by its id" />
+      </div>
+    </div>
   );
 }
 

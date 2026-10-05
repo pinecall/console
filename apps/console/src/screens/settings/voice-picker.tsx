@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { saidBy } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { Button, Icon, Input, Label, Segmented, Select, SelectItem } from "../../ui";
+import { VoiceById } from "./voice-by-id";
 import { heard, readVoices, type Heard, type ListedVoice } from "./voice-doors";
 
 type Gender = "any" | "feminine" | "masculine";
@@ -172,7 +173,7 @@ export function VoicePicker({
       <div className="set-voices-now">
         <Label>Voice</Label>
         <span className="set-voices-in-use">
-          {voice === "" ? `${vendor}'s own default` : inUse !== undefined ? `${inUse.name}${inUse.country === "" ? "" : ` · ${countryName(inUse.country)}`}` : `${voice}, set from the terminal`}
+          {voice === "" ? `${vendor}'s own default` : inUse !== undefined ? `${inUse.name}${inUse.country === "" ? "" : ` · ${countryName(inUse.country)}`}` : `${voice}, by its id`}
         </span>
       </div>
       <div className="set-voices-filters">
@@ -226,6 +227,7 @@ export function VoicePicker({
           {shown.length === 0 && <li className="set-help">No voice matches.</li>}
         </ul>
       )}
+      <VoiceById vendor={vendor} model={model} language={language} opening={said} voice={voice} onChange={onChange} label="A voice not in this list — your own, a clone — by its id" />
       <p className="set-help">
         Each voice says the line above — or one line in the agent's language when it is empty — with {model ?? `${vendor}'s default model`}, on your org's key for {vendor} or the box's: what a caller would hear. The number is the wait from the words to the first audio over the vendor's stream; a call keeps that connection warm, so its own wait sits a little under. Nothing changes until you save.
       </p>

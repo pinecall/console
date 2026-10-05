@@ -329,8 +329,8 @@ Every section is saved together, as one version, over the version it was read at
 moved since is told so and never written over.
 
 **Voice** is picked by ear. For a vendor whose catalogue row says so (`voices_listed` in
-`GET /v1/providers`: Cartesia's read from Cartesia, ElevenLabs' the names the runtime curates) the
-voices are the vendor's own list in the agent's language (`GET /v1/voices`, the wire's
+`GET /v1/providers`: the ones whose plugin lists its voices, and the ones the box's providers row
+lists, Cartesia's among them) the voices are that list in the agent's language (`GET /v1/voices`, the wire's
 `VoicesListed`), narrowed by country — Spain and Mexico are both `es` — by gender where the voices
 carry one, and by a word. Each has a play button that says the agent's own opening with the model
 picked above (`POST /v1/voices/sample`, the wire's `VoiceSample`); an agent with no opening
@@ -339,8 +339,12 @@ the words to the first audio over the vendor's stream; a call keeps that connect
 own wait sits a little under. A sample is asked once per vendor, model, line and voice and kept
 while those stand. What the gateway refuses — a typo, a model it would swap, a line over its
 ceiling, too many samples a minute, no key for the vendor — is shown in its own words. **Use** puts
-the voice in the form; nothing changes until the form is saved. Any other vendor speaks in its own
-id, set from the terminal with `pinecall agent set --voice`.
+the voice in the form; nothing changes until the form is saved.
+
+**A voice by its id** is the field under the list, and the whole of it for a vendor that lists
+none — most of them: the org's own voice, a clone, one no list carries. **Listen** asks the same
+sample door with that id, so a vendor with no such voice refuses it there, in its own words, rather
+than on the next call; **Use** takes the id only once the vendor has said a line with it.
 
 **Recording**, in Conversation, is three choices and not two: *keep the audio*, *keep none*, and
 *not set* — because a corner that never said is not a corner that said no. Not set falls through

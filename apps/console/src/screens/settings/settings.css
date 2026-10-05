@@ -299,6 +299,13 @@
   gap: 6px;
 }
 
+.set-voices-by-id {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
 .set-voices-refused {
   color: var(--red);
 }
