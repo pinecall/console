@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { useCredentials } from "@pinecall/core/credentials";
-import { readNotices, saveNotices, sendTestNotice, type Notices, type NoticesChanged } from "@pinecall/core/notify";
+import { forgetDevice, readNotices, saveNotices, sendTestNotice, type Notices, type NoticesChanged } from "@pinecall/core/notify";
 import { WORLD } from "../../lib/mode";
 import { theNotifier } from "../../lib/notifier";
 import { Button, Card, CardHead, Empty, Item, Page, PageHead, Refused, Switch } from "../../ui";
@@ -110,7 +110,23 @@ export function Notifications(): ReactNode {
           {chosen.devices.length === 0 ? (
             <Empty>No device yet. Turn this browser on, or open Notificaciones in Pinecall on your phone.</Empty>
           ) : (
-            chosen.devices.map((device) => <Item key={device.id} name={device.label ?? PLATFORM[device.platform]} sub={PLATFORM[device.platform]} />)
+            chosen.devices.map((device) => {
+              // This browser's own row is turned off, so its subscription goes with it.
+              const mine = device.id === browser.deviceId;
+              const forget = mine ? browser.turnOff : () => forgetDevice(notifier, device.id);
+              return (
+                <Item
+                  key={device.id}
+                  name={device.label ?? PLATFORM[device.platform]}
+                  sub={mine ? `${PLATFORM[device.platform]} · this one` : PLATFORM[device.platform]}
+                  end={
+                    <Button size="xs" disabled={acting.busy} onClick={() => move(forget)}>
+                      Remove
+                    </Button>
+                  }
+                />
+              );
+            })
           )}
         </Card>
       )}

@@ -281,7 +281,9 @@ turned on), and their devices — and it is not the gateway's: the doors are Pin
 the world is the one the page names. A notice clicked opens `/calls/:call?org=` in its own world —
 the sandbox's under `/sandbox` — in a tab of this origin if one is open, in its org first
 (`lib/from-a-notice.tsx`). *Send a test* sends one notice to every device of the person and prints
-what came of each. **Data & privacy**, the org's rules, consent, export, erasure and who read what,
+what came of each. *Remove*, beside each device, forgets it — a phone lost, a browser no longer
+used (`DELETE /devices/{id}`, the person's own devices only); on this browser's own row it is *Turn
+off*, so the subscription goes with it. **Data & privacy**, the org's rules, consent, export, erasure and who read what,
 is its own page: [data-and-privacy.md](data-and-privacy.md).
 
 ## An agent's screens

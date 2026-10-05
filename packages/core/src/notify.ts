@@ -59,6 +59,11 @@ export async function unregisterDevice(notifier: Credentials, device: Omit<ThisD
   await drop(notifier, "/devices", { kind: "alert", ...device });
 }
 
+/** Forget one of the person's devices by the id the list gave it: a phone lost, a browser no longer used. */
+export async function forgetDevice(notifier: Credentials, device: string): Promise<void> {
+  await drop(notifier, `/devices/${encodeURIComponent(device)}`);
+}
+
 const TestedSchema = z.looseObject({
   sent: z.number(),
   failed: z.array(z.looseObject({ device: z.string(), error: z.string(), dead: z.boolean().default(false) })),
