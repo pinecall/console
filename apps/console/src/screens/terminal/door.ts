@@ -15,7 +15,7 @@ const AskedSchema = z.object({
 /** The pairing request: the terminal's machine name, if it sent one. */
 export type Asked = z.infer<typeof AskedSchema>;
 
-const ApprovedSchema = z.object({ device: z.string().nullable(), org: z.string() });
+const ApprovedSchema = z.object({ device: z.string().nullable(), org: z.string(), org_name: z.string() });
 
 function at(code: string): string {
   return `/v1/login/pairings/${encodeURIComponent(code)}`;
@@ -27,9 +27,10 @@ export async function asking(credentials: Credentials, code: string): Promise<As
 }
 
 /**
- * Approve the terminal as this person. It gets a fresh key labelled with its machine name, collected
- * once by the CLI process; the key never passes through this page.
+ * Approve the terminal as this person and return the name of the org it was signed in to. It gets a
+ * fresh key labelled with its machine name, collected once by the CLI process; the key never passes
+ * through this page.
  */
 export async function approve(credentials: Credentials, code: string): Promise<string> {
-  return ApprovedSchema.parse(await post(credentials, at(code), {})).org;
+  return ApprovedSchema.parse(await post(credentials, at(code), {})).org_name;
 }
