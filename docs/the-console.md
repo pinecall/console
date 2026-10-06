@@ -290,9 +290,9 @@ developer and without a deploy. The org's `/lexicon` of before lands on Overview
 us yet*, *Not answered* (`GET /v1/numbers`'s `rings`) — where it comes through, and who wrote its
 row, *added by the box operator* among them. A row opens to its **path** (`GET
 /v1/numbers/{number}/path`): carrier, fence, world, agent, each with what would fix it, the last
-call, and Move and Remove. **Add a number** is a sheet that asks one question first, where the
+call, and Move and Remove. **Add a number** is a page of its own (`?add=`) that asks one question first, where the
 number lives, and offers only what the box allows (`GET /v1/carriers/catalog`): **automatic**
-(buying, Twilio, WhatsApp: the account connected in the sheet, the gateway's steps shown before
+(buying, Twilio, WhatsApp: the account connected on that page, the gateway's steps shown before
 anything is written), **guided** (a carrier the operator admits: the address to paste in its portal,
 then *waiting for the first call* until one reaches the box), **reviewed** (an own PBX: the console
 mints its password and shows it once, and the number waits for the operator to approve its

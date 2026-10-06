@@ -1,8 +1,8 @@
-/** Add a number: one question first — where does the number live — then the form of that way. */
+/** Add a number, a page of its own: one question first — where does the number live — then the form of that way. */
 
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
-import { Button } from "../../ui";
+import { Card, PageHead } from "../../ui";
 import { BuyWay, GuidedWay, PbxWay, TwilioWay, WhatsAppWay, type WayProps } from "./add-ways";
 import type { Catalog } from "./door";
 import { waysOffered, type Way } from "./ways";
@@ -11,7 +11,7 @@ const HOW_SAID: Record<Way["how"], string> = { automatic: "Automatic", guided: "
 
 const LOGO: Record<string, string> = { buy: "P", twilio: "Tw", pbx: "IP", whatsapp: "WA" };
 
-/** What the sheet is told: the catalog it offers ways from, the way chosen, and what each form needs. */
+/** What the page is told: the catalog it offers ways from, the way chosen, and what each form needs. */
 export interface AddNumberProps extends WayProps {
   catalog: Catalog;
   world: string;
@@ -29,26 +29,19 @@ export function AddNumber({ catalog, world, way, onWay, onClose, ...props }: Add
   const ways = waysOffered(catalog);
   const chosen = ways.find((one) => one.id === way) ?? null;
 
-  useEffect(() => {
-    const closing = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", closing);
-    return () => window.removeEventListener("keydown", closing);
-  }, [onClose]);
-
   return (
     <>
-      <div className="num-scrim" onClick={onClose} />
-      <section className="num-sheet" aria-label="Add a number">
-        <div className="num-sheet-head">
-          <span className="num-sheet-title">Add a number</span>
-          <span className="num-sheet-world">in {world}</span>
-          <Button size="xs" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-        <div className="num-sheet-body">
+      <PageHead
+        back={
+          <button type="button" className="ui-back num-back" onClick={onClose}>
+            ← Phone numbers
+          </button>
+        }
+        title="Add a number"
+        lede={`In ${world}: where the number lives decides how much of it is yours to do.`}
+      />
+      <Card>
+        <div className="num-add">
           <div className="num-wizard">
             <b>1 Where it lives</b>
             <i>›</i>
@@ -78,7 +71,7 @@ export function AddNumber({ catalog, world, way, onWay, onClose, ...props }: Add
           {chosen?.id === "pbx" && <PbxWay {...props} />}
           {chosen?.id === "whatsapp" && <WhatsAppWay {...props} />}
         </div>
-      </section>
+      </Card>
     </>
   );
 }

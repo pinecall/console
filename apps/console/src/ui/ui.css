@@ -59,15 +59,17 @@ textarea:focus {
 
 /* ── the page ─────────────────────────────────────────────────────────────── */
 
+/* The page scrolls the whole width beside the sidebar, so its scrollbar sits at the window's edge;
+   the content keeps its measure (--ui-page) by the right padding growing with the window. */
 .ui-page {
+  --ui-page: 1240px;
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 28px 32px 56px;
+  padding: 28px max(32px, calc(100% - 32px - var(--ui-page))) 56px 32px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 1240px;
 }
 
 .ui-page > * {
@@ -79,15 +81,15 @@ textarea:focus {
 }
 
 .ui-page-1060 {
-  max-width: 1060px;
+  --ui-page: 1060px;
 }
 
 .ui-page-900 {
-  max-width: 900px;
+  --ui-page: 900px;
 }
 
 .ui-page-760 {
-  max-width: 760px;
+  --ui-page: 760px;
 }
 
 .ui-head {

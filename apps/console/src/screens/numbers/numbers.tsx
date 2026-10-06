@@ -40,7 +40,7 @@ const TABS: readonly { tab: Tab; name: string }[] = [
   { tab: "outbound", name: "Calling out" },
 ];
 
-/** The tab is kept in `?tab=`, the open sheet's way in `?add=`. Phone testing for developers is phone.tsx. */
+/** The tab is kept in `?tab=`, the page that adds a number at `?add=` with its way. Phone testing for developers is phone.tsx. */
 export function Numbers(): ReactNode {
   const credentials = useCredentials();
   const { agents } = useOrg();
@@ -106,6 +106,33 @@ export function Numbers(): ReactNode {
     }
     setParams(next);
   };
+
+  // Adding a number is a page of its own, at `?add=` (and `?add=<way>` once one is chosen): the list
+  // gives the screen to it, and its way back is the list again.
+  if (adding && catalog !== null && carriers !== undefined) {
+    return (
+      <Page width={900}>
+        <AddNumber
+          catalog={catalog}
+          world={world}
+          way={params.get("add") || null}
+          onWay={(way) => pick({ add: way ?? "" })}
+          onClose={() => pick({ add: null })}
+          carriers={carriers}
+          agents={agents}
+          available={available}
+          busy={busy}
+          move={move}
+          onAdded={(number) => {
+            setAdded(number);
+            setOpen(number);
+            pick({ add: null });
+          }}
+        />
+        <Refused>{refused}</Refused>
+      </Page>
+    );
+  }
 
   const rows = doors ?? [];
   const counted = countRings(rows);
@@ -214,25 +241,6 @@ export function Numbers(): ReactNode {
         </>
       )}
 
-      {adding && catalog !== null && carriers !== undefined && (
-        <AddNumber
-          catalog={catalog}
-          world={world}
-          way={params.get("add") || null}
-          onWay={(way) => pick({ add: way ?? "" })}
-          onClose={() => pick({ add: null })}
-          carriers={carriers}
-          agents={agents}
-          available={available}
-          busy={busy}
-          move={move}
-          onAdded={(number) => {
-            setAdded(number);
-            setOpen(number);
-            pick({ add: null });
-          }}
-        />
-      )}
     </Page>
   );
 }
