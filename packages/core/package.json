@@ -14,7 +14,6 @@
     "./log-pages": "./src/log-pages.ts",
     "./use-call": "./src/use-call.ts",
     "./use-floor": "./src/use-floor.ts",
-    "./use-agent-sessions": "./src/use-agent-sessions.ts",
     "./seat": "./src/seat.ts",
     "./use-listen": "./src/use-listen.ts",
     "./use-supervise": "./src/use-supervise.ts",

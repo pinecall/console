@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useCredentials } from "@pinecall/core/credentials";
-import { readJudges, type Judge, type Whose } from "./door";
+import { readJudges, type Judge, type Whose } from "./judges-door";
 
 export function useJudges(whose: Whose): {
   judges: Judge[] | null;

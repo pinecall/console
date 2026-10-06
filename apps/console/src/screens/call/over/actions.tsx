@@ -51,7 +51,7 @@ export function Actions({ agent, call, number }: { agent: string; call: string; 
     setRefused(null);
     try {
       await eraseCall(credentials, call);
-      void navigate("/calls/list");
+      void navigate("/calls");
     } catch (failed) {
       setRefused(saidBy(failed));
       setBusy("");

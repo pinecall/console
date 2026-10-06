@@ -199,7 +199,7 @@ test("a sample is the WAV handed to the player as a blob, with the vendor's wait
 const A_JUDGE = { name: "offers-next-slot", question: "The agent offered the next free slot.", runs_on: "every-call", author: "m_ana", set_at: 1789897543.33 };
 
 test("an agent's own judges are read, written and dropped at the agent's door, and a renamed field is refused", async () => {
-  const { dropJudge, readJudges, writeJudge } = await import("../src/screens/judges/door");
+  const { dropJudge, readJudges, writeJudge } = await import("../src/screens/quality/judges-door");
   const asked: { method: string; url: string; body: string | undefined }[] = [];
   globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
@@ -224,7 +224,7 @@ test("an agent's own judges are read, written and dropped at the agent's door, a
 });
 
 test("the org's judges are read, written and dropped at the org's door, the same shape as an agent's", async () => {
-  const { dropJudge, readJudges, writeJudge } = await import("../src/screens/judges/door");
+  const { dropJudge, readJudges, writeJudge } = await import("../src/screens/quality/judges-door");
   const asked: { method: string; url: string }[] = [];
   globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {

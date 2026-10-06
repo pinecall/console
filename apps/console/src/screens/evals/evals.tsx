@@ -1,16 +1,13 @@
-/** Evals screen: goldens, runs, scored calls and drift for one agent. */
+/** Goldens, a tab of Test: the agent's golden questions, the newest verdict on each, and every run — is a change safe to ship? */
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router";
 
 import { useCredentials } from "@pinecall/core/credentials";
 import { dayAndTime } from "../../lib/format";
-import { WORLD } from "../../lib/mode";
-import { useScoredCalls } from "../../lib/use-scored-calls";
-import { Button, Card, CardHead, Empty, Page, PageHead, Pill, Refused, Segmented, Stat, Stats } from "../../ui";
-import { CallsTable } from "./calls-table";
+import { inTheOtherWorld, WORLD } from "../../lib/mode";
+import { Button, Card, CardHead, Empty, Page, PageHead, Pill, Refused, Stat, Stats } from "../../ui";
 import type { EvalRun } from "./door";
-import { DriftPanel } from "./drift-panel";
 import { RunDetail } from "./run-detail";
 import { RunTable } from "./run-table";
 import { SuiteForm } from "./suite-form";
@@ -19,8 +16,6 @@ import { useEvalRuns } from "./use-eval-runs";
 import "./evals.css";
 
 const GOLDEN_COLUMNS = "minmax(0,1fr) 110px 90px";
-
-type View = "runs" | "calls" | "drift";
 
 /** One-word label for a golden: the kind of its first expectation. */
 function kindOf(golden: Listed): string {
@@ -42,13 +37,13 @@ function heldIn(run: EvalRun | undefined): Map<string, boolean> {
   return held;
 }
 
-// All state lives in the URL (`?view=`, `?run=`) so a regression can be shared as a link.
+// All state lives in the URL (`?run=`) so a regression can be shared as a link. How the agent's REAL
+// calls are judged is Quality's; this is the goldens alone.
 export function Evals(): ReactNode {
   const agent = useParams()["agent"] ?? "";
   const credentials = useCredentials();
   const [params, setParams] = useSearchParams();
   const runs = useEvalRuns(agent);
-  const scored = useScoredCalls(agent);
   const [roster, setRoster] = useState<Roster | null>(null);
   const [away, setAway] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -72,8 +67,6 @@ export function Evals(): ReactNode {
     };
   }, [credentials, agent]);
 
-  const asked = params.get("view");
-  const view: View = asked === "calls" || asked === "drift" ? asked : asked === "runs" && suites ? "runs" : suites ? "runs" : "calls";
   const selected = params.get("run");
   const open = runs.runs.find((run) => run.id === selected) ?? null;
   const latest = runs.runs.find((run) => run.matrix !== null);
@@ -101,7 +94,7 @@ export function Evals(): ReactNode {
         goldens: goldens.map((one) => one.name),
         voice: false,
       });
-      select({ view: null, run: opened });
+      select({ run: opened });
     } catch (failed) {
       setRefused(failed instanceof Error ? failed.message : String(failed));
     } finally {
@@ -109,18 +102,12 @@ export function Evals(): ReactNode {
     }
   };
 
-  const views: { value: View; label: string }[] = [
-    ...(suites ? [{ value: "runs" as const, label: "Runs" }] : []),
-    { value: "calls", label: "Scored calls" },
-    { value: "drift", label: "Drift" },
-  ];
-
   return (
     <Page width={1060} tight>
       <PageHead
-        title="Evals"
-        ledeWidth={620}
-        lede="Golden sessions replayed against the agent as it is now. A golden is fixed and the agent is the variable: never soften a golden so a change can pass."
+        title="Goldens"
+        ledeWidth={640}
+        lede="Fixed questions replayed against the agent as it is now: is a change safe to ship? A golden is fixed and the agent is the variable — never soften one so a change can pass."
       />
 
       <Stats min={150}>
@@ -134,13 +121,24 @@ export function Evals(): ReactNode {
       </Stats>
 
       <Card>
-        <CardHead title="Golden questions">
-          {suites && goldens.length > 0 && (
-            <Button kind="primary" size="sm" className="ev-run-all" disabled={starting} onClick={() => void runAll()}>
-              {starting ? "Opening…" : "Run all"}
-            </Button>
-          )}
-        </CardHead>
+        <CardHead
+          title="Golden questions"
+          action={
+            suites ? (
+              goldens.length > 0 && (
+                <Button kind="primary" size="sm" disabled={starting} onClick={() => void runAll()}>
+                  {starting ? "Opening…" : "Run all"}
+                </Button>
+              )
+            ) : (
+              // A suite runs through a developer's own class, so it is started from the sandbox: the
+              // same screen there, on the same key.
+              <Button size="sm" onClick={() => window.location.assign(inTheOtherWorld(window.location.pathname))}>
+                Run them in the sandbox
+              </Button>
+            )
+          }
+        />
         {names.length === 0 && (
           <Empty>
             {roster !== null && roster.agent !== agent
@@ -173,20 +171,7 @@ export function Evals(): ReactNode {
 
       <Refused>{refused}</Refused>
 
-      <div className="ev-views">
-        <Segmented
-          options={views}
-          value={view}
-          onChange={(next) =>
-            select({
-              view: next === (suites ? "runs" : "calls") ? null : next,
-              run: null,
-            })
-          }
-        />
-      </div>
-
-      {view === "runs" && (
+      {suites ? (
         <>
           {roster !== null && roster.agent === agent && goldens.length > 0 && <SuiteForm agent={agent} roster={roster} onOpened={(run) => select({ run })} />}
           <Card>
@@ -202,23 +187,18 @@ export function Evals(): ReactNode {
           </Card>
           {open !== null && <RunDetail run={open} before={runs.runs[runs.runs.indexOf(open) + 1]} />}
         </>
-      )}
-
-      {view === "drift" && <DriftPanel agent={agent} />}
-
-      {view === "calls" && (
+      ) : (
         <Card>
-          <CardHead title="Scored calls" meta="the verdict is the call.score entry the log seals on" />
-          <Refused>{scored.error}</Refused>
-          {scored.rows.length > 0 ? (
-            <CallsTable agent={agent} rows={scored.rows} />
+          <CardHead title="Runs" meta={`${runs.runs.length} · the same rows pinecall runs list prints`} />
+          <Refused>{runs.error}</Refused>
+          {runs.runs.length > 0 ? (
+            <RunTable runs={runs.runs} selected={selected} onSelect={(id) => select({ run: id })} />
           ) : (
-            <Empty>
-              No call of this agent has finished yet. The judges seal a call's log with its verdict when the caller hangs up; the first one lands here.
-            </Empty>
+            <Empty>No run has been stored yet. Suites run from a developer's directory — the sandbox's console, a laptop or CI — and appear here the moment one opens.</Empty>
           )}
         </Card>
       )}
+      {!suites && open !== null && <RunDetail run={open} before={runs.runs[runs.runs.indexOf(open) + 1]} />}
     </Page>
   );
 }

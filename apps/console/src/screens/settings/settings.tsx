@@ -115,7 +115,7 @@ export function Settings(): ReactNode {
       {pane.handle}
       <Page width={1060}>
         <PageHead
-          title="Settings"
+          title="Configure"
           ledeWidth={660}
           lede={
             production

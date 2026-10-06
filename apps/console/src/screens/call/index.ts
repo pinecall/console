@@ -1,5 +1,5 @@
-/** One call's door: the page at `/calls/:call`, and the call itself for a screen that mounts one. */
+/** One call, for the screens that mount one: Calls, where it sits beside the conversations, and Simulations. */
 
-export { Call, OneCall } from "./call";
+export { Call } from "./call";
 export { Desk } from "./desk";
 export { LATENCY_NAMES } from "./over";

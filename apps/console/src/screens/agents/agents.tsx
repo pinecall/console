@@ -109,7 +109,7 @@ export function Agents(): ReactNode {
   return (
     <Page>
       <PageHead
-        title="Overview"
+        title="Agents"
         lede="Which agents this gateway is holding right now — the list changes the moment a socket connects."
         actions={
           canIssue ? (
@@ -176,7 +176,7 @@ export function Agents(): ReactNode {
           const last = lines.find((line) => line.agent === one.slug);
           const numbers = numbersOf(one.slug);
           return (
-            <TableRow key={`${one.slug}/${one.holder?.holder ?? ""}`} columns={COLUMNS} padding="13px 16px" to={`/a/${one.slug}/talk`}>
+            <TableRow key={`${one.slug}/${one.holder?.holder ?? ""}`} columns={COLUMNS} padding="13px 16px" to={`/a/${one.slug}/overview`}>
               <div className="agents-name">
                 <Avatar name={one.slug} letters={one.slug.slice(0, 1).toUpperCase()} tint={tintAt(index)} />
                 <div style={{ minWidth: 0 }}>

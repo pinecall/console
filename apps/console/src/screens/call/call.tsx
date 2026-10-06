@@ -1,17 +1,16 @@
-/** One call: its head, the log as it arrives, and beside them the desk on a live call or the reading of a finished one. */
+/** One call: who is on it, the log as it arrives, and beside them the desk on a live call or the reading of a finished one. */
 
 import { type Entry } from "@pinecall/core/wire/envelope";
 import { type State } from "@pinecall/core/wire/state";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router";
 
 import { useDeclaredState } from "../../lib/declared-state";
 import { elapsed, isSpoken, prettyNumber } from "@pinecall/core/calls";
 import { medians } from "@pinecall/core/metrics";
 import { keepCallView, keptCallView, type CallView } from "../../lib/preferences";
-import { useWayBack, type WayBack } from "../../lib/whence";
 import { useScopes } from "../../lib/whoami";
-import { usePane } from "../../ui";
+import { visitorOf } from "../../lib/format";
+import { Avatar, Pill, usePane } from "../../ui";
 import { Desk } from "./desk";
 import { MetricsPanel } from "./metrics-panel";
 import { Actions, CostCard, Details, Facts, LatencyCard, Outcome, Player, recordingIn, ScoreCard, scoreIn, TimeCard, timeSpentIn } from "./over";
@@ -26,17 +25,6 @@ import { TraceView } from "./trace-view";
 import { useWatchedCall } from "./use-watched-call";
 import "./call.css";
 
-/**
- * The page at `/calls/:call` — or under an agent's own Calls tab — whichever agent took it. The
- * way back is wherever the reader came from — Calls, the Inbox, Evals, Personas — and the list
- * itself on a reload or a link somebody pasted.
- */
-export function OneCall(): ReactNode {
-  const { agent = "", call = "" } = useParams();
-  const back = useWayBack(agent === "" ? "/calls" : `/a/${agent}/inbox`);
-  return <Call key={call} call={call} back={back} />;
-}
-
 // Everything on screen comes out of this one hook, so two calls side by side are two streams, two
 // states and two timelines. The log is read from its first entry and followed to its last, live or
 // not: a call that ends is the same page, with nothing more arriving.
@@ -45,8 +33,8 @@ export function Call({
   call,
   agent,
   supervised = true,
+  name,
   beside,
-  back,
   foot,
   aside,
 }: {
@@ -54,10 +42,10 @@ export function Call({
   agent?: string | undefined;
   /** Whether the supervisor's desk may be drawn here. A simulation is stopped, not whispered to. */
   supervised?: boolean;
+  /** Who is on the call as the screen mounting it knows them — a name somebody wrote down — over what its log says. */
+  name?: string | undefined;
   /** One more control in the call's head, told whether the call is over. */
   beside?: ((over: boolean) => ReactNode) | undefined;
-  /** The way back, for the call that is a page of its own; a call mounted inside another screen has none. */
-  back?: WayBack | undefined;
   /** Under the log: the screen that mounts the call may put a composer there. */
   foot?: ReactNode | undefined;
   /** After the call's own panels in the pane: what the screen that mounts the call knows besides. */
@@ -110,8 +98,7 @@ export function Call({
     <div className="call" style={pane.style}>
       {pane.handle}
       <div className="call-middle">
-        <Head call={call} agent={agent} state={state} connection={watched.error ?? watched.connection} failed={watched.error !== null} back={back}>
-          {beside?.(over)}
+        <Head call={call} agent={agent} name={name} state={state} connection={watched.connection} failed={watched.error}>
           <span className="call-view" role="group" aria-label="how the call is read">
             {(["chat", "transcript", "log", "trace"] as const).map((one) => (
               <button key={one} type="button" className={view === one ? "call-view-one call-view-on" : "call-view-one"} onClick={() => pick(one)}>
@@ -119,6 +106,7 @@ export function Call({
               </button>
             ))}
           </span>
+          {beside?.(over)}
         </Head>
         {view === "chat" ? (
           <ChatView entries={watched.entries} state={state} after={theEnd} />
@@ -157,54 +145,72 @@ export function Call({
 
 const VIEW_NAMES: Record<CallView, string> = { chat: "Chat", transcript: "Transcript", log: "Log", trace: "Trace" };
 
-/** The call's head: the way back, which call, which door, how it stands, who is on it, and how far the log got. */
+/**
+ * The call's head, person first: who is on it and how the call stands, then where they came from
+ * and which agent took it — the call's id is the name's title, and the stream is mentioned only
+ * when it is not following the log. On the right, how the call is read and the screen's own moves.
+ */
 function Head({
   call,
   agent,
+  name,
   state,
   connection,
   failed,
-  back,
   children,
 }: {
   call: string;
   agent: string | undefined;
+  name: string | undefined;
   state: State;
   connection: string;
-  failed: boolean;
-  back: WayBack | undefined;
+  failed: string | null;
   children: ReactNode;
 }): ReactNode {
   const now = useNow(state.status !== "ended");
   const over = state.status === "ended";
-  const from = state.caller?.name ?? prettyOrAsIs(state.direction === "outbound" ? state.to : state.from);
+  const address = state.direction === "outbound" ? state.to : state.from;
+  const who = name ?? state.caller?.name ?? visitorOf(address) ?? (address === null ? "A caller" : prettyOrAsIs(address));
+  const asking = !over && state.attention?.status === "open";
   return (
     <div className="call-head">
-      {back !== undefined && (
-        <Link to={back.to} className="ui-back call-back">
-          ← {back.name}
-        </Link>
-      )}
-      <span className="call-call">{call}</span>
-      {state.channel !== null && <span className="call-tag">{state.channel}</span>}
-      {state.direction !== null && <span className="call-tag">{state.direction}</span>}
-      <span className={over ? "call-status call-status-over" : "call-status"}>
-        {over ? (state.end_reason ?? "ended").replace(/_/g, " ") : state.status === "active" ? `on a call · ${elapsed(state.started_at, now)}` : state.status}
-      </span>
-      <span className="call-sub">
-        {from} → {state.agent || agent || "—"} · seq {state.seq}
-        {state.agent_state !== null && ` · agent ${state.agent_state}`}
-        {state.user_state !== null && ` · caller ${state.user_state}`}
-        {" · "}
-        <span className={failed ? "call-connection-bad" : undefined}>{connection}</span>
-      </span>
-      {children}
+      <Avatar name={who} size={36} round tint={asking ? "amber" : over ? undefined : "green"} />
+      <div className="call-who">
+        <div className="call-who-line">
+          <span className="call-who-name" title={call}>
+            {who}
+          </span>
+          {asking ? (
+            <Pill tone="amber" small>
+              wants a person · {elapsed(state.started_at, now)}
+            </Pill>
+          ) : over ? (
+            <Pill tone="gray" small>
+              {(state.end_reason ?? "ended").replace(/_/g, " ")}
+            </Pill>
+          ) : (
+            <Pill tone="green" small>
+              {state.status === "active" ? `on a call · ${elapsed(state.started_at, now)}` : state.status}
+            </Pill>
+          )}
+        </div>
+        <div className="call-who-sub">
+          {[address !== null && visitorOf(address) === null && prettyOrAsIs(address) !== who ? prettyOrAsIs(address) : null, state.channel, state.direction === "outbound" ? "outbound" : null, state.agent || agent || null]
+            .filter((part): part is string => part !== null && part !== "")
+            .join(" · ")}
+          {failed !== null ? (
+            <span className="call-connection-bad"> · {failed}</span>
+          ) : (
+            !over && connection !== "live" && <span className="call-connection"> · {connection}</span>
+          )}
+        </div>
+      </div>
+      <div className="call-head-moves">{children}</div>
     </div>
   );
 }
 
-function prettyOrAsIs(number: string | null): string {
-  if (number === null) return "—";
+function prettyOrAsIs(number: string): string {
   return number.startsWith("+") ? prettyNumber(number) : number;
 }
 

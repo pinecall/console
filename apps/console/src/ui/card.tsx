@@ -29,7 +29,7 @@ export function CardHead({
       {typeof title === "string" ? <span className="ui-card-title">{title}</span> : title}
       {meta !== undefined && <span className="ui-card-meta">{meta}</span>}
       {children}
-      {action}
+      {action !== undefined && <span className="ui-card-end">{action}</span>}
     </div>
   );
 }

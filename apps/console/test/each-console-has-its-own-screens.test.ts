@@ -6,29 +6,37 @@
 import { describe, expect, it } from "vitest";
 
 import { headersFor } from "@pinecall/core/api";
-import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, has, rowOf, rowsOf, screenAt, screensOf, tabsOf } from "../src/lib/mode.js";
+import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, has, rowOf, rowsOf, screenAt, screensOf, tabName, tabsOf } from "../src/lib/mode.js";
 
 const names = (table: typeof ORG_SCREENS, world: "production" | "sandbox"): string[] =>
   screensOf(table, world).map((screen) => screen.name);
-
-const rows = (table: typeof ORG_SCREENS, world: "production" | "sandbox"): string[] => rowsOf(table, world).map((screen) => screen.name);
 
 const tabs = (table: typeof ORG_SCREENS, key: string, world: "production" | "sandbox"): string[] => {
   const row = table.find((screen) => screen.key === key);
   return row === undefined ? [] : tabsOf(table, row, world).map((screen) => screen.name);
 };
 
-// The sidebar is the org's rows under the agents: nothing that is ONE agent's — its callers, its
-// judges, its simulations — is a row of the org's, and what is set once and rarely is Settings' tabs.
+// One word, one place. What is looked at — Overview, Calls, Quality — is three rows whoever is in
+// view; with every agent in view Agents lists them, and what runs the org is the workspace at the
+// sidebar's foot. Nothing that is ONE agent's — its callers, its goldens, its lexicon — is the org's.
+const looked = (table: typeof ORG_SCREENS, world: "production" | "sandbox"): string[] =>
+  rowsOf(table, world).filter((screen) => screen.group === undefined).map((screen) => screen.name);
+const workspace = (world: "production" | "sandbox"): string[] =>
+  rowsOf(ORG_SCREENS, world).filter((screen) => screen.group === "workspace").map((screen) => screen.name);
+
 describe("production's console", () => {
-  it("runs the org from seven rows: its floor, every call, how it is judged, its numbers, its people, its bill and its settings", () => {
-    expect(rows(ORG_SCREENS, "production")).toEqual(["Home", "Calls", "Evals", "Numbers", "Team", "Usage", "Settings"]);
+  it("looks at the org from four rows: its overview, every call, how they are judged, and its agents", () => {
+    expect(looked(ORG_SCREENS, "production")).toEqual(["Overview", "Calls", "Quality", "Agents"]);
   });
 
-  it("reads every call as a messenger does, the table beside it; the floor under Home; what is set once under Settings", () => {
-    expect(tabs(ORG_SCREENS, "calls", "production")).toEqual(["Calls", "List"]);
-    expect(tabs(ORG_SCREENS, "home", "production")).toEqual(["Home", "Agents"]);
+  it("runs the org from the workspace: its numbers, its people, its bill and its settings", () => {
+    expect(workspace("production")).toEqual(["Numbers", "Team", "Usage", "Settings"]);
     expect(tabs(ORG_SCREENS, "org-settings", "production")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Docs", "Memory", "Notifications", "Data & privacy"]);
+  });
+
+  it("reads every call on one screen, with no tab of its own: the table is Calls' own view", () => {
+    expect(tabs(ORG_SCREENS, "calls", "production")).toEqual(["Calls"]);
+    expect(screenAt("/calls/call_9f")?.key).toBe("calls");
   });
 
   it("has no org-wide Personas, Simulations or Lexicon: a caller and the words are one agent's", () => {
@@ -63,44 +71,48 @@ describe("the box's screens", () => {
 });
 
 describe("the sandbox's console", () => {
-  it("is the workshop: no numbers, people or bill, and its own tokens, provider keys and notices", () => {
-    expect(rows(ORG_SCREENS, "sandbox")).toEqual(["Home", "Calls", "Evals", "Settings"]);
+  it("is the workshop: the same rows looked at, no numbers, people or bill, and its own tokens, provider keys and notices", () => {
+    expect(looked(ORG_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Agents"]);
+    expect(workspace("sandbox")).toEqual(["Settings"]);
     expect(tabs(ORG_SCREENS, "org-settings", "sandbox")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Docs", "Memory", "Notifications", "Data & privacy", "Phone testing"]);
   });
 
   it("has every screen of an agent, Dev chat among them", () => {
-    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Chat", "Dev chat", "Calls", "List", "Test", "Personas", "Judges", "Simulations", "Evals", "Knowledge", "Docs", "Memory", "Settings", "Pipeline", "Lexicon", "Widget"]);
+    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Goldens", "Personas", "Simulations", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget"]);
   });
 });
 
-// An agent is five rows under its name, and every other screen of it is a tab of one of them.
+// One agent in view is the same three rows the org has, with only its calls, and what builds it.
 describe("an agent's screens", () => {
-  it("are six rows in the sidebar, Overview first", () => {
-    expect(rows(AGENT_SCREENS, "production")).toEqual(["Overview", "Chat", "Calls", "Test", "Knowledge", "Settings"]);
+  it("are the org's three rows looked at, then what builds the agent, and never a word the workspace says", () => {
+    expect(looked(AGENT_SCREENS, "production")).toEqual(["Overview", "Calls", "Quality"]);
+    expect(rowsOf(AGENT_SCREENS, "production").filter((screen) => screen.group === "build").map((screen) => screen.name)).toEqual(["Playground", "Test", "Knowledge", "Configure"]);
+    const words = rowsOf(AGENT_SCREENS, "production").map((screen) => screen.name);
+    expect(words.filter((word) => workspace("production").includes(word))).toEqual([]);
   });
 
-  it("read its calls as threads, the messenger's way, with the table beside them", () => {
-    expect(tabs(AGENT_SCREENS, "inbox", "production")).toEqual(["Calls", "List"]);
-    expect(screenAt("/a/clinica-norte/inbox")?.name).toBe("Calls");
+  it("read its calls where the org reads them, under its own prefix", () => {
+    expect(tabs(AGENT_SCREENS, "calls", "production")).toEqual(["Calls"]);
+    expect(screenAt("/a/clinica-norte/calls/call_9f")?.key).toBe("calls");
   });
 
-  it("keep what it runs on under Settings: its settings, the pipeline, its lexicon and the widget", () => {
-    expect(tabs(AGENT_SCREENS, "settings", "production")).toEqual(["Settings", "Pipeline", "Lexicon", "Widget"]);
-    expect(tabs(AGENT_SCREENS, "settings", "sandbox")).toEqual(["Settings", "Pipeline", "Lexicon", "Widget"]);
+  it("keep what it runs on under Configure: its settings, the pipeline, its lexicon and the widget", () => {
+    const configure = AGENT_SCREENS.find((screen) => screen.key === "settings");
+    expect(configure === undefined ? [] : tabsOf(AGENT_SCREENS, configure, "production").map(tabName)).toEqual(["General", "Pipeline", "Lexicon", "Widget"]);
     expect(screenAt("/a/clinica-norte/lexicon")?.key).toBe("lexicon");
     expect(screenAt("/lexicon")).toBeUndefined();
   });
 
-  it("put its callers, its judges, a simulation and its goldens under Test", () => {
-    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Personas", "Judges", "Simulations", "Evals"]);
+  it("put only what comes before a change ships under Test: its goldens, its callers and a simulation", () => {
+    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Goldens", "Personas", "Simulations"]);
   });
 
-  it("read a path in the agent's table, so its Settings is not the org's", () => {
-    expect(screenAt("/a/clinica-norte/settings")?.key).toBe("settings");
+  it("read a path in the agent's table, so its Configure is not the org's Settings", () => {
+    expect(screenAt("/a/clinica-norte/configure")?.key).toBe("settings");
     expect(screenAt("/settings")?.key).toBe("org-settings");
     expect(screenAt("/a/clinica-norte/personas/el-que-cancela")?.key).toBe("personas");
-    const judges = screenAt("/a/clinica-norte/judges");
-    expect(judges === undefined ? undefined : rowOf(AGENT_SCREENS, judges).name).toBe("Test");
+    const goldens = screenAt("/a/clinica-norte/goldens");
+    expect(goldens === undefined ? undefined : rowOf(AGENT_SCREENS, goldens).name).toBe("Test");
   });
 });
 

@@ -1,4 +1,4 @@
-/** Eval requests and schemas: runs, drift, replay, promote, reproductions. */
+/** Eval requests and schemas: runs, replay, promote, reproductions. */
 
 import { z } from "zod";
 
@@ -73,54 +73,6 @@ export async function readRuns(credentials: Credentials, agent: string): Promise
     await read(credentials, "/v1/evals/runs", { agent, limit: AS_MANY_AS_IT_MAY }),
   );
   return listed.runs;
-}
-
-/** A judge's pass rate in one window. */
-const RateSchema = z.object({ held: z.int(), settled: z.int(), percent: z.number() });
-
-/** A judge's rate in both windows and the delta. Null means no verdicts, not zero. */
-const JudgeDriftSchema = z.object({
-  judge: z.string(),
-  before: RateSchema.nullable(),
-  now: RateSchema.nullable(),
-  delta: z.number().nullable(),
-});
-export type JudgeDrift = z.infer<typeof JudgeDriftSchema>;
-
-/** A failed verdict with the seqs it cites. */
-const BrokeSchema = z.object({
-  call: z.string(),
-  judge: z.string(),
-  seqs: z.array(z.int()),
-  reason: z.string(),
-});
-
-/** Drift report: per-judge rates, unjudged counts, recent failures, worst drop. */
-const DriftedSchema = z.object({
-  agent: z.string(),
-  window: z.number(),
-  baseline: z.number(),
-  threshold: z.number(),
-  drift: z.object({
-    judges: z.array(JudgeDriftSchema),
-    notJudged: z.object({ now: z.int(), before: z.int() }),
-    broke: z.array(BrokeSchema),
-    worst: z.number().nullable(),
-  }),
-});
-export type Drifted = z.infer<typeof DriftedSchema>;
-
-/**
- * Each judge's pass rate over two windows. Computed by the `pinecall start` process (same code as
- * `pinecall runs drift`) to avoid hundreds of round trips from the browser.
- */
-export async function readDrift(
-  credentials: Credentials,
-  agent: string,
-  window: number,
-  baseline: number,
-): Promise<Drifted> {
-  return DriftedSchema.parse(await dev(credentials, agent, "drift.read", { agent, window, baseline }));
 }
 
 /** One ring-3 check result. */

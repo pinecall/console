@@ -35,7 +35,7 @@ was deployed with, whatever this checkout says.
 ## Structure
 
 - `apps/console/src/` — the page: `main.tsx` boots it, `router.tsx` routes it, and under it
-  `shell/` (the frame: sidebar, top bar, switcher, palette) · `screens/` (one directory per screen,
+  `shell/` (the frame: sidebar and its Viewing picker, top bar, palette) · `screens/` (one directory per screen,
   imported by its directory and never by a file inside it) · `lib/` (the page's own reading of the
   gateway: the world, the whoami, the org, the corners, the formats) ·
   `ui/` (the design system: every control, and `ui.css`). Its `vite.config.ts` builds `dist/`.
@@ -45,7 +45,7 @@ was deployed with, whatever this checkout says.
   before any key), `theme.ts`, `login.ts`, `session-key.ts`, `whoami.ts` (who a key is, and the
   org's word), `members.ts` (an org's people, the `team` door), `agents.ts` (the agents held now,
   `GET /v1/agents`), `initials.ts`, the SSE reader `stream.ts` and the hooks over it (`use-call`,
-  `use-floor`, `use-agent-sessions`, `log-pages`), the seat and the two that spend one
+  `use-floor`, `log-pages`), the seat and the two that spend one
   (`use-listen`, `use-supervise`), `verbs.ts` (one verb onto a call, the desk's and the phone's),
   `calls.ts` (a row said the same in every app: live, wants a person, elapsed, who, a web
   visitor's short id, the cut by day, and whether a call is spoken or typed), `calls-search.ts` (a list's search: the sessions door's
@@ -73,12 +73,17 @@ saying which worlds have it. A screen with no `under` is a row of the sidebar; o
 another is a tab of that row, drawn by the tab bar over it (`shell/screen-tabs.tsx`). The sidebar
 and the tab bar draw that table and the router routes it, so a screen a console does not have is
 neither linked nor reachable by typing its path. A redesign moves rows there and nothing else.
+**One word, one place**: the agent is what the sidebar's Viewing puts in view, never a section, so
+what is looked at (Overview, Calls, Quality) is the same rows in the org's table and an agent's,
+and a row's `group` says the rest — `build` (one agent's, drawn only while one is in view) or
+`workspace` (the org's, at the sidebar's foot whoever is). No two rows the sidebar draws at once
+share a name.
 
 **The world is the path's first segment, read once per page.** One gateway, one name, holds both
 worlds and a person's key opens both (production only where their org lets them). `/…` is
 production's console and `/sandbox/…` the sandbox's — the same screens under the prefix, which is
 the router's base; `lib/mode.ts` reads it off `window.location`, every request names it in
-`pinecall-env`, and the switcher's chips open the same screen in the other world (`inTheOtherWorld`),
+`pinecall-env`, and the sidebar's Production · Sandbox control opens the same screen in the other world (`inTheOtherWorld`),
 at the same origin, on the same key. One sign-in, one card, for both.
 
 ## Rules the tests enforce

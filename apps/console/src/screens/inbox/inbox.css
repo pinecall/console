@@ -1,4 +1,4 @@
-/* The Inbox: the threads down the left, and beside them the person's head over their call as its own page draws it. */
+/* Calls as threads: the threads down the left, and beside them the call, drawn the one way a call is. */
 
 .ib {
   position: relative;
@@ -9,7 +9,17 @@
   grid-template-rows: minmax(0, 1fr);
 }
 
-/* The person's head, and under it the call — which brings its own pane, dragged as wide as you like. */
+/* In focus the list folds away and the call has the screen. */
+.ib-focus {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.ib-focus .ib-list {
+  visibility: hidden;
+  border-right: 0;
+}
+
+/* The call — which brings its own head and its own pane, dragged as wide as you like. */
 .ib-open {
   min-width: 0;
   min-height: 0;
@@ -324,39 +334,6 @@
   padding: 26px 22px;
   font-size: 13.5px;
   color: var(--ink-3);
-}
-
-.ib-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 11px 16px;
-  border-bottom: 1px solid var(--line);
-  background: var(--ground);
-  flex-wrap: wrap;
-}
-
-.ib-head-words {
-  min-width: 0;
-}
-
-.ib-head-name {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.15px;
-}
-
-.ib-head-sub {
-  font-size: 12px;
-  color: var(--ink-4);
-}
-
-.ib-head-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  flex: none;
 }
 
 .ib-refused-line {

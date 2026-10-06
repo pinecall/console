@@ -51,7 +51,14 @@ export function theBoxsOwnName(): string {
 }
 
 /** The sidebar's icons, by name (ui/icon.tsx). */
-export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask";
+export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask" | "bot";
+
+/**
+ * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality —
+ * and read the same with every agent in view or one. `build` is what makes one agent, drawn only
+ * while one is in view; `workspace` is the org's own, drawn at the sidebar's foot whatever is.
+ */
+export type ScreenGroup = "build" | "workspace";
 
 /**
  * One screen: where it is, what it is called, which console has it, and where it sits. A screen
@@ -70,6 +77,9 @@ export interface Screen {
   under?: string;
   /** A row with no screen of its own: its path lands on the first of its tabs. */
   opensOn?: "first-tab";
+  /** What a row that is also a screen is called in its own tab bar, when its name would say the row twice. */
+  tab?: string;
+  group?: ScreenGroup;
   /** The box's own: drawn and routed only for a person the box made an operator. */
   operator?: true;
 }
@@ -83,24 +93,21 @@ const THE_WORKSHOPS = ["sandbox"] as const;
 // reachable by typing its path. A redesign moves rows here and nothing else: no screen asks which
 // world it is in to decide whether it exists.
 //
-// The org's screens: what the sidebar has once the agents are listed. Calls is every conversation
-// of the org as a messenger shows them, whichever agent took it, the one open drawn as the call's
-// own page — where a supervisor works a live call from — and the same calls as a table beside it.
-// Evals is how every agent is judged, a row of its own. The agents held are Home's tab. Running the org
-// (numbers, people, the bill) is production's
-// business. What is set once and rarely — tokens, vendor keys, hosted apps and their secrets, the
-// bases, the notices — is Settings' tabs; tokens and provider keys are each instance's own, so
-// each console holds them.
+// One word, one place. What is looked at — Overview, Calls, Quality — is the same three rows
+// whether every agent is in view or one, and the agent is what the sidebar's Viewing picks, never
+// a section of its own: these are the org's, at the root, and the agent's below are the same
+// screens under `/a/<slug>`. Agents lists them all. What runs the org — numbers, people, the bill,
+// what is set once and rarely — is the workspace, at the sidebar's foot; tokens and provider keys
+// are each instance's own, so each console holds them.
 export const ORG_SCREENS: readonly Screen[] = [
-  { key: "home", path: "", name: "Home", in: BOTH, icon: "home" },
-  { key: "agents", path: "overview", name: "Agents", in: BOTH, under: "home" },
+  { key: "overview", path: "", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
-  { key: "calls-list", path: "list", name: "List", in: BOTH, under: "calls" },
-  { key: "org-evals", path: "evals", name: "Evals", in: BOTH, icon: "check" },
-  { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone" },
-  { key: "team", path: "team", name: "Team", in: PRODUCTIONS, icon: "users" },
-  { key: "usage", path: "usage", name: "Usage", in: PRODUCTIONS, icon: "chart" },
-  { key: "org-settings", path: "settings", name: "Settings", in: BOTH, icon: "sliders", opensOn: "first-tab" },
+  { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
+  { key: "agents", path: "agents", name: "Agents", in: BOTH, icon: "bot" },
+  { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
+  { key: "team", path: "team", name: "Team", in: PRODUCTIONS, icon: "users", group: "workspace" },
+  { key: "usage", path: "usage", name: "Usage", in: PRODUCTIONS, icon: "chart", group: "workspace" },
+  { key: "org-settings", path: "settings", name: "Settings", in: BOTH, icon: "sliders", opensOn: "first-tab", group: "workspace" },
   { key: "tokens", path: "tokens", name: "Tokens", in: BOTH, under: "org-settings" },
   { key: "providers", path: "providers", name: "Providers", in: BOTH, under: "org-settings" },
   // The apps the box hosts for the org in this world (`pinecall deploy`), and what they start with.
@@ -128,32 +135,27 @@ export const BOX_SCREENS: readonly Screen[] = [
   { key: "box-settings", path: "box/settings", name: "Box settings", in: PRODUCTIONS, icon: "sliders", operator: true },
 ];
 
-// An agent's screens: six rows under its name in the sidebar, and their tabs. Overview is where the
-// agent opens: its numbers, calls and spend a day, how its calls end and how fast it answers. Chat is the
-// gateway's room, by voice or in writing — its path stays `talk`, so links made before still land
-// — and Dev chat, a written call to the class in a developer's own directory, is its second tab
-// in the workshop. Calls is the agent's conversations the way a messenger shows them — a thread
-// per person, the one open read and supervised live, its call's own page one click away — and the
-// same calls as a table beside it. Test is everything
-// that puts the agent through its paces: the callers written for it, the judges over its calls,
-// a caller put on it live, and the goldens and their runs. Knowledge is what it searches and what
-// it learned. Settings is what it runs on, with the pipeline that results, its lexicon and the
-// widget that embeds it.
+// One agent in view: the same three rows the org's are — its Overview, its Calls, its Quality,
+// each the org's screen with only its calls — then what builds it. Playground is the gateway's
+// room, by voice or in writing, and Dev chat — a written call to the class in a developer's own
+// directory — is its second tab in the workshop. Test is what happens before a change ships: the
+// goldens and their runs, the callers written for it, and a caller put on it live; how its REAL
+// calls are judged is Quality's. Knowledge is what it searches and what it learned. Configure is
+// what it runs on, with the pipeline that results, its lexicon and the widget that embeds it.
 export const AGENT_SCREENS: readonly Screen[] = [
   { key: "agent-overview", path: "overview", name: "Overview", in: BOTH, icon: "grid" },
-  { key: "talk", path: "talk", name: "Chat", in: BOTH, icon: "chat" },
+  { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
+  { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
+  { key: "talk", path: "playground", name: "Playground", tab: "Chat", in: BOTH, icon: "chat", group: "build" },
   { key: "devchat", path: "dev-chat", name: "Dev chat", in: THE_WORKSHOPS, under: "talk" },
-  { key: "inbox", path: "inbox", name: "Calls", in: BOTH, icon: "list" },
-  { key: "calls", path: "calls", name: "List", in: BOTH, under: "inbox" },
-  { key: "test", path: "test", name: "Test", in: BOTH, icon: "flask", opensOn: "first-tab" },
+  { key: "test", path: "test", name: "Test", in: BOTH, icon: "flask", opensOn: "first-tab", group: "build" },
+  { key: "evals", path: "goldens", name: "Goldens", in: BOTH, under: "test" },
   { key: "personas", path: "personas", name: "Personas", in: BOTH, under: "test" },
-  { key: "judges", path: "judges", name: "Judges", in: BOTH, under: "test" },
   { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, under: "test" },
-  { key: "evals", path: "evals", name: "Evals", in: BOTH, under: "test" },
-  { key: "knowledge", path: "knowledge", name: "Knowledge", in: BOTH, icon: "book", opensOn: "first-tab" },
+  { key: "knowledge", path: "knowledge", name: "Knowledge", in: BOTH, icon: "book", opensOn: "first-tab", group: "build" },
   { key: "docs", path: "docs", name: "Docs", in: BOTH, under: "knowledge" },
   { key: "memory", path: "memory", name: "Memory", in: BOTH, under: "knowledge" },
-  { key: "settings", path: "settings", name: "Settings", in: BOTH, icon: "sliders" },
+  { key: "settings", path: "configure", name: "Configure", tab: "General", in: BOTH, icon: "sliders", group: "build" },
   { key: "pipeline", path: "pipeline", name: "Pipeline", in: BOTH, under: "settings" },
   { key: "lexicon", path: "lexicon", name: "Lexicon", in: BOTH, under: "settings" },
   { key: "widget", path: "widget", name: "Widget", in: BOTH, under: "settings" },
@@ -180,15 +182,20 @@ export function tabsOf(table: readonly Screen[], row: Screen, world: World = WOR
   return [...own, ...screensOf(table, world).filter((screen) => screen.under === row.key)];
 }
 
+/** What a row is called in its own tab bar: its `tab` word where its name would say the row twice. */
+export function tabName(screen: Screen): string {
+  return screen.under === undefined ? (screen.tab ?? screen.name) : screen.name;
+}
+
 /** The row a screen belongs to: itself, or the one it is a tab of. */
 export function rowOf(table: readonly Screen[], screen: Screen): Screen {
   return (screen.under === undefined ? undefined : table.find((one) => one.key === screen.under)) ?? screen;
 }
 
 // A path is a screen's when it starts with that screen's own path, once an agent's prefix is off
-// it: `/calls/call_9f` is Calls', `/a/clinica-norte/inbox` is the agent's Calls. The longest
-// match wins, so `box/orgs` is not mistaken for anything shorter — and the table is the path's,
-// because an agent's `settings` and the org's are two screens at one word. What a back link is
+// it: `/calls/call_9f` is Calls', `/a/clinica-norte/calls/call_9f` the same screen with one agent
+// in view. The longest match wins, so `box/orgs` is not mistaken for anything shorter — and the
+// table is the path's, because an agent's `docs` and the org's are two screens at one word. What a back link is
 // CALLED comes from here, which is why a screen renamed in the table is renamed in every link
 // pointing home to it.
 /** The screen a path belongs to, or undefined when no screen owns it. */

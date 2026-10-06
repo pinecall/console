@@ -23,55 +23,49 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
 }
 
-.call-back {
-  flex-basis: 100%;
+.call-who {
+  min-width: 0;
+  flex: 1 1 220px;
 }
 
-.call-call {
-  font-size: 13.5px;
+.call-who-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.call-who-name {
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.1px;
-  word-break: break-all;
+  letter-spacing: -0.2px;
 }
 
-.call-tag {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-2);
-  background: var(--ground-5);
-  padding: 2px 8px;
-  border-radius: 99px;
-  white-space: nowrap;
-}
-
-.call-status {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 99px;
-  white-space: nowrap;
-  color: var(--green);
-  background: var(--green-soft);
-}
-
-.call-status-over {
-  color: var(--ink-3);
-  background: var(--ground-5);
-}
-
-.call-sub {
-  font-size: 12px;
+.call-who-sub {
+  margin-top: 2px;
+  font-size: 12.5px;
   color: var(--ink-4);
+}
+
+.call-connection {
+  color: var(--amber);
 }
 
 .call-connection-bad {
   color: var(--red);
+}
+
+.call-head-moves {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* ── the desk ─────────────────────────────────────────────────────────────── */
@@ -589,33 +583,35 @@ details.call-row > .call-line {
   border-bottom: 1px solid var(--line);
 }
 
-/* Transcript or log: two words in the head, the one in force filled. */
+/* Chat, transcript, log or trace: four words in the head, the one in force raised. */
 .call-view {
-  margin-left: auto;
   display: inline-flex;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  overflow: hidden;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--ground-4);
 }
 
 .call-view-one {
   border: 0;
+  border-radius: 6px;
   background: transparent;
-  padding: 4px 10px;
+  padding: 3px 9px;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ink-3);
   cursor: pointer;
 }
 
-.call-view-one + .call-view-one {
-  border-left: 1px solid var(--line);
+.call-view-one:hover {
+  color: var(--ink);
 }
 
 .call-view-on {
-  background: var(--ground-side);
+  background: var(--ground);
   color: var(--ink);
   font-weight: 550;
+  box-shadow: var(--shadow-raised);
 }
 
 /* ── the call read as a chat ─────────────────────────────────────────────── */

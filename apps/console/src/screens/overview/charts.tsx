@@ -1,8 +1,8 @@
-/** The Overview's charts, drawn in SVG with the console's own tokens: calls a day by channel, spend a day, and a bar per share. */
+/** The Overview's charts, drawn in SVG with the console's own tokens: calls a day by channel, and a bar per share. */
 
 import { useState, type ReactNode } from "react";
 
-import { dayOf, spend } from "../../lib/format";
+import { dayOf } from "../../lib/format";
 import { callsOn, CHANNELS, type Channel, type Day } from "./counted";
 
 const WIDTH = 640;
@@ -82,59 +82,6 @@ export function CallsByDay({ days }: { days: Day[] }): ReactNode {
               <span className="ovw-tip-value">{hovered.calls[channel]}</span>
             </div>
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Spend a day as one 2px line over a faint area, with a crosshair and the day's figure on hover. */
-export function SpendByDay({ days }: { days: Day[] }): ReactNode {
-  const [on, setOn] = useState<number | null>(null);
-  const most = Math.max(0.01, ...days.map((day) => day.spend));
-  const top = Math.ceil(most * 100 * 1.15) / 100;
-  const step = (WIDTH - LEFT) / Math.max(1, days.length - 1);
-  const x = (index: number): number => LEFT + index * step;
-  const y = (value: number): number => TOP + PLOT - (value / top) * PLOT;
-  const points = days.map((day, index) => `${x(index)},${y(day.spend)}`).join(" ");
-  const area = `${x(0)},${y(0)} ${points} ${x(days.length - 1)},${y(0)}`;
-  const hovered = on === null ? undefined : days[on];
-
-  return (
-    <div className="ovw-chart">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Spend a day" onMouseLeave={() => setOn(null)}>
-        {[0, top / 2, top].map((tick) => (
-          <g key={tick}>
-            <line x1={LEFT} x2={WIDTH} y1={y(tick)} y2={y(tick)} className="ovw-grid" />
-            <text x={LEFT - 8} y={y(tick) + 3.5} className="ovw-tick" textAnchor="end">
-              {tick === 0 ? "0" : `$${tick < 1 ? tick.toFixed(2) : tick.toFixed(1)}`}
-            </text>
-          </g>
-        ))}
-        <polygon points={area} className="ovw-area" />
-        <polyline points={points} className="ovw-line" />
-        {on !== null && <line x1={x(on)} x2={x(on)} y1={TOP} y2={TOP + PLOT} className="ovw-cross" />}
-        {on !== null && hovered !== undefined && <circle cx={x(on)} cy={y(hovered.spend)} r={4.5} className="ovw-dot" />}
-        {days.map((day, index) => (
-          <g key={day.day} onMouseEnter={() => setOn(index)}>
-            <rect x={x(index) - step / 2} y={TOP} width={step} height={PLOT} className="ovw-hit" />
-            {(index % 2 === days.length % 2 || days.length <= 8) && (
-              <text x={x(index)} y={HEIGHT - 6} className="ovw-tick" textAnchor="middle">
-                {dayAt(day.day)}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-      {hovered !== undefined && on !== null && (
-        <div className="ovw-tip" style={{ left: `${(x(on) / WIDTH) * 100}%` }}>
-          <div className="ovw-tip-head">{dayAt(hovered.day)}</div>
-          <div className="ovw-tip-row">
-            Spend<span className="ovw-tip-value">{spend(hovered.spend)}</span>
-          </div>
-          <div className="ovw-tip-row">
-            Calls<span className="ovw-tip-value">{callsOn(hovered)}</span>
-          </div>
         </div>
       )}
     </div>

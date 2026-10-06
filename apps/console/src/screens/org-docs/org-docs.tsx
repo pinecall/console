@@ -77,7 +77,7 @@ export function OrgDocs(): ReactNode {
                     : one.agents.map((agent, at) => (
                         <span key={agent}>
                           {at > 0 && ", "}
-                          <Link to={`/a/${encodeURIComponent(agent)}/settings`}>{agent}</Link>
+                          <Link to={`/a/${encodeURIComponent(agent)}/configure`}>{agent}</Link>
                         </span>
                       ))}
                 </span>

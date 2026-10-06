@@ -1,14 +1,10 @@
-/* Evals: the goldens list, a run's rows and score sheet, the scored calls and their evidence, the drift. */
+/* Goldens: the golden questions with their newest verdict, a run's rows and its score sheet. */
 
 .ev-last {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.3px;
   padding-top: 4px;
-}
-
-.ev-run-all {
-  margin-left: auto;
 }
 
 .ev-goldens > .ui-table-row:first-child {
@@ -34,10 +30,6 @@
 
 .ev-golden-call:hover {
   color: var(--accent);
-}
-
-.ev-views {
-  display: flex;
 }
 
 .ev-row-open,
@@ -125,73 +117,6 @@
   overflow: auto;
 }
 
-.ev-judge {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--green);
-  background: var(--green-soft);
-  padding: 2px 8px;
-  border-radius: 99px;
-  white-space: nowrap;
-}
-
-.ev-judge-bad {
-  color: var(--red);
-  background: var(--red-soft);
-}
-
-.ev-evidence {
-  padding: 12px 16px 16px;
-  background: var(--ground-side);
-  border-top: 1px solid var(--line-3);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ev-evidence-head {
-  display: flex;
-}
-
-.ev-acts {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ev-acts-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.ev-warn {
-  font-size: 12.5px;
-  color: var(--amber);
-  line-height: 1.55;
-}
-
-.ev-said {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--ground);
-}
-
-.ev-said-body {
-  padding: 0 15px 13px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.ev-quote {
-  border-left: 2px solid var(--line-control);
-  padding-left: 10px;
-  font-size: 13px;
-  color: var(--ink-2);
-  line-height: 1.55;
-}
-
 .ev-suite-controls {
   display: flex;
   align-items: flex-end;
@@ -251,35 +176,6 @@
 .ev-suite-expects {
   font-size: 12px;
   color: var(--ink-4);
-}
-
-.ev-drift-windows {
-  margin-left: auto;
-  display: flex;
-  gap: 10px;
-}
-
-.ev-drift-field {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: var(--ink-4);
-  white-space: nowrap;
-}
-
-.ev-drift-field .ui-input {
-  width: 64px;
-  height: 30px;
-}
-
-.ev-broke {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 2fr);
-  gap: 12px;
-  align-items: baseline;
-  padding: 10px 16px;
-  border-top: 1px solid var(--line-3);
 }
 
 @media (max-width: 720px) {

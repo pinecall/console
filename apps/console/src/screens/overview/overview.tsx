@@ -1,198 +1,156 @@
-/** An agent's Overview over a window of days: its numbers, calls and spend a day, how its calls end and are judged, how fast it answers, and what to look at. */
+/** Overview: who is on the line, the window's numbers, calls a day, what needs a look, and how calls end — every agent's, or the one in view. */
 
-import { type SessionLine, SessionListSchema } from "@pinecall/core/wire/rest";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router";
+import { useMemo, type ReactNode } from "react";
+import { useParams } from "react-router";
 
-import { read } from "@pinecall/core/api";
-import { whoOn } from "@pinecall/core/calls";
-import { useCredentials } from "@pinecall/core/credentials";
 import { seconds } from "@pinecall/core/metrics";
-import { ago, percent, spend, webVisitor } from "../../lib/format";
-import { useInsights, useWindowDays, WindowPicker, windowSaid } from "../../lib/insights";
-import { Card, CardHead, Empty, Page, PageHead, Pill, Refused, Stat, Stats } from "../../ui";
-import { LATENCY_NAMES } from "../call";
-import { readPipeline, type Report } from "../pipeline/door";
-import { CallsByDay, CHANNEL_NAME, Legend, Shares, SpendByDay } from "./charts";
-import { CHANNELS, daysOf, windowWithCalls, worthALook } from "./counted";
+import { change, percent, spend, utcDay } from "../../lib/format";
+import { useInsights, useWindowDays, WindowPicker, windowSaid, type Insights } from "../../lib/insights";
+import { Minutes, minutesMeter, useLimits } from "../../lib/limits";
+import { useOrg } from "../../lib/org";
+import { useWhoami } from "../../lib/whoami";
+import { Card, CardHead, Empty, Page, PageHead, Stat, Stats } from "../../ui";
+import { useSuites } from "../evals";
+import { AgentsTable } from "./agents-table";
+import { CallsByDay, CHANNEL_NAME, Legend, Shares } from "./charts";
+import { CHANNELS, daysOf, windowWithCalls } from "./counted";
+import { NeedsALook } from "./needs-a-look";
+import { OnTheLine } from "./on-the-line";
+import { Setup } from "./setup";
+import { Speed } from "./speed";
 import "./overview.css";
 
-// The numbers are the gateway's count over the window, however many calls it holds; the newest
-// calls are read only for the list a reviewer opens first, and for when the last one came in.
-const NEWEST = 50;
-
-// A day's numbers do not need the floor's three seconds.
-const EVERY_MS = 10000;
-
-const FLAG_SAID = { escalated: "a person took part", low_score: "a judge said no", promise: "an unrecorded promise" } as const;
-
-/** The agent's newest calls, re-read on a slow clock, and whatever the door refused with. */
-function useNewestCalls(agent: string): { lines: SessionLine[] | null; refused: string | null } {
-  const credentials = useCredentials();
-  const [lines, setLines] = useState<SessionLine[] | null>(null);
-  const [refused, setRefused] = useState<string | null>(null);
-  useEffect(() => {
-    let gone = false;
-    const ask = async (): Promise<void> => {
-      try {
-        const listed = SessionListSchema.parse(await read(credentials, "/v1/sessions", { agent, limit: NEWEST }));
-        if (!gone) {
-          setLines(listed.calls);
-          setRefused(null);
-        }
-      } catch (failed) {
-        if (!gone) setRefused(failed instanceof Error ? failed.message : String(failed));
-      }
-    };
-    void ask();
-    const again = window.setInterval(() => void ask(), EVERY_MS);
-    return () => {
-      gone = true;
-      window.clearInterval(again);
-    };
-  }, [credentials, agent]);
-  return { lines, refused };
+function greeting(): string {
+  const hour = new Date().getHours();
+  return hour < 12 ? "Good morning" : hour < 19 ? "Good afternoon" : "Good evening";
 }
 
-/** How fast the agent's turns were, from its pipeline report: undefined while asked, null when the door refused. */
-function usePipeline(agent: string): { report: Report | null | undefined; refused: string | null } {
-  const credentials = useCredentials();
-  const [report, setReport] = useState<Report | null | undefined>(undefined);
-  const [refused, setRefused] = useState<string | null>(null);
-  useEffect(() => {
-    let gone = false;
-    readPipeline(credentials, agent).then(
-      (read) => {
-        if (!gone) setReport(read);
-      },
-      (failed: unknown) => {
-        if (gone) return;
-        setReport(null);
-        setRefused(failed instanceof Error ? failed.message : String(failed));
-      },
-    );
-    return () => {
-      gone = true;
-    };
-  }, [credentials, agent]);
-  return { report, refused };
-}
-
+/**
+ * One screen for both: with every agent in view it is the org's morning — the greeting, the agents
+ * side by side, what is left to set up — and with one in view it is that agent's, with how fast it
+ * answers. The numbers are the gateway's count over the window picked (`?days=`), however many
+ * calls it holds; unpicked, the window is the shortest that holds a call, read off the last 30 days.
+ */
 export function Overview(): ReactNode {
   const agent = useParams()["agent"] ?? "";
-  const base = `/a/${encodeURIComponent(agent)}`;
-  const { lines, refused } = useNewestCalls(agent);
-  const { report, refused: unmeasured } = usePipeline(agent);
-  // Unpicked, the window is the shortest that holds a call, read off the last 30 days.
-  const month = useInsights({ agent, days: 30 });
+  const whose = useWhoami();
+  const { lines, live, agents } = useOrg();
+  const asked = agent === "" ? undefined : agent;
+  const month = useInsights({ agent: asked, days: 30 });
   const busiest = month === null ? undefined : windowWithCalls(daysOf(month.series));
   const [range, pickRange, picked] = useWindowDays(busiest ?? 1);
-  const answered = useInsights({ agent, days: range });
+  const answered = useInsights({ agent: asked, days: range });
+  const before = useInsights({ agent: asked, day: utcDay(Date.now() / 1000 - range * 86400), days: range });
   // Nothing is drawn until the window is known, nor a count of another window than the one shown.
   const counted = (picked || busiest !== undefined) && answered?.days === range ? answered : null;
   const days = useMemo(() => daysOf(counted?.series ?? []), [counted]);
-  const flagged = useMemo(() => worthALook(lines ?? []), [lines]);
-  const last = lines?.[0];
-  const calls = counted?.conversations.now ?? 0;
+  const suites = useSuites();
+  const meter = minutesMeter(useLimits());
+
+  const mine = agent === "" ? lines : lines.filter((line) => line.agent === agent);
+  const onAir = agent === "" ? live : live.filter((line) => line.agent === agent);
+  const theirSuites = [...suites.values()].filter((suite) => agent === "" || suite.agent === agent);
+  const first = (whose?.name ?? "").split(" ")[0] ?? "";
+  const said = windowSaid(range);
 
   return (
-    <Page tight>
+    <Page>
       <div className="ovw">
-      <PageHead
-        title={agent}
-        lede={
-          counted === null
-            ? "Counting its calls…"
-            : `${calls} ${calls === 1 ? "call" : "calls"} ${windowSaid(range)}${last?.started_at == null ? "" : `, the last ${ago(last.started_at)}`}. Days are UTC.`
-        }
-        actions={<WindowPicker days={range} onPick={pickRange} />}
-      />
-      <Refused>{refused}</Refused>
-
-      <Stats min={160}>
-        <Stat label="Calls" value={counted === null ? "—" : calls} of={(counted?.live ?? 0) > 0 ? `· ${counted?.live ?? 0} live now` : undefined} />
-        <Stat
-          label="Judges held"
-          value={counted === null || counted.judged === 0 ? "—" : percent(counted.passed / counted.judged)}
-          of={counted === null || counted.judged === 0 ? undefined : `${counted.passed} of ${counted.judged}`}
-          accent
+        <PageHead
+          title={agent !== "" ? agent : first === "" ? greeting() : `${greeting()}, ${first}`}
+          lede={standing(onAir.length, onAir.some((line) => line.attention?.status === "open"), agent)}
+          actions={<WindowPicker days={range} onPick={pickRange} />}
         />
-        <Stat label="Mean length" value={counted?.mean_length_s == null ? "—" : minutesOf(counted.mean_length_s)} />
-        <Stat label="Spend" value={counted === null ? "—" : spend(counted.spend_usd)} of={counted === null || calls === 0 ? undefined : `${spend(counted.spend_usd / calls)} a call`} />
-        <Stat label="A person took part" value={counted === null ? "—" : counted.escalated} of={counted === null || calls === 0 ? undefined : percent(counted.escalated / calls)} />
-      </Stats>
 
-      <div className="ovw-grid2">
-        <Card>
-          <CardHead title="Calls a day" meta={<Legend />} />
-          <CallsByDay days={days} />
-        </Card>
-        <Card>
-          <CardHead title="Spend a day" meta="provider fees, in dollars" />
-          <SpendByDay days={days} />
-        </Card>
-      </div>
+        <section className="ovw-section" aria-label="On the line now">
+          <div className="ovw-section-head">
+            <span className={onAir.length > 0 ? "ovw-pulse ovw-pulse-on" : "ovw-pulse"} aria-hidden />
+            On the line now
+          </div>
+          <OnTheLine live={onAir} agent={agent} />
+        </section>
 
-      <div className="ovw-grid3">
-        <Card>
-          <CardHead title="How calls end" />
-          {(counted?.endings.length ?? 0) === 0 ? (
-            <Empty>No call has ended {windowSaid(range)}.</Empty>
+        <Stats min={170}>
+          <Numbers counted={counted} before={before} said={said} />
+          {agent === "" && meter !== null && <Minutes meter={meter} size="big" />}
+        </Stats>
+
+        <div className="ovw-split">
+          <Card>
+            <CardHead title="Calls a day" meta={<Legend />} />
+            {counted === null ? <Empty>Counting the calls…</Empty> : <CallsByDay days={days} />}
+          </Card>
+          <NeedsALook lines={mine} suites={theirSuites} agent={agent} />
+        </div>
+
+        <div className="ovw-pair">
+          <Card>
+            <CardHead title="How calls end" meta={said} />
+            {(counted?.endings.length ?? 0) === 0 ? (
+              <Empty>No call has ended {said}.</Empty>
+            ) : (
+              <Shares rows={(counted?.endings ?? []).slice(0, 6).map((one) => ({ name: one.reason.replace(/_/g, " "), count: one.count }))} />
+            )}
+          </Card>
+          {agent === "" ? (
+            <Card>
+              <CardHead title="Where calls come in" meta={said} />
+              <Shares tone="channel" rows={CHANNELS.map((channel) => ({ name: CHANNEL_NAME[channel], count: counted?.channels[channel] ?? 0, key: channel }))} />
+            </Card>
           ) : (
-            <Shares rows={(counted?.endings ?? []).slice(0, 6).map((one) => ({ name: one.reason.replace(/_/g, " "), count: one.count }))} />
+            <Speed agent={agent} />
           )}
-        </Card>
-        <Card>
-          <CardHead title="Where they come in" />
-          <Shares tone="channel" rows={CHANNELS.map((channel) => ({ name: CHANNEL_NAME[channel], count: counted?.channels[channel] ?? 0, key: channel }))} />
-        </Card>
-        <Card>
-          <CardHead title="How fast it answers" meta={report === undefined ? "reading…" : report === null ? undefined : `median over ${report.calls} calls`} />
-          {report === undefined ? null : report === null ? (
-            <Empty>{unmeasured}</Empty>
-          ) : report.medians.length === 0 ? (
-            <Empty>No turn has been measured yet.</Empty>
-          ) : (
-            <div className="ovw-latency">
-              {report.medians.map((one) => (
-                <div key={one.name} className="ovw-latency-one">
-                  <span className="ovw-latency-value">{one.name === "talk_share" ? percent(one.seconds) : seconds(one.seconds)}</span>
-                  <span className="ovw-latency-name">{LATENCY_NAMES[one.name] ?? one.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
+        </div>
 
-      <Card>
-        <CardHead title="Worth a look" meta="the newest calls a reviewer should open first" action={<Link className="ui-card-action" to={`${base}/inbox`}>All calls</Link>} />
-        {flagged.length === 0 ? (
-          <Empty>Nothing to look at: no call of these went to a person, broke a judge, or promised what no tool recorded.</Empty>
-        ) : (
-          flagged.map((line) => (
-            <Link key={line.call} to={`${base}/inbox/${line.call}`} className="ovw-flagged">
-              <span className="ovw-flagged-who">{whoOn(line, webVisitor)}</span>
-              <span className="ovw-flagged-what">{line.outcome ?? "—"}</span>
-              <span className="ovw-flagged-flags">
-                {line.flags?.map((flag) => (
-                  <Pill key={flag} tone={flag === "low_score" ? "red" : "amber"} small>
-                    {FLAG_SAID[flag]}
-                  </Pill>
-                ))}
-              </span>
-              <span className="ovw-flagged-when">{ago(line.started_at)}</span>
-            </Link>
-          ))
-        )}
-      </Card>
+        {agent === "" && <Setup />}
+
+        {agent === "" && <AgentsTable agents={agents} live={live} counted={counted} suites={suites} said={said} />}
       </div>
     </Page>
   );
 }
 
-/** `2m 14s`: a mean length, the way the calls list says one. */
-function minutesOf(total: number): string {
-  const whole = Math.round(total);
-  return `${Math.floor(whole / 60)}m ${String(whole % 60).padStart(2, "0")}s`;
+/** The sentence under the title: who is on the line, and whether one of them is waiting for a person. */
+function standing(onAir: number, asking: boolean, agent: string): string {
+  const who = agent === "" ? "" : ` with ${agent}`;
+  if (onAir === 0) return `Nobody is on the line${who} right now.`;
+  const calls = onAir === 1 ? `One call is on the line${who}` : `${onAir} calls are on the line${who}`;
+  return asking ? `${calls}, and a caller is waiting for a person.` : `${calls}.`;
+}
+
+/** The window's five numbers, the first four against the window of the same length before it. */
+function Numbers({ counted, before, said }: { counted: Insights | null; before: Insights | null; said: string }): ReactNode {
+  if (counted === null) {
+    return ["Calls", "Resolved without a person", "Held by the judges", "Median answer", "Spend"].map((label) => <Stat key={label} size="big" label={label} value="—" />);
+  }
+  const calls = counted.conversations.now;
+  const moved = change(calls, counted.conversations.before);
+  const resolved = counted.resolved_rate;
+  const resolvedBefore = before?.resolved_rate ?? null;
+  const points = resolved === null || resolvedBefore === null ? null : Math.round((resolved - resolvedBefore) * 100);
+  const median = counted.median_e2e_s;
+  const medianBefore = before?.median_e2e_s ?? null;
+  const faster = median === null || medianBefore === null ? null : Math.round((median - medianBefore) * 10) / 10;
+  const limit = counted.budget.limit_usd;
+  return (
+    <>
+      <Stat size="big" label="Calls" value={calls} delta={moved?.text ?? said} tone={moved?.tone ?? "flat"} />
+      <Stat
+        size="big"
+        label="Resolved without a person"
+        value={resolved === null ? "—" : percent(resolved)}
+        delta={points === null ? said : points === 0 ? "steady" : `${points > 0 ? "+" : "−"}${Math.abs(points)} pts`}
+        tone={points === null || points === 0 ? "flat" : points > 0 ? "up" : "down"}
+      />
+      <Stat size="big" label="Held by the judges" value={counted.judged === 0 ? "—" : percent(counted.passed / counted.judged)} delta={counted.judged === 0 ? "nothing judged" : `${counted.passed} of ${counted.judged}`} tone="flat" />
+      <Stat
+        size="big"
+        label="Median answer"
+        value={median === null ? "—" : seconds(median)}
+        delta={faster === null ? said : Math.abs(faster) < 0.1 ? "steady" : `${faster > 0 ? "+" : "−"}${Math.abs(faster).toFixed(1)}s`}
+        tone={faster === null || Math.abs(faster) < 0.1 ? "flat" : faster > 0 ? "down" : "up"}
+      />
+      <Stat size="big" label="Spend" value={spend(counted.spend_usd)} delta={limit === null ? said : `of $${limit} a month`} tone="flat" />
+    </>
+  );
 }

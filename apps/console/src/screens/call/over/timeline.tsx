@@ -12,7 +12,7 @@ import type { Line } from "./transcript";
 // (@pinecall/core/metrics); expanded field lines are the entry's raw values.
 const ROLES: Record<string, string> = { "turn.user": "user", "turn.agent": "agent" };
 
-// `#seq-N` links to a row (judge evidence, Evals links). The log loads after the browser handles
+// `#seq-N` links to a row (a verdict's evidence). The log loads after the browser handles
 // the fragment, so we scroll manually once rows render.
 const AT_SEQ = /^#seq-(\d+)$/;
 

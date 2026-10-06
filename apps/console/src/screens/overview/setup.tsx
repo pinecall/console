@@ -76,24 +76,24 @@ export function Setup(): ReactNode {
       <div className="ui-card-head">
         <span className="ui-card-title">Finish setting up</span>
       </div>
-      <div className="home-steps">
+      <div className="ovw-steps">
         {steps.map((step) =>
           step.done ? (
-            <div key={step.name} className="home-step">
-              <span className="home-step-done">✓</span>
-              <span className="home-step-name home-step-name-done">{step.name}</span>
+            <div key={step.name} className="ovw-step">
+              <span className="ovw-step-done">✓</span>
+              <span className="ovw-step-name ovw-step-name-done">{step.name}</span>
             </div>
           ) : step.run !== undefined ? (
-            <button key={step.name} type="button" className="home-step home-step-open home-step-button" onClick={() => void step.run?.()}>
-              <span className="home-step-todo" />
-              <span className="home-step-name">{step.name}</span>
-              <span className="home-step-action">{step.action}</span>
+            <button key={step.name} type="button" className="ovw-step ovw-step-open ovw-step-button" onClick={() => void step.run?.()}>
+              <span className="ovw-step-todo" />
+              <span className="ovw-step-name">{step.name}</span>
+              <span className="ovw-step-action">{step.action}</span>
             </button>
           ) : (
-            <Link key={step.name} to={step.to ?? "/"} className="home-step home-step-open">
-              <span className="home-step-todo" />
-              <span className="home-step-name">{step.name}</span>
-              <span className="home-step-action">{step.action}</span>
+            <Link key={step.name} to={step.to ?? "/"} className="ovw-step ovw-step-open">
+              <span className="ovw-step-todo" />
+              <span className="ovw-step-name">{step.name}</span>
+              <span className="ovw-step-action">{step.action}</span>
             </Link>
           ),
         )}

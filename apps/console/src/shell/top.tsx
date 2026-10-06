@@ -1,13 +1,11 @@
-/** The top bar: where you are on the left; what this tab is looking at, and the way out, on the right. */
+/** The top bar: where you are — whose calls, which screen — on the left; the notices, the theme and the way out on the right. */
 
 import type { ReactNode } from "react";
 import { useLocation } from "react-router";
 
 import { useLeaving } from "../lib/leaving";
-import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, rowOf, screenAt } from "../lib/mode";
-import { orgOf, useWhoami } from "../lib/whoami";
+import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, rowOf, screenAt, tabName } from "../lib/mode";
 import { NoticesButton } from "./notices-button";
-import { Switcher } from "./switcher";
 import { ThemeButton } from "./theme-button";
 
 /** The page's title, from the path: the row's name, and its tab's after it where the screen is one. */
@@ -19,24 +17,25 @@ export function titleOf(pathname: string, agent: string): string {
     return box === undefined ? "Box" : box.key === "box-orgs" && segments[2] !== undefined ? "Organization" : box.name;
   }
   const screen = screenAt(pathname);
-  if (screen === undefined) return agent === "" ? "Home" : "Chat";
+  if (screen === undefined) return "Overview";
   const row = rowOf(agent === "" ? ORG_SCREENS : AGENT_SCREENS, screen);
   const name = screen.key === "numbers" ? "Phone numbers" : screen.name;
-  return row.key === screen.key ? name : `${row.name} · ${name}`;
+  return row.key === screen.key ? name : `${row.name} · ${tabName(screen)}`;
 }
 
 export function Top({ agent }: { agent: string }): ReactNode {
-  const whose = useWhoami();
   const leave = useLeaving();
   const { pathname } = useLocation();
-  // The box's screens are about every org, so the crumb says the box and not the org the key opens.
-  const context = agent !== "" ? agent : pathname.startsWith("/box/") ? "box" : whose === null ? "" : orgOf(whose);
+  const screen = screenAt(pathname);
+  // Whose calls the screen is about: the agent in view, every agent, or — the box's and the
+  // workspace's screens, which are nobody's calls — nothing at all.
+  const whose = pathname.startsWith("/box/") ? "Box" : agent !== "" ? agent : screen === undefined || screen.group === "workspace" || screen.under !== undefined && ORG_SCREENS.find((one) => one.key === screen.under)?.group === "workspace" ? null : "All agents";
   return (
     <header className="top">
-      {context !== "" && <span className="top-crumb">{context} /</span>}
+      {whose !== null && <span className="top-crumb">{whose}</span>}
+      {whose !== null && <span className="top-sep">/</span>}
       <span className="top-title">{titleOf(pathname, agent)}</span>
       <div className="top-right">
-        <Switcher agent={agent} />
         <NoticesButton />
         <ThemeButton />
         {/* Both consoles are the box's and both hold a key of this browser's, so both sign out. */}

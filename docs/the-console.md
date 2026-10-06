@@ -8,70 +8,97 @@ what keeps a test call off a production process is the worker fleet each world h
 **The world is the path**: `https://<name>/…` is production's console and `https://<name>/sandbox/…`
 the sandbox's, the same screens under the `/sandbox` prefix. `lib/mode.ts` reads the first segment
 when the page loads, and every request names that world in `pinecall-env`; the doors stay at the
-root (`/v1/…`) whichever world the page is. The switcher's two chips open the same screen in the
-other world — `/sandbox` put on or taken off, same origin, same key, no second sign-in — so no
-screen ever holds one world's data under the other's path. Which screens each console has is a table in that file —
+root (`/v1/…`) whichever world the page is. The sidebar's **Production · Sandbox** control opens the
+same screen in the other world — `/sandbox` put on or taken off, same origin, same key, no second
+sign-in — so no screen ever holds one world's data under the other's path. Which screens each console has is a table in that file —
 the org's, the box's, an agent's — which the sidebar and the tab bar draw and the router routes, so
 a screen a console lacks is neither linked nor reachable by its path.
 
 | URL | screen | where |
 |---|---|---|
-| `/` · `/overview` · `/evals` | **Home** and its tab Agents: today, the agents held; **Evals**, how every agent is judged | both |
-| `/calls[/:call]` · `/list` | **Calls**: every conversation of the org as a messenger shows them, the one open drawn as the call itself — where a live call is supervised — and the same calls as a table (`?q=` `?agent=` `?channel=` `?status=`) | both |
-| `/numbers` · `/team` · `/usage` | the org's numbers, people and bill | production's |
+| `/` | **Overview**: who is on the line, the window's numbers, calls a day, what needs a look, the agents | both |
+| `/calls[/:call]` | **Calls**: every conversation, as threads beside the call open — where a live call is supervised — or as one table (`?view=table` `?status=` `?focus=1` `?q=` `?agent=` `?channel=`) | both |
+| `/quality` | **Quality**: how the real calls are judged at hang-up — the share that held, what broke, every judge | both |
+| `/agents` | **Agents**: every agent held, its processes, the tokens in use and the providers | both |
+| `/numbers` · `/team` · `/usage` | the workspace: the org's numbers, people and bill | production's |
 | `/settings` → `/tokens` · `/providers` · `/apps` · `/secrets` · `/docs[/:base]` · `/memory` · `/notifications` · `/data` · `/phone` | **Settings**' tabs: this instance's tokens and vendor keys, the apps the box hosts and their secrets ([hosted-apps.md](hosted-apps.md)), every base and every fact, what you are told, the org's data ([data-and-privacy.md](data-and-privacy.md)); Phone testing on the sandbox's | both, bar the two ends |
-| `/a/:agent/…` | an agent's six rows and their tabs, below | both |
+| `/a/:agent/…` | one agent in view: the same Overview, Calls and Quality, and what builds it, below | both |
 | `/box/…` | the box's own screens | an operator, on production's |
 
-**The sidebar is a tree.** The workspace and its org menu, ⌘K, then **Agents**: one row per agent
-the gateway holds — its letter, its name, a dot, and *n live* while it is on calls, the one count
-in the sidebar and the agent's own. The agent open is lifted, and its six rows hang under it:
-**Overview · Chat · Calls · Test · Knowledge · Settings**; a click on the agent opens Overview. Under the agents, **Organization**: Home, Calls,
-Evals, Numbers, Team, Usage, Settings; and **Box** for an operator. Nothing that is one agent's — its
-callers, its judges, its simulations, its lexicon — is a row of the org's. A row with more than one screen gets
-**the tab bar** over its screen (`shell/screen-tabs.tsx`); a row that is only a place for its tabs
-(Test, Knowledge, the org's Settings) lands on the first one the key opens.
+The URLs of before still land: `/overview` is Agents, `/list` Calls' table, `/evals` Quality, and an
+agent's `inbox`, `talk`, `settings`, `evals` and `judges` are its Calls, Playground, Configure,
+Goldens and Quality (`router.tsx`).
 
-Both are filtered by the scopes the key holds (`packages/core/src/scopes.ts`): Chat, Dev chat and
-Widget need `talk`; Agents, Calls and List `calls`; Personas, Judges, Simulations and both
-Evals `evals`; Settings and Lexicon `words`; both Docs `knowledge`; Memory, Pipeline, Numbers,
-Providers, Team and Usage the scope of their own name; the rest are open to any key. A screen a key
-does not open is not drawn, so nobody meets a 403 on a click.
+**One word, one place.** The sidebar never says a word twice. At its top the org (and its menu, for
+a person of several), **Production · Sandbox**, and **Viewing**: whose calls are on screen — *All
+agents*, or one (`shell/viewing.tsx`). The agent is what you look at, never a section of its own:
+**Overview · Calls · Quality** are the same three rows whoever is in view — `/calls` is every
+agent's, `/a/:agent/calls` the same screen with one — and changing who is in view keeps the screen
+you are on. With every agent in view, **Agents** lists them; with one, **Build** adds what makes it:
+**Playground · Test · Knowledge · Configure**. At the foot, always the org's, the **Workspace**:
+Numbers, Team, Usage, Settings; and **Box** for an operator. ⌘K and *n live* on Calls — amber while a
+caller waits for a person — are the rest. A row with more than one screen gets **the tab bar** over
+its screen (`shell/screen-tabs.tsx`); a row that is only a place for its tabs (Test, Knowledge,
+Settings) lands on the first one the key opens.
 
-**The switcher** answers *what am I looking at*: the person, their org and the key's id, the two
-environment chips, and one card per copy of an agent — yours, a teammate's, the one deployed on the
-box. A colleague's copy opens from the sandbox's page and on a `team` key, never from the gateway's.
+Both are filtered by the scopes the key holds (`packages/core/src/scopes.ts`): Playground, Dev chat
+and Widget need `talk`; Agents, Calls and an agent's Overview `calls`; Quality, Goldens, Personas
+and Simulations `evals`; Configure and Lexicon `words`; both Docs `knowledge`; Memory, Pipeline,
+Numbers, Providers, Team and Usage the scope of their own name; the rest are open to any key. A
+screen a key does not open is not drawn, so nobody meets a 403 on a click.
+
+**Viewing** answers *whose calls am I looking at*: All agents, and one row per copy of an agent —
+the one deployed in production; yours, a teammate's or the team's in the sandbox — with *n live*
+beside it. A colleague's copy opens from the sandbox's page and on a `team` key, never from the
+gateway's. The top bar says the rest in a line: who is in view, then the screen.
 
 A call that starts while you are looking at something else pops a small window in the bottom-right
 corner, with who is on and **Watch live** — three at a time at most, and never the call this tab
 started itself or the one already open at `/calls/:call`. When a screen has nothing to show it says so **in a
 sentence, never a spinner**, and a refusal is shown in the gateway's own words.
 
-## Home
+## Overview
 
-A window of whole UTC days, picked at the top — **24 h** (today), **7 d**, **30 d** — and kept in
-the URL (`?days=7`). Four numbers across the top — conversations, resolved without a human, median
-answer, spend — all counted by `GET /v1/insights?days=` over every call of the window, however many;
-the first three carry the window of the same length before beside them, and spend carries the
-month's budget instead, or the window's name when the org set none. A gateway that refuses the door
-draws today alone, from the rows the page already holds, and no picker.
+**One screen, whoever is in view.** With every agent in view it opens on the greeting and the
+org's day; with one, on that agent's name — the same numbers, only its calls. A window of whole UTC
+days is picked at the top — **24 h**, **7 d**, **30 d** — and kept in the URL (`?days=7`);
+unpicked, it is the shortest that holds a call, read off the last 30 days.
 
-Under them, today whatever the window, **Needs a look**, a row per call a flag was raised on (`escalated`, `low score`, `promise
-made`) with the judge's own reason; **On the floor now**, up to four live calls with **Listen**,
-each opening the call itself; where calls arrived, by channel; and **Finish setting up**, the steps
-still undone — a carrier and a number for a `numbers` key, the team for a `team` key, and a judge
-for a `usage` key, because turning judging on is the org's spend.
+**On the line now** first: a card per live call — who, the agent, the door and how long — the
+one waiting for a person lifted and first, with **Take the line**; every other with **Listen**,
+each opening the call. Then the window's numbers in one strip, counted by `GET /v1/insights?days=`
+(with `agent=` when one is in view) over every call of the window, however many: calls, resolved
+without a person, held by the judges, the median answer and spend — the first two and the median
+against the window of the same length before, spend against the month's budget — and **Minutes
+used · n of N** where minutes are limited.
+
+Beside **calls a day** by channel (a bar a day, a hover giving its numbers), **Needs a look**:
+every agent whose newest suite has goldens failing, and the newest calls a person took part in,
+a judge broke, or that promised what no tool recorded — each one click from where it is fixed.
+Under them how calls end, and either where calls come in (every agent) or how fast the agent
+answers, its pipeline's medians (one agent). With every agent in view, **Finish setting up**
+lists what is still undone — a carrier and a number for a `numbers` key, the team for a `team`
+key, judging for a `usage` key — and the **agents** close the page: on the line, calls, how their
+judges held and their newest suite, a row putting that agent in view. Nothing is estimated: a day
+with no calls is a zero bar, a measure nobody took is a dash.
 
 ## Agents
 
-Home's second tab: which agents this gateway is holding right now: one row per slug with its channels, the numbers
+A row of its own with every agent in view: which agents this gateway is holding right now, one row per slug with its channels, the numbers
 routed to it, today's calls and the share of judges that held. Under them the **processes** — one
 row per app socket, what each holds, and **Stop** for a key that may hold agents — then this
 instance's **tokens in use** and **providers** ready or waiting for a key (numbers: production's).
 
-## Calls, as a list
+## Calls
 
-**Calls' second tab, List — one table, live or over.** Every call the org has taken, newest first
+**The one place calls are read.** Over the screen a bar: the status chips — **All · Live · Wants a
+person · Did not hold**, each with its count, the URL's `?status=` — and **Threads · Table**
+(`?view=table`). Both read the list the sidebar's live count is folded from, so the two never
+disagree.
+
+### As a table
+
+**One table, live or over.** Every call the org has taken, newest first
 and **grouped by day**: the ones up right now under *On a call now*, then *Today*, *Yesterday*, and every day before under its
 date, each with its count. A row leads with **who was on** — a name, a number, a web visitor — and
 the last thing said under them, the way a thread reads; then the agent, the channel, how
@@ -84,20 +111,23 @@ person* pill — and comes first in the list, above every other live call: it is
 reading this page has to act on. A window pops in the corner for it, wherever in the console you
 are, with the reason and one click to the call; it closes itself when somebody takes the line.
 
-**The filters are the URL**: `?q=`, `?agent=`, `?channel=` and `?status=` (`live` or `ended`), so
-every list here is a link somebody can paste. The search asks the gateway (`q`, `agent`,
+**The filters are the URL**: `?q=`, `?agent=`, `?channel=` and the status chip picked, so every
+list here is a link somebody can paste. The search asks the gateway (`q`, `agent`,
 `channel`); a gateway that answers a `total` gets **Load more**. The search, the cut by day and who
 a row names are core's (`calls-search.ts`, `calls.ts`) — the phone's Llamadas tab reads the same.
-The rows are polled and re-read the moment the org's stream says something moved; an agent's own
-List has no agent column and no agent to choose.
+The rows are polled and re-read the moment the org's stream says something moved; with one agent in
+view the table has no agent column and no agent to choose, and a row opens the call beside its thread.
 
 ## One call
 
-One page per call, at `/calls/:call`, whichever agent took it and whether or not it is over — the log is
-read from its first entry and followed to its last, so a call that ends does not change pages, and
-there is one URL to paste for a call rather than three. Its head carries the way back to
-wherever it was opened from, then the call's id, its channel and direction, how it stands, who is on
-it and how far the log got.
+One URL per call, `/calls/:call` (or `/a/:agent/calls/:call` with that agent in view), whichever
+agent took it and whether or not it is over — the log is read from its first entry and followed to
+its last, so a call that ends does not change pages. **The head is the person**: who is on the
+call and how it stands — *on a call* and its clock, *wants a person*, or how it ended — then where
+they came from, the door and the agent; the call's id is the name's title, and the stream is
+mentioned only while it is not following the log. On its right, how the call is read and the
+screen's moves: **Focus**, which folds the conversations away and gives the call the screen
+(`?focus=1`), and **Call back** to a phone number.
 
 The middle is read four ways, switched in the head and kept by the browser for the next call
 (`lib/preferences.ts`). **Chat**, first: bubbles, each tool one line. **Transcript**: the turns, the
@@ -142,23 +172,23 @@ folded, on its left and the call's moves on its right — **Re-check by code**, 
 proof, the prompt block by block, and the whole log again with every row an anchor (`#seq-93`),
 which is where a judge's citation lands. **Attach a judge** scores a call nobody judged.
 
-## Calls, as conversations
+### As threads
 
-**The Calls row itself, the org's and an agent's alike, and there is only one way a conversation is
-drawn.** Down the left, **one thread per person** — a contact who reached two agents is one thread,
+**Calls' first view, every agent's and one agent's alike, and there is only one way a conversation
+is drawn.** Down the left, **one thread per person** — a contact who reached two agents is one thread,
 and the agent of its newest call is whose it is — each with the last thing said, when, and one
 mark: *live* (amber when the agent **asked for a person**, and that thread sits at the top of the
 list), *new* (a dot, no count, gone the moment the thread is opened), or a verdict that broke (`2/3`, red) — and
 else, on the org's, whose agent. The one open is **the call, drawn exactly as *One call* draws it**:
-the person's head over it, then the call in the view kept for it — chat, transcript or log — the desk on a live
+the call in the view kept for it — chat, transcript or log — the desk on a live
 call for a key that holds `supervise` (listen, whisper, say, take the line, transfer, end; typed on
 a text call), and on one that is over its outcome, score, latencies, cost, recording and Details.
 The URL names the call shown, so `/calls/:call` from anywhere lands here with the list beside it;
 the person's other conversations are in the pane, each one click from being the call shown, and
-**Open ↗** is the same call on a page of its own. Writing into a live call is the desk's Say; a
+**Focus** is the same call alone on the screen. Writing into a live call is the desk's Say; a
 **closed WhatsApp thread** takes what you type through the gateway's own door, inside the channel's
 window, as the agent. What the gateway keeps per contact — the name somebody wrote down, what is
-unread, the call back — is one agent's, so it is drawn on the agent's own row; the org's names a
+unread, the call back — is one agent's, so it is drawn with that agent in view; every agent's names a
 thread the way the list does, and the **+** that dials a number is the agent's too, because a call
 is placed as one agent.
 
@@ -179,7 +209,8 @@ declares no view is asked nothing at all, and the pane is the console's facts al
 
 ## Test: Personas
 
-An agent's Test is four tabs: **Personas**, **Judges**, **Simulations** and **Evals**. A persona is
+An agent's Test is what comes before a change ships, three tabs: **Goldens** (below), **Personas**
+and **Simulations**. How its real calls are judged is Quality's. A persona is
 a caller a model plays against the agent: a goal, a manner, and the facts they may state about
 themselves. A caller is ONE agent's — the patient who cancels is the clinic's — and the gateway
 keeps them so, one list per agent in both worlds ([`pinecall personas`](the-cli.md#personas)):
@@ -197,20 +228,6 @@ played in, as an agent's settings spell them; a word this box does not have is r
 The doors are `GET /v1/agents/{slug}/personas`, `PUT`·`DELETE /v1/agents/{slug}/personas/{name}`
 and `GET /v1/agents/{slug}/personas/{name}/runs` (`evals`); Simulations offers the same list.
 
-## Test: Judges
-
-What every call of the agent is held to at hang-up: **the runtime's panel** — `consent`,
-`grounded`, `promises`, and `persona` on a simulated call whose caller wrote a rule — each with
-what it asks, who answers (code, or code then a model), when it runs, and its held-rate over the
-agent's newest scored calls. Under it, two lists a tenant writes, each judge one sentence put to
-the judge model the way `persona`'s rule is, on every call or only on a call a persona played:
-**the org's**, asked of every agent's calls (never gives medical advice), and **the agent's own**,
-about its job alone (offers the next free slot). Each is listed with its question and when it runs,
-**Drop** forgets it, and **New judge** writes one — name, question, runs on — the same name again
-replacing it; a panel's name, or a name the org and the agent would share, is refused. Its verdict
-lands in `call.score` beside the panel's, under its name. The doors are `/v1/org/judges[/{name}]`
-and `/v1/agents/{slug}/judges[/{name}]` (`evals`); the CLI's is [`pinecall judges`](the-cli.md#judges).
-
 ## Test: Simulations
 
 The one place a caller is simulated from, on the agent it is under. The form is `pinecall
@@ -226,11 +243,32 @@ persona's voice, else a Cartesia voice no agent is given, and waits for the agen
 up at once (`POST /v1/calls/{call}/verbs`) and the caller, played in the gateway off this call's
 log, reads `call.ended`. The verb is a supervisor's, so a `qa` key is told so instead.
 
-## Evals, Memory and Docs, org-wide
+## Quality
 
-**Evals**, a row of the sidebar, is every agent's: the suites run on purpose beside the real calls judged
-at hang-up — how many were judged, how many held, which agents' newest suite is green, and the forty
-calls that did not hold with the judge's reason. **Memory** and **Docs** are Settings' tabs: every
+**How the real calls are going**, judged at hang-up — every agent's, or the one in view's;
+whether a change is safe before it ships is Test's. The week's numbers across — calls judged, held,
+did not hold (one click to Calls with *Did not hold* picked) — then **held, a day at a time**: the
+share of judged calls where every judge held, one line over the last 30 days, a day nobody judged
+a gap and never a zero (`GET /v1/insights`'s `series`). Beside it **what broke**: the calls the
+page follows whose judges said no, each with the judge's own reason, opening the call. With every
+agent in view, the agents by how their judges held.
+
+**Judges**, one table: **the runtime's panel** — `consent`, `grounded`, `promises`, and `persona`
+on a simulated call whose caller wrote a rule — each with what it asks, who answers (code, or code
+then a model) and when it runs; **the org's**, asked of every agent's calls (never gives medical
+advice), written here with every agent in view; and with one in view, **the agent's own**, about
+its job alone (offers the next free slot), written there. Each judge's held-rate is over the newest
+judged calls the page read; where the `pinecall start` holding the agent answers, the table counts
+`pinecall runs drift`'s windows instead — the last 7 days against the last 30, and the points
+between, a fall past the threshold in red. **New judge** writes one — name, question, runs on — the
+same name again replacing it; **Drop** forgets it; a panel's name, or a name the org and the agent
+would share, is refused. Its verdict lands in `call.score` beside the panel's, under its name. The
+doors are `/v1/org/judges[/{name}]` and `/v1/agents/{slug}/judges[/{name}]` (`evals`); the CLI's is
+[`pinecall judges`](the-cli.md#judges).
+
+## Memory and Docs, org-wide
+
+**Memory** and **Docs** are Settings' tabs: every
 current fact any agent's calls taught, newest first, searchable, droppable one row at a time; and
 every base of documents pushed in this world, its chunks, its embedder and which agents search it; a base opens onto its files, read,
 written, added and taken out one at a time, and **New base** starts one here from a name and its
@@ -238,13 +276,13 @@ first documents, with no project to push from.
 
 ## Lexicon
 
-An agent's words — a tab of its Settings, at `/a/:agent/lexicon` — in two tabs because they are two
+An agent's words — a tab of its Configure, at `/a/:agent/lexicon` — in two tabs because they are two
 different fixes:
 **Pronunciation** is how the voice says a word it says wrong, **Recognition** is the words the ears
 must know. Each console sets its own world's; the sandbox's has a *Your copy · The team's* switch
 over it, and switching with a word half written warns before it is discarded. A `words` key — a
 supervisor's, a manager's — opens it, so a brand said wrong forty times a day is fixed without a
-developer and without a deploy. The org's `/lexicon` of before lands on Home: it names no agent.
+developer and without a deploy. The org's `/lexicon` of before lands on Overview: it names no agent.
 
 ## Numbers, Tokens, Providers, Team, Usage
 
@@ -265,7 +303,7 @@ import`), moved by adding it again, nothing deployed; the web needs no row. **To
 every key: your keys at this instance and the org's server tokens, shown once as `PINECALL_KEY=…`,
 made in this console's world (`POST /v1/keys` refuses the other). **Providers**: the vendors this
 build runs and the keys the org brought here. **Team**: people, roles and single sign-on. **Usage**:
-what the org consumed, by day, by agent and call by call; it and Home show **Minutes used · n of N**
+what the org consumed, by day, by agent and call by call; it and Overview show **Minutes used · n of N**
 where minutes are limited, *Upgrade* only where the box bills (`lib/limits.tsx`). The sandbox's
 console has **Phone testing** instead: which number reaches your copy, and how to tell which phone
 is yours.
@@ -288,23 +326,12 @@ is its own page: [data-and-privacy.md](data-and-privacy.md).
 
 ## An agent's screens
 
-Six rows, and their tabs: **Overview**, below; **Chat** (and **Dev chat**, the sandbox's); **Calls** — the org's
-conversations with the agent fixed — and **List**, its table; **Test** (above); **Knowledge** — **Docs** and **Memory**; **Settings**, with
-**Pipeline**, **Lexicon** (above) and **Widget**.
+With one agent in view, the three rows looked at are the org's own — Overview, Calls, Quality,
+above, with only its calls — and **Build** is what makes it: **Playground** (and **Dev chat**, the
+sandbox's); **Test** — **Goldens**, **Personas**, **Simulations** (above); **Knowledge** — **Docs**
+and **Memory**; **Configure** — **General**, **Pipeline**, **Lexicon** (above) and **Widget**.
 
-### Overview
-
-The agent over the same window as Home's picker (24 h, 7 d, 30 d, in the URL); unpicked, the
-shortest that holds a call, else 30 d. Counted by the gateway (`GET /v1/insights?agent=&days=`) over
-every call of it, however many: calls and how many are live, the share whose judges all held, the
-mean length, what they cost, how often a person took part; **calls a day** by channel and **spend a
-day**, a bar for each day of the window, a hover giving the day's numbers; how calls end, where they
-come in, the pipeline's median latencies; and the newest calls a reviewer should open first, off its
-newest calls (`/v1/sessions?agent=`). Nothing is estimated: a day with no calls is a zero bar, a
-measure nobody took is a dash, a door the key does not open says so. What the door answers is read
-for the charts in `overview/counted.ts`.
-
-### Chat
+### Playground
 
 **A chat window, as a chat opens**: with nothing said, a question and the box in the middle; then
 the conversation, the box at its foot. Writing starts a **text** chat (the same room, no audio) and
@@ -321,9 +348,9 @@ Local only, for the breakpoint: the class is mounted in your terminal, so a `@to
 your database and you can stop inside it. A call starts from *As* (a number, a customer id, or nobody)
 and *From* — the opening, or a golden's state; a terminal holding **another** agent's directory is named.
 
-### Settings
+### Configure
 
-What the agent runs on, per world and per corner, **a version a row**. The form is **one tab a
+Its first tab, **General**, is what the agent runs on, per world and per corner, **a version a row**. The form is **one tab a
 section** — STT, LLM, Voice, Conversation, Memory, Knowledge, Bases — and every vendor, model and
 model in it is a dropdown of what this box can actually run, read off the pipeline report. Knowledge
 is what the agent knows by heart, in Markdown, read whole on every call; Bases is what it searches.
@@ -375,21 +402,21 @@ and model; the **anatomy of a turn** as medians over the last calls; and the **h
 the caller hears while a tool runs. Nothing else here writes — changing any of it is Settings, and
 a card says so.
 
-### Docs, Memory, Evals, Widget
+### Goldens, Docs, Memory, Widget
 
-**Docs** pushes the directory's `docs/<name>/` folder whole and runs its golden, lists every base of
-the world, and shows which bases this agent reads, off its settings. **Memory** is every current
-fact this agent's calls taught, one droppable at a time, plus the recall golden and the extraction
-cases. **Evals** is the calls the judges sealed and the drift of each judge's held-rate over two
-windows in both consoles, and — on the sandbox's only, because running a suite needs the class
-on this disk — the goldens as questions with the latest run's verdict on each, **Run all**, the runs
-table and one run's matrix judgment by judgment. **Widget** is the script tag to paste, with the
+**Goldens**, Test's first tab, is the goldens as questions with the newest run's verdict on each,
+the runs table and one run's matrix judgment by judgment; **Run all** and the suite form are the
+sandbox's, because running a suite needs the class on this disk, and production's Goldens offers
+the same screen there instead. **Docs** pushes the directory's `docs/<name>/` folder whole and runs
+its golden, lists every base of the world, and shows which bases this agent reads, off its
+settings. **Memory** is every current fact this agent's calls taught, one droppable at a time, plus
+the recall golden and the extraction cases. **Widget** is the script tag to paste, with the
 title, tagline, greeting, accent, theme (auto, light or dark) and autostart the gateway keeps per agent and world, the company
 and the phone read off the org's numbers, and the widget mounted as a live preview; a phone agent is called **by code** (`code-url`
 in the snippet, `POST /v1/codes` as whoever looks in the preview: the number, four digits, and the
 call that keys them). What the tag takes is the **widget** repo's `README.md`.
 
-Docs, Memory and Evals each ask the `pinecall start` standing in the agent's directory for the half
+Goldens, Docs, Memory and Quality's drift each ask the `pinecall start` standing in the agent's directory for the half
 that lives on that disk; when no process is there, the card says so and the rest of the screen still
 loads.
 

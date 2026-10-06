@@ -9,15 +9,11 @@ import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, screensOf, WORLD, WORLD_BASE, 
 import { Agents } from "./screens/agents";
 import { Apps } from "./screens/apps";
 import { BoxCarriers, BoxFleet, BoxOrg, BoxOrgs, BoxRoutes, BoxSettings, BoxTraceback, BoxUsage, OperatorOnly } from "./screens/box";
-import { OneCall } from "./screens/call";
 import { Chat } from "./screens/chat";
 import { Calls } from "./screens/calls";
-import { OrgEvals } from "./screens/org-evals";
 import { OrgMemory } from "./screens/org-memory";
 import { OrgBase, OrgDocs } from "./screens/org-docs";
 import { Evals } from "./screens/evals";
-import { Home } from "./screens/home";
-import { Inbox } from "./screens/inbox";
 import { Tokens } from "./screens/tokens";
 import { Lexicon } from "./screens/lexicon";
 import { Providers } from "./screens/providers";
@@ -37,7 +33,7 @@ import { BillingHop } from "./screens/billing";
 import { Terminal } from "./screens/terminal";
 import { Team } from "./screens/team";
 import { Usage } from "./screens/usage";
-import { Judges } from "./screens/judges";
+import { Quality } from "./screens/quality";
 import { Widget, WidgetPreview } from "./screens/widget";
 import { FirstTab } from "./shell/screen-tabs";
 import { Shell } from "./shell/shell";
@@ -46,11 +42,10 @@ import { Shell } from "./shell/shell";
 // has is that table's answer and not this file's: a row it leaves out gets no route, so a path
 // typed by hand lands on the front page and not on a screen whose doors would refuse.
 const ORG: Record<string, ReactNode> = {
-  home: <Home />,
+  overview: <Overview />,
   agents: <Agents />,
-  calls: <Inbox />,
-  "calls-list": <Calls />,
-  "org-evals": <OrgEvals />,
+  calls: <Calls />,
+  quality: <Quality />,
   "org-memory": <OrgMemory />,
   "org-docs": <OrgDocs />,
   // A row that is only a place for its tabs lands on the first one this key opens.
@@ -85,10 +80,9 @@ const AGENT: Record<string, ReactNode> = {
   talk: <Talk />,
   devchat: <Chat />,
   calls: <Calls />,
-  inbox: <Inbox />,
+  quality: <Quality />,
   test: <FirstTab />,
   personas: <Personas />,
-  judges: <Judges />,
   simulations: <Simulations />,
   evals: <Evals />,
   knowledge: <FirstTab />,
@@ -100,18 +94,19 @@ const AGENT: Record<string, ReactNode> = {
   widget: <Widget />,
 };
 
-// A call in the path is the call itself under Calls — the one page a call has, live or over — the
-// thread holding it under the Inbox, the conversation Dev chat is one of, the simulation watched,
-// or, under Personas, the caller open: the same screen one level deeper.
-const DEEPER: Record<string, ReactNode> = { devchat: <Chat />, calls: <OneCall />, inbox: <Inbox />, simulations: <Simulations />, personas: <Personas /> };
+// A call in the path is the call itself under Calls — the one page a call has, live or over, the
+// conversations beside it — the conversation Dev chat is one of, the simulation watched, or, under
+// Personas, the caller open: the same screen one level deeper.
+const DEEPER: Record<string, ReactNode> = { devchat: <Chat />, calls: <Calls />, simulations: <Simulations />, personas: <Personas /> };
 // The org's, by the same rule: `/calls/:call` is the call named, shown beside every conversation.
-const ORG_DEEPER: Record<string, ReactNode> = { calls: <Inbox /> };
+const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls /> };
 
 // The URLs the console had before Calls and the Inbox replaced Live, Sessions and — for a day —
-// Conversations. A link somebody pasted, or an Evals verdict citing `#seq-93`, lands on what the
-// screen is called now, hash and query and all — nothing pasted before today stops working.
-// Personas, Simulations and the Lexicon were the org's and are an agent's now: a link to the org's
-// lands on Home, because no agent is named in it to land on.
+// Conversations, and before one word took one place: Home's Agents tab is Agents, the table of
+// calls is Calls' own `?view=table`, Evals is Quality. A link somebody pasted, or a verdict citing
+// `#seq-93`, lands on what the screen is called now, hash and query and all — nothing pasted
+// before today stops working. Personas, Simulations and the Lexicon were the org's and are an
+// agent's now: a link to the org's lands on Overview, because no agent is named in it to land on.
 const GONE: readonly { path: string; to: string }[] = [
   { path: "live", to: "/calls?status=live" },
   { path: "live/:call", to: "/calls/:call" },
@@ -126,21 +121,35 @@ const GONE: readonly { path: string; to: string }[] = [
   { path: "simulations", to: "/" },
   { path: "simulations/:call", to: "/" },
   { path: "lexicon", to: "/" },
+  { path: "overview", to: "/agents" },
+  { path: "list", to: "/calls?view=table" },
+  { path: "evals", to: "/quality" },
 ];
 const AGENT_GONE: readonly { path: string; to: string }[] = [
   { path: "sessions", to: "/a/:agent/calls" },
   { path: "sessions/:call", to: "/calls/:call" },
   { path: "conversations", to: "/a/:agent/calls" },
+  // An agent's screens before its rows were the org's own words: the Inbox is Calls, Chat is the
+  // Playground, Settings is Configure, the goldens are Test's, and its judges are Quality's.
+  { path: "inbox", to: "/a/:agent/calls" },
+  { path: "inbox/:call", to: "/a/:agent/calls/:call" },
+  { path: "talk", to: "/a/:agent/playground" },
+  { path: "settings", to: "/a/:agent/configure" },
+  { path: "evals", to: "/a/:agent/goldens" },
+  { path: "judges", to: "/a/:agent/quality" },
 ];
 
 /** One old URL sent to the one it is now: the path's own words, and the query and hash it arrived with. */
 function To({ to }: { to: string }): ReactNode {
   const params = useParams();
   const { search, hash } = useLocation();
-  const path = to.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(params[name] ?? ""));
-  // A target that names its own query says what it is for (`?status=live`); every other one keeps
-  // the query the reader came with (`?agent=`), and the hash rides along either way.
-  return <Navigate to={`${path}${path.includes("?") ? "" : search}${hash}`} replace />;
+  const [path = "", own = ""] = to.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(params[name] ?? "")).split("?");
+  // A target that names its own query says what it is for (`?view=table`), and the query the reader
+  // came with (`?q=`, `?agent=`) rides along beside it; the hash rides along either way.
+  const query = new URLSearchParams(search);
+  for (const [name, value] of new URLSearchParams(own)) query.set(name, value);
+  const said = query.toString();
+  return <Navigate to={`${path}${said === "" ? "" : `?${said}`}${hash}`} replace />;
 }
 
 function redirects(gone: readonly { path: string; to: string }[]): RouteObject[] {

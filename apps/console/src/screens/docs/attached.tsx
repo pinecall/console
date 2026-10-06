@@ -20,7 +20,7 @@ function basesRead(answer: TuningAnswer): DocsConfig[] {
   return row?.config.bases ?? [];
 }
 
-// Read-only: the bases are edited in the Settings tab.
+// Read-only: the bases are edited in Configure.
 export function Attached({ agent }: { agent: string }): ReactNode {
   const credentials = useCredentials();
   const [bases, setBases] = useState<DocsConfig[] | null>(null);
@@ -50,7 +50,7 @@ export function Attached({ agent }: { agent: string }): ReactNode {
         <Empty>Asking the gateway…</Empty>
       ) : bases.length === 0 ? (
         <Empty>
-          No base attached: this agent searches nothing. Attach one in <Link to={`/a/${encodeURIComponent(agent)}/settings`}>Settings</Link>, or `pinecall docs attach &lt;base&gt;`.
+          No base attached: this agent searches nothing. Attach one in <Link to={`/a/${encodeURIComponent(agent)}/configure`}>Configure</Link>, or `pinecall docs attach &lt;base&gt;`.
         </Empty>
       ) : (
         <div className="kb-attached">
@@ -65,7 +65,7 @@ export function Attached({ agent }: { agent: string }): ReactNode {
           ))}
           <div className="ui-card-foot">
             {bases.length > 1 && "They are one search: read together and ranked against each other, so a base with nothing to say about the question takes none of the turn's chunks. "}
-            Change them in <Link to={`/a/${encodeURIComponent(agent)}/settings`}>Settings</Link>.
+            Change them in <Link to={`/a/${encodeURIComponent(agent)}/configure`}>Configure</Link>.
           </div>
         </div>
       )}

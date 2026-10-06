@@ -3,7 +3,7 @@
 import "./ui.css";
 
 export { Card, CardAction, CardFoot, CardHead, Empty, Item, KV, Refused, Row, SectionLabel } from "./card";
-export { Button, ButtonLink, Check, Chips, Choice, Field, Input, Label, Segmented, Switch, TextAction, TextArea } from "./controls";
+export { Button, ButtonLink, Check, Chips, Field, Input, Label, Segmented, Switch, TextAction, TextArea } from "./controls";
 export type { ButtonKind, ButtonSize } from "./controls";
 export { Icon } from "./icon";
 export { Select, SelectItem } from "./select";

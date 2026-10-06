@@ -1,4 +1,4 @@
-/** The table of calls: what the URL filters by, grouped by day, the calls up right now on top. */
+/** Calls as a table: what the URL searches and filters by, grouped by day, the calls up right now on top. */
 
 import { type SessionLine } from "@pinecall/core/wire/rest";
 import { Fragment, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -8,43 +8,42 @@ import { byDay, isLive, whoOn, type CallDay } from "@pinecall/core/calls";
 import { floorMoved, matches, useServerSearch, type Filter } from "@pinecall/core/calls-search";
 import { clockOf, dayOf, duration, lettersFor, liveFirst, utcDay, webVisitor } from "../../lib/format";
 import { Avatar, Button, Card, CardFoot, Empty, Input, Pill, Refused, Select, SelectItem, TableHead, TableRow, type Tone } from "../../ui";
+import { keeps, type Status } from "./status";
 
 // A call id as the log names one: pasted whole, Enter opens it even when it is not on the page.
 const A_CALL = /^call[_-][\w+-]{6,}$/;
 
 // A row leads with WHO was on the call — a person, not an id — then what was last said under
-// them, the way the Inbox draws a thread. The id is the row's title and the page it opens.
+// them, the way a thread reads. The id is the row's title, and the row opens the call beside its thread.
 const ORG_COLUMNS = "28px minmax(0,2fr) minmax(90px,0.7fr) 84px 132px 70px 60px 52px";
 const AGENT_COLUMNS = "28px minmax(0,2fr) 84px 132px 70px 60px 52px";
 const ORG_LABELS = ["", "Who", "Agent", "Channel", "Ended", "Judges", "Length>", "At>"];
 const AGENT_LABELS = ["", "Who", "Channel", "Ended", "Judges", "Length>", "At>"];
 const CHANNELS = ["web", "phone", "whatsapp"] as const;
 
-// The filters are the URL's and nothing else's: `?q=`, `?agent=`, `?channel=` and `?status=` are
-// links people paste and the sidebar's live badge is one of them (`?status=live`).
-const STATUSES = [
-  { value: "", name: "Live and ended" },
-  { value: "live", name: "On a call now" },
-  { value: "ended", name: "Ended" },
-] as const;
+// The filters are the URL's and nothing else's: `?q=`, `?agent=` and `?channel=` are links people
+// paste, and so is the status Calls' chips pick (`?status=`), which reaches the table already applied.
 
 /**
- * The list. `lines` is what the screen already follows — the org's, or the org's filtered to one
- * agent — and it is filtered here; a gateway whose sessions door searches by itself (it answers a
- * `total`) is asked instead, and its total is said.
+ * The list. `lines` is what the screen already follows — the org's, or the agent in view's,
+ * through the status picked — and it is searched here; a gateway whose sessions door searches by
+ * itself (it answers a `total`) is asked instead, the status applied to what it answers, and its
+ * total is said.
  */
 export function ConversationList({
   lines,
   error,
   agent,
   agents,
+  status,
 }: {
   lines: SessionLine[];
   error: string | null;
-  /** The agent this list is one of, or "" for the org's. */
+  /** The agent in view, or "" for every agent. */
   agent: string;
-  /** The slugs the agent filter offers, on the org's list. */
+  /** The slugs the agent filter offers, with every agent in view. */
   agents: string[];
+  status: Status;
 }): ReactNode {
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams();
@@ -52,7 +51,6 @@ export function ConversationList({
   const org = agent === "";
   // An agent fixed by the path is not one to choose: `?agent=` is the org's list alone.
   const filter: Filter = { query: search.get("q") ?? "", agent: org ? (search.get("agent") ?? "") : "", channel: search.get("channel") ?? "" };
-  const status = search.get("status") ?? "";
   // Asked again whenever the followed list moves: a call that rang shows up in the searched page too.
   const searched = useServerSearch(agent, filter, pages, floorMoved(lines)).found;
 
@@ -69,15 +67,17 @@ export function ConversationList({
       : lines.filter(
           (line) => matches(line, filter.query) && (filter.agent === "" || line.agent === filter.agent) && (filter.channel === "" || line.channel === filter.channel),
         );
-  const shown = status === "" ? found : found.filter((line) => isLive(line) === (status === "live"));
+  const shown = found.filter((line) => keeps(status, line));
   const ordered = liveFirst(shown);
 
   const open = (event: KeyboardEvent<HTMLInputElement>): void => {
     const typed = filter.query.trim();
-    if (event.key === "Enter" && A_CALL.test(typed)) void navigate(`/calls/${typed}`);
+    if (event.key === "Enter" && A_CALL.test(typed)) void navigate(`${base}/${typed}`);
   };
 
   const columns = org ? ORG_COLUMNS : AGENT_COLUMNS;
+  // A row opens the call in Threads, the agent in view kept in view.
+  const base = org ? "/calls" : `/a/${encodeURIComponent(agent)}/calls`;
   const filtering = filter.query !== "" || filter.agent !== "" || filter.channel !== "" || status !== "";
 
   return (
@@ -107,13 +107,6 @@ export function ConversationList({
           {CHANNELS.map((channel) => (
             <SelectItem key={channel} value={channel}>
               {channel}
-            </SelectItem>
-          ))}
-        </Select>
-        <Select size="sm" className="calls-select" aria-label="Filter by status" value={status} onValueChange={(value) => asked("status", value)}>
-          {STATUSES.map((one) => (
-            <SelectItem key={one.value} value={one.value}>
-              {one.name}
             </SelectItem>
           ))}
         </Select>
@@ -149,7 +142,7 @@ export function ConversationList({
                   </span>
                 </div>
                 {group.lines.map((line) => (
-                  <Row key={line.call} line={line} columns={columns} org={org} />
+                  <Row key={line.call} line={line} columns={columns} org={org} base={base} />
                 ))}
               </Fragment>
             ))}
@@ -173,12 +166,12 @@ export function ConversationList({
 }
 
 /** One call: who, what was last said, which agent and door, how it ended, what the judges made of it, how long, when. */
-function Row({ line, columns, org }: { line: SessionLine; columns: string; org: boolean }): ReactNode {
+function Row({ line, columns, org, base }: { line: SessionLine; columns: string; org: boolean; base: string }): ReactNode {
   const who = whoOn(line, webVisitor);
   const live = isLive(line);
   const ended = endedAs(line);
   return (
-    <TableRow columns={columns} to={`/calls/${line.call}`}>
+    <TableRow columns={columns} to={`${base}/${line.call}`}>
       <span className={live ? "calls-who-avatar calls-who-avatar-live" : "calls-who-avatar"} title={line.call}>
         <Avatar name={who} letters={lettersFor(line.caller?.name, line.direction === "outbound" ? line.to : line.from)} size={28} round />
       </span>

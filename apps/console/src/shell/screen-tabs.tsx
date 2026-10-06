@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 import { Navigate, NavLink, useLocation, useParams } from "react-router";
 
 import { opens } from "@pinecall/core/scopes";
-import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, rowOf, screenAt, tabsOf, type Screen } from "../lib/mode";
+import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, rowOf, screenAt, tabName, tabsOf, type Screen } from "../lib/mode";
 import { useScopes } from "../lib/whoami";
 
 /**
- * Drawn only where a row has more than one screen this key opens: Home's floor, an agent's Test.
+ * Drawn only where a row has more than one screen this key opens: Settings, an agent's Test.
  * A row of one screen has nothing to switch and gets no bar. Which tab is on is the URL's, so a
  * link lands on it and a reload keeps it — the same rule every `?view=` on the page follows.
  */
@@ -27,7 +27,7 @@ export function ScreenTabs({ agent }: { agent: string }): ReactNode {
     <nav className="tabs" aria-label={`${row.name}'s screens`}>
       {tabs.map((screen) => (
         <NavLink key={screen.key} to={`${prefix}/${screen.path}`} end={screen.path === ""} className={({ isActive }) => (isActive || at.key === screen.key ? "tabs-tab tabs-tab-on" : "tabs-tab")}>
-          {screen.name}
+          {tabName(screen)}
         </NavLink>
       ))}
     </nav>

@@ -1,12 +1,13 @@
-/** The Inbox: the conversations as a messenger shows them — one thread per person — and the one open drawn as the call's own page. */
+/** Calls read as threads: the conversations as a messenger shows them — one thread per person — beside the one open, drawn the one way a call is. */
 
+import { type SessionLine } from "@pinecall/core/wire/rest";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 
 import { GatewayError } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { wantsAPerson } from "@pinecall/core/calls";
-import { clockOf, dayOf, today, utcDay, visitorOf } from "../../lib/format";
+import { clockOf, dayOf, today, utcDay } from "../../lib/format";
 import { useOrg } from "../../lib/org";
 import { Avatar, usePane } from "../../ui";
 import { Call } from "../call";
@@ -18,24 +19,25 @@ import { lastOf, lettersOf, threadsOf, titleOf, type Thread } from "./threads";
 import "./inbox.css";
 
 /**
- * The screen. The threads are the org's calls grouped by who was on them — a contact who talked to
- * two agents is ONE thread, and its agent is whoever took the newest call — and an agent in the
- * path keeps only that agent's. The URL names a call, and the thread holding it is the one open:
- * THE CALL, drawn exactly as its own page draws it and nowhere else any other way — the transcript
- * with every tool call, or the log; the desk on a live one, which is where a supervisor works;
- * its verdict on one that is over — with the person after the call's own panels, and their other
- * conversations there, each one click from being the call shown. What the gateway keeps per
- * contact on top of that — names, what is unread, a call back, writing into a closed thread — is
- * per agent, so it is drawn on the agent's own tab and only there.
+ * Calls read as threads. The threads are the calls Calls hands it — the org's, or the agent in
+ * view's, through the status picked — grouped by who was on them: a contact who talked to two
+ * agents is ONE thread, and its agent is whoever took the newest call. The URL names a call, and
+ * the thread holding it is the one open: THE CALL, drawn exactly one way — the chat, the transcript
+ * with every tool call, or the log; the desk on a live one, which is where a supervisor works; its
+ * verdict on one that is over — with the person after the call's own panels, and their other
+ * conversations there, each one click from being the call shown. In focus the list folds away and
+ * the call has the screen. What the gateway keeps per contact on top of that — names, what is
+ * unread, a call back, writing into a closed thread — is per agent, so it is drawn with one agent
+ * in view and only then.
  */
-export function Inbox(): ReactNode {
+export function Inbox({ listed, focus, onFocus }: { listed: readonly SessionLine[]; focus: boolean; onFocus: () => void }): ReactNode {
   const params = useParams();
   const agent = params["agent"] ?? "";
   const chosen = params["call"];
   const navigate = useNavigate();
+  const { search } = useLocation();
   const credentials = useCredentials();
-  const { lines, floorError } = useOrg();
-  const listed = useMemo(() => (agent === "" ? lines : lines.filter((line) => line.agent === agent)), [lines, agent]);
+  const { floorError } = useOrg();
   const threads = useMemo(() => threadsOf(listed), [listed]);
   const [query, setQuery] = useState("");
   const pane = usePane({ name: "agent.conversations", initial: 292, min: 200, max: 520, side: "left" });
@@ -47,8 +49,9 @@ export function Inbox(): ReactNode {
   const open = threads.find((thread) => chosen !== undefined && thread.lines.some((line) => line.call === chosen)) ?? threads[0];
   // The call on screen where the screen opens a call: the one the URL names, else the thread's newest.
   const call = open === undefined ? undefined : (open.lines.find((line) => line.call === chosen) ?? open.latest);
-  const base = agent === "" ? "/calls" : `/a/${agent}/inbox`;
-  const hrefOf = (one: string): string => `${base}/${one}`;
+  const base = agent === "" ? "/calls" : `/a/${encodeURIComponent(agent)}/calls`;
+  // The status picked and the focus ride along: opening another conversation keeps the list as it is.
+  const hrefOf = (one: string): string => `${base}/${one}${search}`;
   const words = query.trim().toLowerCase();
   const shown = threads.filter((thread) => words === "" || `${nameOf(thread, door)} ${thread.handle} ${lastOf(thread)}`.toLowerCase().includes(words));
 
@@ -64,8 +67,8 @@ export function Inbox(): ReactNode {
   const whose = open?.latest.agent ?? agent;
 
   return (
-    <div className="ib" style={pane.style}>
-      {pane.handle}
+    <div className={focus ? "ib ib-focus" : "ib"} style={pane.style}>
+      {!focus && pane.handle}
       <div className="ib-list">
         <div className="ib-list-head">
           <input className="ib-search" placeholder="Search a caller or number" value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -115,15 +118,16 @@ export function Inbox(): ReactNode {
         </div>
       ) : (
         <div className="ib-open">
-          <ThreadHead agent={whose} thread={open} name={nameOf(open, door)} outbound={outbound} onRefused={setRefused} />
           {refused !== null && <p className="ib-refused-line ib-refused-head">{refused}</p>}
-          {/* The call, one hook and one stream, as its own page draws it. Around it what is the
-              thread's: writing into a closed WhatsApp thread under the log, the person and their
-              other conversations after the call's panels. */}
+          {/* The call, one hook and one stream, drawn the one way a call is. Around it what is the
+              thread's: its name and moves in the head, writing into a closed WhatsApp thread under
+              the log, the person and their other conversations after the call's panels. */}
           <Call
             key={call.call}
             call={call.call}
             agent={whose}
+            name={nameOf(open, door)}
+            beside={() => <ThreadMoves agent={whose} thread={open} outbound={outbound} focus={focus} onFocus={onFocus} onRefused={setRefused} />}
             foot={door !== null && call.status === "ended" && call.channel === "whatsapp" ? <Composer agent={whose} contact={open.contact} /> : undefined}
             aside={<Aside key={`${open.contact}-aside`} agent={whose} thread={open} name={nameOf(open, door)} shown={call.call} hrefOf={hrefOf} />}
           />
@@ -235,39 +239,40 @@ function whenOf(at: number | null): string {
   return dayOf(at);
 }
 
-/** The person over the conversation: their name, how they reached the agent, the call's own page, and a call back. */
-function ThreadHead({ agent, thread, name, outbound, onRefused }: { agent: string; thread: Thread; name: string; outbound: Outbound | null; onRefused?: ((why: string | null) => void) | undefined }): ReactNode {
-  const navigate = useNavigate();
+/** The thread's moves in the call's head: the conversation alone on the screen, and a call back to a phone number. */
+function ThreadMoves({
+  agent,
+  thread,
+  outbound,
+  focus,
+  onFocus,
+  onRefused,
+}: {
+  agent: string;
+  thread: Thread;
+  outbound: Outbound | null;
+  focus: boolean;
+  onFocus: () => void;
+  onRefused: (why: string | null) => void;
+}): ReactNode {
   const [calling, setCalling] = useState(false);
   const closeCalling = useCallback(() => setCalling(false), []);
   // A call BACK: to a phone number, and only once the org can place a call at all.
   const phone = outbound !== null && thread.contact.startsWith("+");
   return (
-    <div className="ib-head">
-      <Avatar name={name} letters={lettersOf(thread)} size={38} round />
-      <div className="ib-head-words">
-        <div className="ib-head-name">{name}</div>
-        <div className="ib-head-sub">
-          {/* The handle says how they reached the agent, unless the title already did. */}
-          {thread.handle !== name && visitorOf(thread.contact) !== name && `${thread.handle} · `}
-          {thread.latest.channel ?? "—"} · handled by {agent}
-        </div>
-      </div>
-      <div className="ib-head-actions">
-        {/* One conversation, one page: the newest call of this thread, live or over. */}
-        <button type="button" className="ui-button ui-button-md" onClick={() => void navigate(`/calls/${thread.latest.call}`)}>
-          Open ↗
-        </button>
-        {phone && outbound !== null && (
-          <span className="dial-anchor">
-            <button type="button" className="ui-button ui-button-primary ui-button-md" aria-expanded={calling} onClick={() => setCalling(!calling)}>
-              Call back
-            </button>
-            {calling && <CallBack agent={agent} to={thread.contact} outbound={outbound} onClose={closeCalling} onRefused={onRefused ?? (() => undefined)} />}
-          </span>
-        )}
-      </div>
-    </div>
+    <>
+      <button type="button" className="ui-button ui-button-sm" onClick={onFocus} title={focus ? "Show the conversations beside the call" : "Give the call the whole screen"}>
+        {focus ? "Show the list" : "Focus"}
+      </button>
+      {phone && outbound !== null && (
+        <span className="dial-anchor">
+          <button type="button" className="ui-button ui-button-primary ui-button-sm" aria-expanded={calling} onClick={() => setCalling(!calling)}>
+            Call back
+          </button>
+          {calling && <CallBack agent={agent} to={thread.contact} outbound={outbound} onClose={closeCalling} onRefused={onRefused} />}
+        </span>
+      )}
+    </>
   );
 }
 

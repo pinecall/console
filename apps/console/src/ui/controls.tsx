@@ -151,19 +151,6 @@ export function Chips<T extends string>({
   );
 }
 
-/** The square choices of the switcher: an org, an environment. */
-export function Choice({
-  on,
-  children,
-  ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { on: boolean }): ReactNode {
-  return (
-    <button type="button" className={on ? "ui-choice ui-choice-on" : "ui-choice"} aria-pressed={on} {...rest}>
-      {children}
-    </button>
-  );
-}
-
 export function Switch({ on, onChange, label }: { on: boolean; onChange: (on: boolean) => void; label: string }): ReactNode {
   return (
     <button

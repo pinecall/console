@@ -39,7 +39,7 @@ export function Pipeline(): ReactNode {
 
           <Card>
             <Empty>
-              Changing any of it is the <Link to={`/a/${encodeURIComponent(agent)}/settings`}>Settings</Link> tab: the vendors and models with the opening, the cut of a turn and what is remembered, per corner and versioned.
+              Changing any of it is the <Link to={`/a/${encodeURIComponent(agent)}/configure`}>Configure</Link> tab: the vendors and models with the opening, the cut of a turn and what is remembered, per corner and versioned.
             </Empty>
           </Card>
           <HoldMelody key={`hold-${agent}`} agent={agent} />
