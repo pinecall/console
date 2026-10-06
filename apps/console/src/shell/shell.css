@@ -113,11 +113,12 @@
   display: grid;
 }
 
+/* The sidebar scrolls, so it clips what is wider than itself: its menus are exactly its width. */
 .side-orgs {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  width: 260px;
+  right: 0;
   z-index: 40;
   padding: 5px;
   border: 1px solid var(--line-control);
@@ -147,6 +148,12 @@
   cursor: pointer;
 }
 
+.side-orgs-row > .ui-clip {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
 .side-orgs-row:hover {
   background: var(--ground-4);
 }
@@ -156,6 +163,7 @@
 }
 
 .side-orgs-role {
+  flex: none;
   margin-left: auto;
   font-size: 11.5px;
   color: var(--ink-4);
@@ -490,7 +498,7 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  width: 300px;
+  right: 0;
   max-height: 70vh;
   overflow-y: auto;
   z-index: 40;
