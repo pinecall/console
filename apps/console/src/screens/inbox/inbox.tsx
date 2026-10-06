@@ -75,7 +75,7 @@ export function Inbox({ listed, focus, onFocus }: { listed: readonly SessionLine
           {/* Simulating a caller is the Simulations screen's; here the + calls a real number as ONE
               agent, so it is drawn where the path names one. */}
           {outbound !== null && agent !== "" && (
-            <button type="button" className="ib-new" title="Call a number" aria-expanded={dialling} onClick={() => setDialling(!dialling)}>
+            <button type="button" className="ib-call" title="Call a number" aria-expanded={dialling} onClick={() => setDialling(!dialling)}>
               +
             </button>
           )}

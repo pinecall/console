@@ -166,7 +166,8 @@
   box-shadow: var(--accent-ring);
 }
 
-.ib-new {
+/* The + that calls a number as the agent in view: its own name, because .ib-new is a thread's unread dot. */
+.ib-call {
   flex: none;
   width: 34px;
   height: 34px;
@@ -179,7 +180,7 @@
   cursor: pointer;
 }
 
-.ib-new:hover {
+.ib-call:hover {
   background: var(--accent-hover);
 }
 
