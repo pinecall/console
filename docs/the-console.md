@@ -419,7 +419,8 @@ in the snippet, `POST /v1/codes` as whoever looks in the preview: the number, fo
 call that keys them). What the tag takes is the **widget** repo's `README.md`.
 
 Goldens, Docs, Memory and Quality's drift each ask the `pinecall start` standing in the agent's directory for the half
-that lives on that disk; when no process is there, the card says so and the rest of the screen still
+that lives on that disk — its companion socket answers, the process listed as `pinecall-cli/<version>`
+beside the agent's own; when no process is there, the card says so and the rest of the screen still
 loads.
 
 ## The box's screens
