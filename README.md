@@ -10,7 +10,7 @@ sandbox, a switch at the top, one sign-in.
 - **Sandbox** is for development: your copies of the agents, live calls, Dev chat, test suites,
   phone testing.
 
-`pinecall console` (the CLI in the [agents](https://github.com/pinecall/agents) repository)
+`pinecall console` (the CLI, [pinecall/cli](https://github.com/pinecall/cli))
 opens it signed in.
 
 ## Development
