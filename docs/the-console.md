@@ -381,6 +381,8 @@ to the corner below, and an agent nobody has told keeps its audio. What is kept 
 which is what the conversation's page plays back: the caller, the agent, the hold music and a
 supervisor who took the line. **Longest voice call** beside it: the runtime's ten minutes, 5 to 60,
 or *no limit* — a minute before it the agent wraps up, at it the call ends as a timeout; never a chat.
+**Language**, under STT's vendor and model, is a tag (`en`, `es`, `pt`, `fr`, `de`, `it`, or one set
+from the terminal such as `pt-BR`, kept as set) or *not set*, which pins none: each vendor runs its own default.
 
 **Bases** is a row per attachment, and the row is the whole attachment: the base, how many chunks
 a turn reads, who searches it (the platform before every turn, or the model when it decides) and

@@ -27,6 +27,8 @@ export interface Typed {
   llm: Knob;
   tts: Knob;
   voice: string;
+  /** A language tag; "" is not set, and the vendors run their own default. */
+  language: string;
   /** Opening: literal words, or an instruction for the model. */
   opening: "say" | "reply";
   say: string;
@@ -73,6 +75,7 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
     llm: knobOf(config.llm, vendors),
     tts: ttsModel === undefined || ttsModel === "" ? tts : { ...tts, model: ttsModel },
     voice: config.voice ?? "",
+    language: config.language ?? "",
     opening: reply !== "" ? "reply" : "say",
     say: config.greeting?.say ?? "",
     reply,
@@ -107,6 +110,8 @@ export function configOf(typed: Typed, wordsOnly: boolean, standing: TuningBody)
     }
     const voice = typed.voice.trim();
     if (voice !== "") config.voice = voice;
+    const language = typed.language.trim();
+    if (language !== "") config.language = language;
     const hangup = typed.hangup.trim();
     if (hangup !== "") config.hangup = { when: hangup };
     const turn: NonNullable<TuningBody["turn"]> = {};

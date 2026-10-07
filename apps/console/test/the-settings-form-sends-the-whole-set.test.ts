@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 
+import { languagesWith } from "../src/screens/settings/language";
 import { configOf, knobOf, typedOf, wordOf } from "../src/screens/settings/typed";
 
 const VENDORS = new Set(["anthropic", "deepgram", "elevenlabs", "cartesia"]);
@@ -89,6 +90,26 @@ describe("what the form sends", () => {
     expect(configOf(typedOf({ max_duration_s: 900 }, VENDORS), false, {}).max_duration_s).toBe(900);
   });
 
+  // Unset pins no language: each vendor runs its own default.
+  it("sends a language nobody set as nothing, and one picked as its tag", () => {
+    expect(configOf(typedOf({}, VENDORS), false, {}).language).toBeUndefined();
+
+    const picked = typedOf({}, VENDORS);
+    picked.language = "es";
+    expect(configOf(picked, false, {}).language).toBe("es");
+
+    const cleared = typedOf({ language: "es" }, VENDORS);
+    cleared.language = "";
+    expect(configOf(cleared, false, {}).language).toBeUndefined();
+  });
+
+  it("keeps a language set from the terminal that is not on the list, and offers it first", () => {
+    const typed = typedOf({ language: "pt-BR" }, VENDORS);
+    expect(configOf(typed, false, {}).language).toBe("pt-BR");
+    expect(languagesWith("pt-BR")[0]).toBe("pt-BR");
+    expect(languagesWith("es")).toEqual(languagesWith(""));
+  });
+
   it("sends of an attachment only what was picked: no k, no mode and no floor unless they were", () => {
     const typed = typedOf({}, VENDORS);
     typed.bases = [
@@ -109,7 +130,7 @@ describe("what the form sends", () => {
   });
 
   it("carries the corner's other fields over for a key that opens words alone", () => {
-    const standing = { voice: "carolina", llm: "anthropic/claude-haiku-4-5", greeting: { say: "Buenas." }, bases: [{ base: "clinica", k: 4 }] };
+    const standing = { voice: "carolina", language: "es", llm: "anthropic/claude-haiku-4-5", greeting: { say: "Buenas." }, bases: [{ base: "clinica", k: 4 }] };
     const typed = typedOf(standing, VENDORS);
     typed.say = "Clínica Norte, buenos días.";
     typed.knowledge = "# Horario\nDe 9 a 20.";
@@ -117,6 +138,7 @@ describe("what the form sends", () => {
 
     expect(configOf(typed, true, standing)).toEqual({
       voice: "carolina",
+      language: "es",
       llm: "anthropic/claude-haiku-4-5",
       greeting: { say: "Clínica Norte, buenos días." },
       knowledge: "# Horario\nDe 9 a 20.",

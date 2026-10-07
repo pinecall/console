@@ -122,6 +122,6 @@ export function ConversationSection({
 }
 
 // A value set from the terminal that is not on the list stays on it, so the form never drops it.
-function listed(values: readonly string[], set: string): readonly string[] {
+export function listed(values: readonly string[], set: string): readonly string[] {
   return set === "" || values.includes(set) ? values : [set, ...values];
 }

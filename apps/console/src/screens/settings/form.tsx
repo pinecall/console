@@ -9,6 +9,7 @@ import type { Provider } from "../../lib/catalogue";
 import { Button, Input, Tabs } from "../../ui";
 import { BasesSection } from "./bases";
 import { ConversationSection } from "./conversation";
+import { LanguageField } from "./language";
 import { StageSection, VoiceField } from "./stages";
 import { configOf, typedOf, type Typed } from "./typed";
 import { KnowledgeSection, MemorySection } from "./words";
@@ -92,7 +93,9 @@ export function SettingsForm({
         <Tabs label="Settings" tabs={sectionsFor(wordsOnly)} on={section} onPick={onPickSection} />
       </div>
       {section === "hears" && (
-        <StageSection modality="stt" title="Speech to text" blurb="What turns the caller's voice into words." knob={typed.stt} providers={providers} defaults={defaults} models={models} onChange={knob("stt")} />
+        <StageSection modality="stt" title="Speech to text" blurb="What turns the caller's voice into words, and in which language." knob={typed.stt} providers={providers} defaults={defaults} models={models} onChange={knob("stt")}>
+          <LanguageField language={typed.language} onChange={(language) => change("language", language)} />
+        </StageSection>
       )}
       {section === "decides" && (
         <StageSection modality="llm" title="Language model" blurb="The model that reads what the caller said and writes the answer." knob={typed.llm} providers={providers} defaults={defaults} models={models} onChange={knob("llm")} />
