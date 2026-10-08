@@ -8,6 +8,9 @@ import { z } from "zod";
  */
 export const ChannelSchema = z.enum(["phone", "web", "whatsapp"]);
 
+/** Whether a call is spoken or written: the widget's voice call and its chat share the `web` channel. */
+export const MediumSchema = z.enum(["voice", "text"]);
+
 /** Inbound: the public reached the agent. Outbound: the agent reached out (a dial). */
 export const DirectionSchema = z.enum(["inbound", "outbound"]);
 
