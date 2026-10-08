@@ -3,7 +3,9 @@
 A tab of Settings, open to a key with `team`, in both worlds: what the org keeps in this console's
 world, how it comes out and how it goes (`screens/org-data`). The terminal's twin is
 `pinecall data`; every door here is the runtime's (`docs/protocol/gateway-api.md` §7 and
-§Erasing, `numbers.md` §Consent).
+§Erasing, `numbers.md` §Consent). Which of these controls Pinecall's own cloud runs, the test
+that holds each one, and what it does not claim (SOC 2, HIPAA, PCI DSS) are on
+[pinecall.io/compliance](https://pinecall.io/compliance/).
 
 ## Rules
 
