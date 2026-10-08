@@ -11,7 +11,7 @@ import { promoteCall, replayCall, type Promoted, type Replayed } from "../../eva
 import { eraseCall, optOut } from "../../org-data";
 
 // Operator-facing labels for ring-3 verdicts, distinct from judge verdicts.
-const TONE: Record<string, Tone> = { passed: "green", failed: "red", deferred: "amber", skipped: "muted" };
+const TONE: Record<string, Tone> = { held: "green", broken: "red", deferred: "amber", skipped: "muted" };
 
 /**
  * Ring 3 rebuilds the call from its log without re-running it. Promote writes a golden candidate

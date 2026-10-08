@@ -90,7 +90,7 @@ export function Docs(): ReactNode {
       <PageHead
         title="Docs"
         ledeWidth={620}
-        lede="The documents this agent searches on a turn — the RAG. A base opens onto its files, read and edited one at a time; a project pushes its folder whole from here. Which bases the agent reads is its Settings; what it knows by heart is Settings ▸ Knowledge, not a document."
+        lede="The documents this agent searches on a turn — the RAG. A base opens onto its files, read and edited one at a time; a project pushes its folder whole from here. Which bases the agent reads is its Configure screen; what it knows by heart is Configure ▸ Knowledge, not a document."
       />
 
       <Attached agent={agent} />
