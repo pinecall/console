@@ -10,7 +10,7 @@ const VENDORS = new Set(["anthropic", "deepgram", "elevenlabs", "cartesia"]);
 describe("a model knob, read as two picks", () => {
   it("reads a vendor, a vendor with its model, and a bare model on the vendor in use", () => {
     expect(knobOf("deepgram", VENDORS)).toEqual({ vendor: "deepgram", model: "" });
-    expect(knobOf("anthropic/claude-haiku-4-5", VENDORS)).toEqual({ vendor: "anthropic", model: "claude-haiku-4-5" });
+    expect(knobOf("anthropic/claude-haiku-5-5", VENDORS)).toEqual({ vendor: "anthropic", model: "claude-haiku-5-5" });
     expect(knobOf("claude-sonnet-5", VENDORS)).toEqual({ vendor: "", model: "claude-sonnet-5" });
     expect(knobOf(null, VENDORS)).toEqual({ vendor: "", model: "" });
   });
@@ -130,7 +130,7 @@ describe("what the form sends", () => {
   });
 
   it("carries the corner's other fields over for a key that opens words alone", () => {
-    const standing = { voice: "carolina", language: "es", llm: "anthropic/claude-haiku-4-5", greeting: { say: "Buenas." }, bases: [{ base: "clinica", k: 4 }] };
+    const standing = { voice: "carolina", language: "es", llm: "anthropic/claude-haiku-5-5", greeting: { say: "Buenas." }, bases: [{ base: "clinica", k: 4 }] };
     const typed = typedOf(standing, VENDORS);
     typed.say = "Clínica Norte, buenos días.";
     typed.knowledge = "# Horario\nDe 9 a 20.";
@@ -139,7 +139,7 @@ describe("what the form sends", () => {
     expect(configOf(typed, true, standing)).toEqual({
       voice: "carolina",
       language: "es",
-      llm: "anthropic/claude-haiku-4-5",
+      llm: "anthropic/claude-haiku-5-5",
       greeting: { say: "Clínica Norte, buenos días." },
       knowledge: "# Horario\nDe 9 a 20.",
       bases: [{ base: "clinica", k: 4 }],

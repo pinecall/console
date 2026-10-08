@@ -116,7 +116,7 @@ export function PersonaEditor({
         hint="The same three words as an agent's settings: the model that improvises them, the vendor that reads their lines, the voice. Empty is the runtime's choice — its default model, a voice the agent does not have. A name this box does not have is refused on save."
       >
         <div className="psn-knobs">
-          <Input size="sm" value={written.llm ?? ""} spellCheck={false} aria-label="Model" placeholder="anthropic/claude-haiku-4-5" onChange={(event) => set("llm", event.target.value.trim())} />
+          <Input size="sm" value={written.llm ?? ""} spellCheck={false} aria-label="Model" placeholder="anthropic/claude-haiku-5-5" onChange={(event) => set("llm", event.target.value.trim())} />
           <Input size="sm" value={written.tts ?? ""} spellCheck={false} aria-label="Voice vendor" placeholder="elevenlabs" onChange={(event) => set("tts", event.target.value.trim())} />
           <Input size="sm" value={written.voice ?? ""} spellCheck={false} aria-label="Voice" placeholder="carolina, or the vendor's own id" onChange={(event) => set("voice", event.target.value.trim())} />
         </div>
