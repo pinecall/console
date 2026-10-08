@@ -152,6 +152,7 @@
 
 .cs-doc-head {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
@@ -164,7 +165,12 @@
   font-size: 18px;
   font-weight: 600;
   color: var(--ink);
-  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.cs-doc-head > :first-child {
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 .cs-doc-about {
@@ -353,8 +359,8 @@
   font-size: 12px;
   line-height: 1.6;
   color: var(--ink);
-  white-space: pre-wrap;
-  word-break: break-all;
+  white-space: pre;
+  overflow-x: auto;
 }
 
 .cs-run {
@@ -362,6 +368,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.cs-run > :first-child {
+  width: min(100%, 420px);
 }
 
 .cs-result {

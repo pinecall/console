@@ -19,7 +19,7 @@ const STATUS_SAID = { pending: "waiting for you", approved: "played every night"
 export function CaseView({ agent, kept, onDecided }: { agent: string; kept: EvalCase; onDecided: (kept: EvalCase) => void }): ReactNode {
   const golden = kept.golden;
   const lines = golden.input ?? [];
-  const state = Object.entries(golden.state ?? {});
+  const state = flattened(golden.state ?? {});
   const events = golden.events ?? [];
   return (
     <article className="cs-doc">
@@ -55,7 +55,7 @@ export function CaseView({ agent, kept, onDecided }: { agent: string; kept: Eval
             {state.map(([what, value]) => (
               <div key={what} className="cs-fact">
                 <dt>{what}</dt>
-                <dd>{typeof value === "string" ? value : JSON.stringify(value)}</dd>
+                <dd>{value}</dd>
               </div>
             ))}
           </dl>
@@ -96,5 +96,14 @@ function Event({ name, data }: { name: string; data: Record<string, unknown> | u
     <span className="cs-event">
       your backend sent <code>{name}</code> {data === undefined ? "" : JSON.stringify(data)}
     </span>
+  );
+}
+
+// One level of a state's objects opened into dotted names (`patient.name`), the rest said as JSON.
+function flattened(state: Record<string, unknown>): [string, string][] {
+  return Object.entries(state).flatMap(([what, value]): [string, string][] =>
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? Object.entries(value).map(([inner, said]): [string, string] => [`${what}.${inner}`, typeof said === "string" ? said : JSON.stringify(said)])
+      : [[what, typeof value === "string" ? value : JSON.stringify(value)]],
   );
 }

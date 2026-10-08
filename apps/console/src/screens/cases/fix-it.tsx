@@ -36,7 +36,7 @@ export function FixIt({ agent, kept }: { agent: string; kept: EvalCase }): React
             ))}
           </dl>
           <p className="cs-fix-how">
-            Saved in your own corner nobody else hears it. Run the case on that version below; once it holds, apply it to the team, then to
+            Saved in your own corner, nobody else hears it. Run the case on that version below; once it holds, apply it to the team, then to
             production.
           </p>
           <ButtonLink size="sm" to={configure}>
