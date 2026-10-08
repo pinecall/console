@@ -65,6 +65,16 @@ export async function put(credentials: Credentials, path: string, body: unknown)
   return answered(answer);
 }
 
+/** PATCH JSON: only the fields sent are written; the caller parses the response with the wire's schema. */
+export async function patch(credentials: Credentials, path: string, body: unknown): Promise<unknown> {
+  const answer = await fetch(doorAt(credentials, path, {}), {
+    method: "PATCH",
+    headers: { ...headersFor(credentials), "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return answered(answer);
+}
+
 /** POST JSON; the caller parses the response with the wire's schema. */
 export async function post(credentials: Credentials, path: string, body: unknown): Promise<unknown> {
   const answer = await fetch(doorAt(credentials, path, {}), {

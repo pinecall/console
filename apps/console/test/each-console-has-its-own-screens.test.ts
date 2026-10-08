@@ -78,7 +78,7 @@ describe("the sandbox's console", () => {
   });
 
   it("has every screen of an agent, Dev chat among them", () => {
-    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Goldens", "Personas", "Simulations", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget"]);
+    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Cases", "Goldens", "Personas", "Simulations", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget"]);
   });
 });
 
@@ -103,8 +103,8 @@ describe("an agent's screens", () => {
     expect(screenAt("/lexicon")).toBeUndefined();
   });
 
-  it("put only what comes before a change ships under Test: its goldens, its callers and a simulation", () => {
-    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Goldens", "Personas", "Simulations"]);
+  it("put only what comes before a change ships under Test: the calls that broke, its goldens, its callers and a simulation", () => {
+    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Cases", "Goldens", "Personas", "Simulations"]);
   });
 
   it("read a path in the agent's table, so its Configure is not the org's Settings", () => {

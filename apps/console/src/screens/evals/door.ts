@@ -75,6 +75,14 @@ export async function readRuns(credentials: Credentials, agent: string): Promise
   return listed.runs;
 }
 
+/**
+ * Play cases of the org's dataset as a run, through the app holding the agent in this world, on a
+ * version of its settings or the one standing; the gateway answers once every case is judged.
+ */
+export async function runCases(credentials: Credentials, agent: string, cases: string[], version: number | undefined): Promise<EvalRun> {
+  return EvalRunSchema.parse(await post(credentials, "/v1/evals/run", { agent, cases, ...(version === undefined ? {} : { version }) }));
+}
+
 /** One ring-3 check result. */
 const VerdictSchema = z.object({ check: z.string(), status: z.string(), detail: z.string() });
 

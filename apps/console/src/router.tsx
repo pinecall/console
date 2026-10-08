@@ -11,6 +11,7 @@ import { Apps } from "./screens/apps";
 import { BoxCarriers, BoxFleet, BoxOrg, BoxOrgs, BoxRoutes, BoxSettings, BoxTraceback, BoxUsage, OperatorOnly } from "./screens/box";
 import { Chat } from "./screens/chat";
 import { Calls } from "./screens/calls";
+import { Cases } from "./screens/cases";
 import { OrgMemory } from "./screens/org-memory";
 import { OrgBase, OrgDocs } from "./screens/org-docs";
 import { Evals } from "./screens/evals";
@@ -82,6 +83,7 @@ const AGENT: Record<string, ReactNode> = {
   calls: <Calls />,
   quality: <Quality />,
   test: <FirstTab />,
+  cases: <Cases />,
   personas: <Personas />,
   simulations: <Simulations />,
   evals: <Evals />,
@@ -96,8 +98,8 @@ const AGENT: Record<string, ReactNode> = {
 
 // A call in the path is the call itself under Calls — the one page a call has, live or over, the
 // conversations beside it — the conversation Dev chat is one of, the simulation watched, or, under
-// Personas, the caller open: the same screen one level deeper.
-const DEEPER: Record<string, ReactNode> = { devchat: <Chat />, calls: <Calls />, simulations: <Simulations />, personas: <Personas /> };
+// Personas, the caller open, or under Cases the case open: the same screen one level deeper.
+const DEEPER: Record<string, ReactNode> = { devchat: <Chat />, calls: <Calls />, simulations: <Simulations />, personas: <Personas />, cases: <Cases /> };
 // The org's, by the same rule: `/calls/:call` is the call named, shown beside every conversation.
 const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls /> };
 

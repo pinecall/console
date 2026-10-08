@@ -139,9 +139,10 @@ export const BOX_SCREENS: readonly Screen[] = [
 // each the org's screen with only its calls — then what builds it. Playground is the gateway's
 // room, by voice or in writing, and Dev chat — a written call to the class in a developer's own
 // directory — is its second tab in the workshop. Test is what happens before a change ships: the
-// goldens and their runs, the callers written for it, and a caller put on it live; how its REAL
-// calls are judged is Quality's. Knowledge is what it searches and what it learned. Configure is
-// what it runs on, with the pipeline that results, its lexicon and the widget that embeds it.
+// real calls a judge broke on, waiting for a person, the goldens and their runs, the callers
+// written for it, and a caller put on it live; how its REAL calls are judged is Quality's.
+// Knowledge is what it searches and what it learned. Configure is what it runs on, with the
+// pipeline that results, its lexicon and the widget that embeds it.
 export const AGENT_SCREENS: readonly Screen[] = [
   { key: "agent-overview", path: "overview", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
@@ -149,6 +150,8 @@ export const AGENT_SCREENS: readonly Screen[] = [
   { key: "talk", path: "playground", name: "Playground", tab: "Chat", in: BOTH, icon: "chat", group: "build" },
   { key: "devchat", path: "dev-chat", name: "Dev chat", in: THE_WORKSHOPS, under: "talk" },
   { key: "test", path: "test", name: "Test", in: BOTH, icon: "flask", opensOn: "first-tab", group: "build" },
+  // First, so Test opens on it: a real call a judge broke on waits here for a person.
+  { key: "cases", path: "cases", name: "Cases", in: BOTH, under: "test" },
   { key: "evals", path: "goldens", name: "Goldens", in: BOTH, under: "test" },
   { key: "personas", path: "personas", name: "Personas", in: BOTH, under: "test" },
   { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, under: "test" },

@@ -1,12 +1,13 @@
-/** Post-call actions: re-check by code (ring 3), promote to a golden, or erase the call. */
+/** Post-call actions: re-check by code (ring 3), keep as a case or write as a candidate, or erase the call. */
 
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { saidBy } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { useScopes } from "../../../lib/whoami";
 import { Button, Pill, type Tone } from "../../../ui";
+import { keepCall } from "../../cases";
 import { promoteCall, replayCall, type Promoted, type Replayed } from "../../evals/door";
 import { eraseCall, optOut } from "../../org-data";
 
@@ -14,25 +15,30 @@ import { eraseCall, optOut } from "../../org-data";
 const TONE: Record<string, Tone> = { held: "green", broken: "red", deferred: "amber", skipped: "muted" };
 
 /**
- * Ring 3 rebuilds the call from its log without re-running it. Promote writes a golden candidate
- * into the directory of the agent's `pinecall start`. CLI equivalents: `pinecall eval`, `pinecall runs promote`.
+ * Ring 3 rebuilds the call from its log without re-running it. Keep puts the call in the org's
+ * Cases, where the nightly plays it; a candidate is the same golden written into the directory of
+ * the agent's `pinecall start`, for one that names the code and belongs in the repository.
+ * CLI equivalents: `pinecall eval`, `pinecall cases keep`, `pinecall runs promote`.
  */
 export function Actions({ agent, call, number }: { agent: string; call: string; number: string | null }): ReactNode {
   const credentials = useCredentials();
   const navigate = useNavigate();
   const scopes = useScopes();
-  const [busy, setBusy] = useState<"" | "check" | "promote" | "erase" | "list">("");
+  const [busy, setBusy] = useState<"" | "check" | "keep" | "promote" | "erase" | "list">("");
   const [sure, setSure] = useState(false);
   const [listed, setListed] = useState(false);
   const [replayed, setReplayed] = useState<Replayed | null>(null);
   const [promoted, setPromoted] = useState<Promoted | null>(null);
+  const [kept, setKept] = useState<string | null>(null);
   const [refused, setRefused] = useState<string | null>(null);
 
-  const does = async (what: "check" | "promote"): Promise<void> => {
+  const does = async (what: "check" | "keep" | "promote"): Promise<void> => {
     setBusy(what);
     setRefused(null);
     try {
       if (what === "check") setReplayed(await replayCall(credentials, call));
+      // Named by the call it came from, so a second keep of the same call is refused by name.
+      else if (what === "keep") setKept((await keepCall(credentials, call, `kept-${call.slice(-6).toLowerCase()}`)).name);
       else setPromoted(await promoteCall(credentials, agent, call));
     } catch (failed) {
       setRefused(saidBy(failed));
@@ -82,8 +88,11 @@ export function Actions({ agent, call, number }: { agent: string; call: string; 
         <Button size="sm" disabled={busy !== ""} onClick={() => void does("check")}>
           {busy === "check" ? "Checking…" : "Re-check by code"}
         </Button>
-        <Button size="sm" disabled={busy !== "" || agent === ""} onClick={() => void does("promote")}>
-          {busy === "promote" ? "Writing…" : "Promote to a golden"}
+        <Button size="sm" disabled={busy !== "" || agent === "" || kept !== null} title="The org's Cases: approved, the nightly plays it" onClick={() => void does("keep")}>
+          {busy === "keep" ? "Keeping…" : kept !== null ? "Kept as a case" : "Keep as a case"}
+        </Button>
+        <Button size="sm" disabled={busy !== "" || agent === ""} title="A golden file in test/candidates, in the directory of pinecall start" onClick={() => void does("promote")}>
+          {busy === "promote" ? "Writing…" : "Write as a candidate"}
         </Button>
         <Button size="sm" kind={sure ? "danger" : "secondary"} disabled={busy !== ""} onClick={() => void erase()}>
           {busy === "erase" ? "Erasing…" : sure ? "Erase it for good" : "Erase this call"}
@@ -102,6 +111,12 @@ export function Actions({ agent, call, number }: { agent: string; call: string; 
               {verdict.check} {verdict.status}
             </Pill>
           ))}
+        </div>
+      )}
+      {kept !== null && (
+        <div className="over-result">
+          <span className="over-result-lead">Kept</span>
+          <Link to={`/a/${encodeURIComponent(agent)}/cases/${encodeURIComponent(kept)}`}>Open {kept} in Cases →</Link>
         </div>
       )}
       {promoted !== null && (

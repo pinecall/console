@@ -1,4 +1,4 @@
-/** The evals doors a page reads: personas, their runs, the voices a caller speaks with, an agent's judges. */
+/** The evals doors a page reads: personas, their runs, the voices a caller speaks with, an agent's judges, the org's cases. */
 
 import { z } from "zod";
 import { EndReasonSchema } from "./defs.js";
@@ -158,3 +158,89 @@ export const JudgePutSchema = z.strictObject({
 });
 
 export type JudgePut = z.infer<typeof JudgePutSchema>;
+
+/**
+ * What a golden expects: each field set is one judge, settled by code — except `judges`, the
+ * hang-up judges asked again by name of the golden's call, the one field a model answers. A field
+ * left at its default is not sent.
+ */
+export const ExpectSchema = z.strictObject({
+  tools: z.array(z.string()).optional(),
+  not_tools: z.array(z.string()).optional(),
+  not: z.array(z.string()).optional(),
+  says: z.array(z.string()).optional(),
+  says_any: z.array(z.string()).optional(),
+  grounded: z.boolean().optional(),
+  register: z.enum(["tu", "usted"]).nullable().optional(),
+  replies: z.boolean().nullable().optional(),
+  judges: z.array(z.string()).optional(),
+});
+
+export type Expect = z.infer<typeof ExpectSchema>;
+
+/** A fact of the tenant's backend a golden injects after the caller line it names (0: before the first). */
+export const EventStepSchema = z.strictObject({
+  after_turn: z.number().optional(),
+  name: z.string(),
+  data: z.record(z.string(), z.unknown()).optional(),
+});
+
+/** One conversation written down: the state it opens in, the caller's lines, what it expects. */
+export const GoldenSchema = z.strictObject({
+  name: z.string(),
+  state: z.record(z.string(), z.unknown()).optional(),
+  input: z.array(z.string()).optional(),
+  memory: z.array(z.string()).optional(),
+  events: z.array(EventStepSchema).optional(),
+  today: z.string().nullable().optional(),
+  expect: ExpectSchema.optional(),
+  promoted_from: z.string().nullable().optional(),
+});
+
+export type Golden = z.infer<typeof GoldenSchema>;
+
+/** A case waits for a person (`pending`) until approved into the nightly or dismissed. */
+export const CaseStatusSchema = z.enum(["pending", "approved", "dismissed"]);
+
+export type CaseStatus = z.infer<typeof CaseStatusSchema>;
+
+/**
+ * One case of the org's dataset: a real call kept as a golden — at hang-up when a judge broke on
+ * it, or by a person — whose agent, from which world, on which settings version, and decided how.
+ */
+export const EvalCaseSchema = z.strictObject({
+  id: z.string(),
+  agent: z.string(),
+  name: z.string(),
+  golden: GoldenSchema,
+  source_call: z.string(),
+  source_env: z.enum(["production", "sandbox"]),
+  held_out: z.boolean(),
+  author: z.string(),
+  created_at: z.number(),
+  status: CaseStatusSchema,
+  broke: z.array(z.strictObject({ judge: z.string(), reason: z.string() })),
+  source_version: z.number().nullable(),
+  kept_in_repo: z.boolean(),
+  decided_by: z.string().nullable(),
+});
+
+export type EvalCase = z.infer<typeof EvalCaseSchema>;
+
+/** GET /v1/evals/cases: the org's cases, the pending first, and how many wait of how many may. */
+export const EvalCaseListSchema = z.strictObject({
+  cases: z.array(EvalCaseSchema),
+  pending: z.number(),
+  pending_at_most: z.number(),
+});
+
+/** PATCH /v1/evals/cases/{id}, the body: what a person decided; each field sent is written. */
+export const CaseDecisionSchema = z.strictObject({
+  status: CaseStatusSchema.optional(),
+  held_out: z.boolean().optional(),
+  kept_in_repo: z.boolean().optional(),
+  judge_was_wrong: z.string().optional(),
+  note: z.string().optional(),
+});
+
+export type CaseDecision = z.infer<typeof CaseDecisionSchema>;
