@@ -38,4 +38,5 @@ pinecall-v2/
 └── agents/      the agent framework and CLI
 ```
 
-Every screen, and which world has it: [docs/the-console.md](docs/the-console.md).
+Every screen, and whether the sandbox, production or both have it: `apps/console/src/lib/mode.ts`; the
+screens explained for a team: [The console](https://docs.pinecall.io/guides/console/).

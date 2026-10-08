@@ -3,7 +3,7 @@
 /** One judge of the runtime's panel, as the page describes it. */
 export interface BuiltIn {
   name: string;
-  /** The question, in the words `agents/docs/testing-an-agent.md` puts it. */
+  /** The question, in the words docs.pinecall.io's built-in judges page puts it. */
   asks: string;
   /** Who answers: code alone, or code first and a model for what code could not settle. */
   by: "code" | "code, then a model" | "a model";
