@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { saidBy } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { Button, Card, Check, Empty, Field, Input, KV, Page, PageHead, Refused, TextAction } from "../../ui";
-import { dropCollector, putCollector, readCollector, type Collector } from "./door";
+import { dropCollector, putCollector, readCollector, type Collector } from "../../lib/telemetry";
 
 /** One header of the form: a name and a value, the value sent once and never read back. */
 interface Header {

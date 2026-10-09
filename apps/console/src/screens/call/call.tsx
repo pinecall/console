@@ -21,6 +21,7 @@ import { ChatView } from "./chat-view";
 import { Timeline } from "./timeline";
 import { traceOf } from "./trace-bars";
 import { TraceStep } from "./trace-step";
+import { TraceIdPanel } from "./trace-id";
 import { TraceView } from "./trace-view";
 import { useWatchedCall } from "./use-watched-call";
 import "./call.css";
@@ -137,6 +138,7 @@ export function Call({
         <RoomPanel room={state.room} from={state.from} over={over} />
         <PromptPanel prompt={state.prompt} cost={state.cost} />
         <MetricsPanel metrics={state.metrics} entries={watched.entries} />
+        <TraceIdPanel call={call} />
         {aside}
       </aside>
     </div>

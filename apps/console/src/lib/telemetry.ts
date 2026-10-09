@@ -1,4 +1,4 @@
-/** Telemetry screen API: where the org sends its calls' traces — set with its headers, read back by name, dropped. */
+/** Where the org sends its calls' traces (GET/PUT/DELETE /v1/telemetry), and the trace id a call's spans share. */
 
 import { z } from "zod";
 
@@ -26,4 +26,16 @@ export async function putCollector(credentials: Credentials, endpoint: string, h
 /** Forget the collector: the traces stay on the platform alone. */
 export async function dropCollector(credentials: Credentials): Promise<void> {
   await drop(credentials, DOOR);
+}
+
+// A call id of the gateway's own making: its 32 hex digits are the trace id as they stand
+// (runtime worker/_traces.py trace_id_of); any other id hashes to one.
+const A_HEX_CALL = /^call_([0-9a-f]{32})$/;
+
+/** The trace id of a call's spans, as the worker gave it: the call id's hex, else SHA-256's first 32 hex digits. */
+export async function traceIdOf(call: string): Promise<string> {
+  const found = A_HEX_CALL.exec(call);
+  if (found?.[1] !== undefined) return found[1];
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(call));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }

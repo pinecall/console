@@ -3,7 +3,7 @@
 import { expect, test } from "vitest";
 import { z } from "zod";
 
-import { dropCollector, putCollector, readCollector } from "../src/screens/telemetry/door";
+import { dropCollector, putCollector, readCollector, traceIdOf } from "../src/lib/telemetry";
 
 const CREDENTIALS = { base: "/", key: "pk_test" };
 // runtime wire/rest/telemetry.py: TelemetryResponse.
@@ -27,6 +27,13 @@ test("the collector is read by header name, null when the org sends its traces n
   expect(await readCollector(CREDENTIALS)).toBeNull();
   answering({ ...A_COLLECTOR, header_names: undefined });
   await expect(readCollector(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
+});
+
+test("a trace id is the call id's hex, and a carrier's call id hashes to one", async () => {
+  expect(await traceIdOf("call_7216eb82996a429f88ddd4173cff5c3f")).toBe("7216eb82996a429f88ddd4173cff5c3f");
+  const hashed = await traceIdOf("call-_+34607827824_GCrodJQ2ozT9");
+  expect(hashed).toMatch(/^[0-9a-f]{32}$/);
+  expect(hashed).not.toBe(await traceIdOf("call-_+34600000000_x"));
 });
 
 test("setting it sends the endpoint, the headers and pii in the body, and dropping it is a DELETE", async () => {
