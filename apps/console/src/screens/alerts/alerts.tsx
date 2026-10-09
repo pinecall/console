@@ -151,7 +151,7 @@ export function Alerts(): ReactNode {
       <Card>
         <CardHead title="What is posted" meta="each as it is written on the agent's log, tried twice within five seconds" />
         {POSTED.map((one) => (
-          <KV key={one.type} label={<code className="alr-type">{one.type}</code>}>
+          <KV key={one.type} keyWidth={170} label={<code className="alr-type">{one.type}</code>}>
             {one.when}
           </KV>
         ))}
