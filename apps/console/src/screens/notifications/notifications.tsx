@@ -101,6 +101,7 @@ export function Notifications(): ReactNode {
           <CardHead title="What to tell you" meta={`of ${org}'s ${calls}, on every device of yours`} />
           <Choice name="A call asks for a person" sub="The agent put the caller on hold and is waiting for somebody to take the line." on={chosen.events.attention} onChange={(on) => change({ events: { attention: on } })} />
           <Choice name="Every incoming call" sub="Each call as it starts ringing, whoever answers it." on={chosen.events.ringing} onChange={(on) => change({ events: { ringing: on } })} />
+          <Choice name="A monitor fires" sub="A number the org watches crossed its line over its window: latency, the judges, escalations, tools, spend. Once a day per monitor." on={chosen.events.monitors} onChange={(on) => change({ events: { monitors: on } })} />
         </Card>
       )}
 

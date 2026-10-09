@@ -164,6 +164,20 @@ export const ErrorEventSchema = z.strictObject({
   recoverable: z.boolean(),
 });
 
+/** A monitor's number crossed its line over its window: written once a day, on the agent's log, saying its world. */
+export const MonitorFiredSchema = z.strictObject({
+  monitor: z.string(),
+  name: z.string(),
+  metric: z.string(),
+  above: z.boolean(),
+  threshold: z.number(),
+  value: z.number(),
+  window_days: z.number(),
+  agent: z.string().nullable(),
+  env: EnvSchema,
+  day: z.string(),
+});
+
 /** The org's calls cost more today than its own days usually do: written once a day, on the agent's log. */
 export const SpendUnusualSchema = z.strictObject({
   org: z.string(),

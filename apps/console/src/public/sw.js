@@ -13,7 +13,7 @@ self.addEventListener("push", (event) => {
       // One notification per call; a newer one replaces it and alerts again.
       tag: notice.call || notice.kind || "pinecall",
       renotify: true,
-      data: { call: notice.call || null, org: notice.org || null, world: notice.world || null },
+      data: { call: notice.call || null, kind: notice.kind || null, org: notice.org || null, world: notice.world || null },
     }),
   );
 });
@@ -23,8 +23,10 @@ self.addEventListener("push", (event) => {
 // same path under `/sandbox` (lib/mode.ts), production's at the root.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const { call, org, world } = event.notification.data || {};
-  const path = call ? `/calls/${encodeURIComponent(call)}${org ? `?org=${encodeURIComponent(org)}` : ""}` : "/";
+  const { call, kind, org, world } = event.notification.data || {};
+  const inTheOrg = org ? `?org=${encodeURIComponent(org)}` : "";
+  // A monitor that fired has no call to open: its screen is Quality's Monitors.
+  const path = call ? `/calls/${encodeURIComponent(call)}${inTheOrg}` : kind === "monitors" ? `/monitors${inTheOrg}` : "/";
   const to = `${self.location.origin}${world === "sandbox" ? "/sandbox" : ""}${path}`;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((open) => {

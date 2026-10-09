@@ -25,7 +25,7 @@ const DeviceRowSchema = z.looseObject({
 export const NoticesSchema = z.looseObject({
   org: z.string(),
   org_name: z.string().nullable(),
-  events: z.looseObject({ attention: z.boolean(), ringing: z.boolean() }),
+  events: z.looseObject({ attention: z.boolean(), ringing: z.boolean(), monitors: z.boolean() }),
   devices: z.array(DeviceRowSchema),
 });
 export type Notices = z.infer<typeof NoticesSchema>;
@@ -38,7 +38,7 @@ export interface ThisDevice {
 }
 
 export interface NoticesChanged {
-  events?: { attention?: boolean; ringing?: boolean };
+  events?: { attention?: boolean; ringing?: boolean; monitors?: boolean };
 }
 
 export async function readNotices(notifier: Credentials): Promise<Notices> {

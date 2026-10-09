@@ -7,6 +7,7 @@ import { AGENT_SCREENS, BOX_SCREENS, ORG_SCREENS, screensOf, WORLD, WORLD_BASE, 
 // One import line per screen, and it is the screen's directory, never a file inside it: a screen
 // that reorganises itself renames nothing here.
 import { Agents } from "./screens/agents";
+import { Alerts } from "./screens/alerts";
 import { Apps } from "./screens/apps";
 import { BoxCarriers, BoxFleet, BoxOrg, BoxOrgs, BoxRoutes, BoxSettings, BoxTraceback, BoxUsage, OperatorOnly } from "./screens/box";
 import { Chat } from "./screens/chat";
@@ -64,6 +65,7 @@ const ORG: Record<string, ReactNode> = {
   apps: <Apps />,
   secrets: <Secrets />,
   telemetry: <Telemetry />,
+  alerts: <Alerts />,
   observability: <Observability />,
   team: <Team />,
   usage: <Usage />,

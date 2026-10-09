@@ -117,6 +117,8 @@ export const ORG_SCREENS: readonly Screen[] = [
   { key: "apps", path: "apps", name: "Apps", in: BOTH, under: "org-settings" },
   { key: "secrets", path: "secrets", name: "Secrets", in: BOTH, under: "org-settings" },
   { key: "telemetry", path: "telemetry", name: "Telemetry", in: BOTH, under: "org-settings" },
+  // Where the org's alerts are posted: a webhook of its own, beside the bell.
+  { key: "alerts", path: "alerts", name: "Alerts", in: BOTH, under: "org-settings" },
   // Every base of the world and who searches it, and every fact any agent's calls taught.
   { key: "org-docs", path: "docs", name: "Docs", in: BOTH, under: "org-settings" },
   { key: "org-memory", path: "memory", name: "Memory", in: BOTH, under: "org-settings" },

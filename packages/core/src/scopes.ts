@@ -20,6 +20,7 @@ export const SCOPE_OF: Record<string, string> = {
   judges: "evals",
   monitors: "evals",
   test: "evals",
+  alerts: "providers",
   widget: "talk",
   agents: "calls",
   personas: "evals",

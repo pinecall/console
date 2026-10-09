@@ -8,6 +8,7 @@ import { useCredentials } from "@pinecall/core/credentials";
 import { Button, Card, CardHead, Empty, Page, PageHead, Pill, Refused, TableHead, TableRow, TextAction } from "../../ui";
 import { dropMonitor, type Monitor } from "./door";
 import { ruleOf, valueOf } from "./metrics";
+import { useNames } from "./names";
 import { NewMonitor } from "./new-monitor";
 import { useMonitors } from "./use-monitors";
 import "./monitors.css";
@@ -24,6 +25,7 @@ export function Monitors(): ReactNode {
   const agent = useParams()["agent"] ?? "";
   const credentials = useCredentials();
   const { monitors, asking, setMonitors } = useMonitors();
+  const names = useNames();
   const [writing, setWriting] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const shown = (monitors ?? []).filter((one) => agent === "" || one.agent === null || one.agent === agent);
@@ -79,14 +81,14 @@ export function Monitors(): ReactNode {
         )}
         {shown.length > 0 && <TableHead columns={COLUMNS} labels={["Monitor", "Watches", "Agent", "Set by", "Last fired", ""]} />}
         {shown.map((one) => (
-          <Row key={one.id} monitor={one} agent={agent} onDrop={() => void dropped(one.id)} />
+          <Row key={one.id} monitor={one} agent={agent} setBy={names.get(one.created_by) ?? one.created_by} onDrop={() => void dropped(one.id)} />
         ))}
       </Card>
     </Page>
   );
 }
 
-function Row({ monitor, agent, onDrop }: { monitor: Monitor; agent: string; onDrop: () => void }): ReactNode {
+function Row({ monitor, agent, setBy, onDrop }: { monitor: Monitor; agent: string; setBy: string; onDrop: () => void }): ReactNode {
   return (
     <TableRow columns={COLUMNS}>
       <span className="mon-name ui-clip" title={monitor.id}>
@@ -94,7 +96,9 @@ function Row({ monitor, agent, onDrop }: { monitor: Monitor; agent: string; onDr
       </span>
       <span className="mon-rule">{ruleOf(monitor)}</span>
       <span className={monitor.agent === null ? "ui-cell-faint" : "ui-cell-ink ui-clip"}>{monitor.agent ?? "every agent"}</span>
-      <span className="ui-cell-faint ui-clip">{monitor.created_by}</span>
+      <span className="ui-cell-faint ui-clip" title={monitor.created_by}>
+        {setBy}
+      </span>
       <span className="mon-fired">
         {monitor.fired_on === null ? (
           <span className="ui-cell-faint">never</span>
