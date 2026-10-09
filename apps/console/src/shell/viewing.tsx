@@ -89,16 +89,23 @@ export function Viewing({ agent }: { agent: string }): ReactNode {
 
   return (
     <div ref={box} className="view">
-      <button type="button" className={open ? "view-trigger view-trigger-open" : "view-trigger"} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="listbox">
+      <button
+        type="button"
+        className={open ? "view-trigger view-trigger-open" : "view-trigger"}
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={`Viewing ${agent === "" ? "all agents" : agent}`}
+        title="Whose calls are on screen: every agent, or one"
+      >
         {agent === "" ? (
           <span className="view-all" aria-hidden>
-            <Icon name="bot" size={15} />
+            <Icon name="bot" size={13} />
           </span>
         ) : (
-          <Avatar size={26} name={agent} letters={agent.slice(0, 1).toUpperCase()} />
+          <Avatar size={20} name={agent} letters={agent.slice(0, 1).toUpperCase()} />
         )}
         <span className="view-words">
-          <span className="view-label">Viewing</span>
           <span className="view-name">{agent === "" ? "All agents" : agent}</span>
         </span>
         <span className="view-caret">

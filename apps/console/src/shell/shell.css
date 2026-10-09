@@ -37,8 +37,21 @@
   padding: 12px 10px 10px;
   background: var(--ground-side);
   border-right: 1px solid var(--line);
+  overflow: hidden;
+}
+
+/* The rows between the top and the person: they scroll, and the person stays at the foot. */
+.side-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 -10px;
+  padding: 0 10px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
 .side-folded {
@@ -330,11 +343,11 @@
 }
 
 .side-foot {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 4px 0;
-  margin-top: auto;
   border-top: 1px solid var(--line);
 }
 
@@ -459,15 +472,14 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 8px;
-  border: 1px solid var(--line-control);
-  border-radius: 10px;
-  background: var(--ground);
+  gap: 9px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: var(--shadow-card);
 }
 
 .view-trigger:hover,
@@ -477,9 +489,9 @@
 
 .view-all {
   flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   background: var(--ground-5);
@@ -493,16 +505,8 @@
   flex-direction: column;
 }
 
-.view-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-5);
-}
-
 .view-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;

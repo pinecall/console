@@ -83,6 +83,7 @@ export function Sidebar({ agent, onSearch }: { agent: string; onSearch: () => vo
         <Viewing agent={agent} />
       </div>
 
+      <div className="side-scroll">
       <nav className="side-nav">
         <button type="button" className="side-link side-search" onClick={onSearch} title="Search">
           <span className="side-icon">
@@ -121,6 +122,7 @@ export function Sidebar({ agent, onSearch }: { agent: string; onSearch: () => vo
           </>
         )}
       </nav>
+      </div>
 
       <div className="side-foot">
         {yours === undefined ? (
