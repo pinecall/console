@@ -1,4 +1,4 @@
-/** Quality: how the REAL calls are going — judged at hang-up — for every agent or the one in view: the share that held, a day at a time, what broke, and every judge. */
+/** Quality's overview: how the REAL calls are going — judged at hang-up — for every agent or the one in view: the share that held, a day at a time, what broke, and by agent. */
 
 import { useMemo, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
@@ -7,12 +7,8 @@ import { whoOn } from "@pinecall/core/calls";
 import { ago, percent, webVisitor } from "../../lib/format";
 import { useInsights } from "../../lib/insights";
 import { useOrg } from "../../lib/org";
-import { useScores } from "../../lib/use-scores";
 import { Bar, Card, CardHead, Page, PageHead, Stat, Stats, TableHead, TableRow } from "../../ui";
-import { useDrift } from "./drift";
 import { HeldByDay } from "./held-by-day";
-import { Judges } from "./judges";
-import { heldRates } from "./panel";
 import "./quality.css";
 
 // The numbers across are a week's; the line is a month's, so a week reads against what came before.
@@ -26,7 +22,7 @@ const AGENT_COLUMNS = "minmax(0,1.4fr) 90px minmax(0,1fr)";
  * Quality is about calls that happened; whether a change is safe before it ships is Test's. The
  * week's numbers and the line are the gateway's count (`/v1/insights`); what broke is the calls
  * the page follows whose judges said no, each with the judge's own reason; the judges' held-rates
- * are folded from the newest verdicts the page read.
+ * are the Judges tab's.
  */
 export function Quality(): ReactNode {
   const agent = useParams()["agent"] ?? "";
@@ -35,10 +31,6 @@ export function Quality(): ReactNode {
   const week = useInsights({ agent: asked, days: WEEK });
   const month = useInsights({ agent: asked, days: MONTH });
   const mine = useMemo(() => (agent === "" ? lines : lines.filter((line) => line.agent === agent)), [lines, agent]);
-  const scored = useScores(mine);
-  const verdicts = scored.flatMap((row) => (row.score === null ? [] : [row.score]));
-  const rates = heldRates(verdicts);
-  const drifted = useDrift(agent);
   const broke = mine.filter((line) => line.score?.passed === false).slice(0, BROKE_SHOWN);
   const calls = agent === "" ? "/calls" : `/a/${encodeURIComponent(agent)}/calls`;
   const judged = week?.judged ?? 0;
@@ -109,8 +101,6 @@ export function Quality(): ReactNode {
           ))}
         </Card>
       )}
-
-      <Judges agent={agent} rates={rates} read={verdicts.length} drifted={drifted} />
     </Page>
   );
 }

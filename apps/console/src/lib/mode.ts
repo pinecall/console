@@ -54,7 +54,7 @@ export function theBoxsOwnName(): string {
 export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask" | "bot";
 
 /**
- * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality —
+ * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality (its judges and monitors under it) —
  * and read the same with every agent in view or one. `build` is what makes one agent, drawn only
  * while one is in view; `workspace` is the org's own, drawn at the sidebar's foot whatever is.
  */
@@ -102,7 +102,9 @@ const THE_WORKSHOPS = ["sandbox"] as const;
 export const ORG_SCREENS: readonly Screen[] = [
   { key: "overview", path: "", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
-  { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
+  { key: "quality", path: "quality", name: "Quality", tab: "Overview", in: BOTH, icon: "check" },
+  { key: "judges", path: "judges", name: "Judges", in: BOTH, under: "quality" },
+  { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, under: "quality" },
   { key: "observability", path: "observability", name: "Observability", in: BOTH, icon: "activity" },
   { key: "agents", path: "agents", name: "Agents", in: BOTH, icon: "bot" },
   { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
@@ -142,17 +144,20 @@ export const BOX_SCREENS: readonly Screen[] = [
 // room, by voice or in writing, and Dev chat — a written call to the class in a developer's own
 // directory — is its second tab in the workshop. Test is what happens before a change ships: the
 // real calls a judge broke on, waiting for a person, the goldens and their runs, the callers
-// written for it, and a caller put on it live; how its REAL calls are judged is Quality's.
+// written for it, and a caller put on it live, with an overview of the whole harness first; how
+// its REAL calls are judged is Quality's, its judges and its monitors under it.
 // Knowledge is what it searches and what it learned. Configure is what it runs on, with the
 // pipeline that results, its lexicon and the widget that embeds it.
 export const AGENT_SCREENS: readonly Screen[] = [
   { key: "agent-overview", path: "overview", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
-  { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
+  { key: "quality", path: "quality", name: "Quality", tab: "Overview", in: BOTH, icon: "check" },
+  { key: "judges", path: "judges", name: "Judges", in: BOTH, under: "quality" },
+  { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, under: "quality" },
   { key: "talk", path: "playground", name: "Playground", tab: "Chat", in: BOTH, icon: "chat", group: "build" },
   { key: "devchat", path: "dev-chat", name: "Dev chat", in: THE_WORKSHOPS, under: "talk" },
-  { key: "test", path: "test", name: "Test", in: BOTH, icon: "flask", opensOn: "first-tab", group: "build" },
-  // First, so Test opens on it: a real call a judge broke on waits here for a person.
+  { key: "test", path: "test", name: "Test", tab: "Overview", in: BOTH, icon: "flask", group: "build" },
+  // A real call a judge broke on waits here for a person.
   { key: "cases", path: "cases", name: "Cases", in: BOTH, under: "test" },
   { key: "evals", path: "goldens", name: "Goldens", in: BOTH, under: "test" },
   { key: "personas", path: "personas", name: "Personas", in: BOTH, under: "test" },

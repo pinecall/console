@@ -19,6 +19,7 @@ import { Tokens } from "./screens/tokens";
 import { Lexicon } from "./screens/lexicon";
 import { Providers } from "./screens/providers";
 import { Secrets } from "./screens/secrets";
+import { Monitors } from "./screens/monitors";
 import { Observability } from "./screens/observability";
 import { Telemetry } from "./screens/telemetry";
 import { Docs } from "./screens/docs";
@@ -36,7 +37,8 @@ import { BillingHop } from "./screens/billing";
 import { Terminal } from "./screens/terminal";
 import { Team } from "./screens/team";
 import { Usage } from "./screens/usage";
-import { Quality } from "./screens/quality";
+import { JudgesTab, Quality } from "./screens/quality";
+import { TestOverview } from "./screens/test-overview";
 import { Widget, WidgetPreview } from "./screens/widget";
 import { FirstTab } from "./shell/screen-tabs";
 import { Shell } from "./shell/shell";
@@ -49,6 +51,8 @@ const ORG: Record<string, ReactNode> = {
   agents: <Agents />,
   calls: <Calls />,
   quality: <Quality />,
+  judges: <JudgesTab />,
+  monitors: <Monitors />,
   "org-memory": <OrgMemory />,
   "org-docs": <OrgDocs />,
   // A row that is only a place for its tabs lands on the first one this key opens.
@@ -86,7 +90,9 @@ const AGENT: Record<string, ReactNode> = {
   devchat: <Chat />,
   calls: <Calls />,
   quality: <Quality />,
-  test: <FirstTab />,
+  judges: <JudgesTab />,
+  monitors: <Monitors />,
+  test: <TestOverview />,
   cases: <Cases />,
   personas: <Personas />,
   simulations: <Simulations />,
@@ -136,13 +142,12 @@ const AGENT_GONE: readonly { path: string; to: string }[] = [
   { path: "sessions/:call", to: "/calls/:call" },
   { path: "conversations", to: "/a/:agent/calls" },
   // An agent's screens before its rows were the org's own words: the Inbox is Calls, Chat is the
-  // Playground, Settings is Configure, the goldens are Test's, and its judges are Quality's.
+  // Playground, Settings is Configure, the goldens are Test's; its judges are a tab of Quality at the same path.
   { path: "inbox", to: "/a/:agent/calls" },
   { path: "inbox/:call", to: "/a/:agent/calls/:call" },
   { path: "talk", to: "/a/:agent/playground" },
   { path: "settings", to: "/a/:agent/configure" },
   { path: "evals", to: "/a/:agent/goldens" },
-  { path: "judges", to: "/a/:agent/quality" },
 ];
 
 /** One old URL sent to the one it is now: the path's own words, and the query and hash it arrived with. */

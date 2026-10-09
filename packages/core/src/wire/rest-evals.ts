@@ -244,3 +244,42 @@ export const CaseDecisionSchema = z.strictObject({
 });
 
 export type CaseDecision = z.infer<typeof CaseDecisionSchema>;
+
+/** The numbers a monitor can watch (runtime domain/monitor.py): latencies in seconds at the median, rates as shares of 1, spend in dollars, calls. */
+export const MonitorMetricSchema = z.enum(["e2e_median_s", "llm_median_s", "held_rate", "escalated_rate", "tool_failure_rate", "spend_usd", "calls"]);
+
+export type MonitorMetric = z.infer<typeof MonitorMetricSchema>;
+
+/**
+ * One monitor of the world (runtime wire/rest/monitors.py: MonitorRow): what it watches over
+ * which window, the line it must not cross, and the last day it did with the value that crossed.
+ */
+export const MonitorSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  metric: z.string(),
+  above: z.boolean(),
+  threshold: z.number(),
+  window_days: z.number(),
+  agent: z.string().nullable(),
+  created_by: z.string(),
+  fired_on: z.string().nullable(),
+  fired_value: z.number().nullable(),
+});
+
+export type Monitor = z.infer<typeof MonitorSchema>;
+
+/** GET /v1/monitors: every monitor of the world, oldest first. */
+export const MonitorListSchema = z.strictObject({ monitors: z.array(MonitorSchema) });
+
+/** POST /v1/monitors, the body: the rule, and whose agent — every agent's calls when null. */
+export const MonitorPutSchema = z.strictObject({
+  name: z.string(),
+  metric: MonitorMetricSchema,
+  above: z.boolean(),
+  threshold: z.number(),
+  window_days: z.union([z.literal(1), z.literal(7), z.literal(30)]),
+  agent: z.string().nullable(),
+});
+
+export type MonitorPut = z.infer<typeof MonitorPutSchema>;

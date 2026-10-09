@@ -34,6 +34,12 @@ describe("production's console", () => {
     expect(tabs(ORG_SCREENS, "org-settings", "production")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Telemetry", "Docs", "Memory", "Notifications", "Data & privacy"]);
   });
 
+  it("judges its real calls under Quality, with the judges and the monitors as its tabs", () => {
+    expect(tabs(ORG_SCREENS, "quality", "production")).toEqual(["Quality", "Judges", "Monitors"]);
+    expect(screenAt("/judges")?.key).toBe("judges");
+    expect(screenAt("/monitors")?.key).toBe("monitors");
+  });
+
   it("reads every call on one screen, with no tab of its own: the table is Calls' own view", () => {
     expect(tabs(ORG_SCREENS, "calls", "production")).toEqual(["Calls"]);
     expect(screenAt("/calls/call_9f")?.key).toBe("calls");
@@ -78,7 +84,7 @@ describe("the sandbox's console", () => {
   });
 
   it("has every screen of an agent, Dev chat among them", () => {
-    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Cases", "Goldens", "Personas", "Simulations", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget"]);
+    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Judges", "Monitors", "Playground", "Dev chat", "Test", "Cases", "Goldens", "Personas", "Simulations", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget"]);
   });
 });
 
@@ -103,8 +109,9 @@ describe("an agent's screens", () => {
     expect(screenAt("/lexicon")).toBeUndefined();
   });
 
-  it("put only what comes before a change ships under Test: the calls that broke, its goldens, its callers and a simulation", () => {
-    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Cases", "Goldens", "Personas", "Simulations"]);
+  it("puts the harness under Test: its overview first, then the calls that broke, its goldens, its callers and a simulation", () => {
+    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Test", "Cases", "Goldens", "Personas", "Simulations"]);
+    expect(tabs(AGENT_SCREENS, "quality", "production")).toEqual(["Quality", "Judges", "Monitors"]);
   });
 
   it("read a path in the agent's table, so its Configure is not the org's Settings", () => {
