@@ -1,12 +1,15 @@
-/** Who set a monitor, by name: the org's people read once, for a key that may read them. */
+/** The org's people by name, read once for a key that may read them: who set a monitor, who read a call, who asked for an erasure. */
 
 import { useEffect, useState } from "react";
 
 import { useCredentials } from "@pinecall/core/credentials";
 import { readMembers } from "@pinecall/core/members";
-import { useScopes } from "../../lib/whoami";
+import { useScopes } from "./whoami";
 
-/** A member's name, else their email, by id — empty until read, and for a key without `team`. */
+/**
+ * A member's name by id — empty until read, and for a key without `team`. Names are a courtesy:
+ * a screen that cannot have them says the id, never refuses for them.
+ */
 export function useNames(): ReadonlyMap<string, string> {
   const credentials = useCredentials();
   const scopes = useScopes();
@@ -18,7 +21,7 @@ export function useNames(): ReadonlyMap<string, string> {
     let gone = false;
     readMembers(credentials)
       .then((members) => {
-        if (!gone) setNames(new Map(members.map((one) => [one.id, one.name ?? one.email])));
+        if (!gone) setNames(new Map(members.map((one) => [one.id, one.name || one.email])));
       })
       .catch(() => undefined);
     return () => {
@@ -27,4 +30,9 @@ export function useNames(): ReadonlyMap<string, string> {
   }, [credentials, mayRead]);
 
   return names;
+}
+
+/** Who an id is, by name when known. */
+export function nameOf(names: ReadonlyMap<string, string>, id: string): string {
+  return names.get(id) ?? id;
 }

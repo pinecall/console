@@ -8,7 +8,7 @@ import { useCredentials } from "@pinecall/core/credentials";
 import { Button, Card, CardHead, Empty, Page, PageHead, Pill, Refused, TableHead, TableRow, TextAction } from "../../ui";
 import { dropMonitor, type Monitor } from "./door";
 import { ruleOf, valueOf } from "./metrics";
-import { useNames } from "./names";
+import { nameOf, useNames } from "../../lib/names";
 import { NewMonitor } from "./new-monitor";
 import { useMonitors } from "./use-monitors";
 import "./monitors.css";
@@ -81,7 +81,7 @@ export function Monitors(): ReactNode {
         )}
         {shown.length > 0 && <TableHead columns={COLUMNS} labels={["Monitor", "Watches", "Agent", "Set by", "Last fired", ""]} />}
         {shown.map((one) => (
-          <Row key={one.id} monitor={one} agent={agent} setBy={names.get(one.created_by) ?? one.created_by} onDrop={() => void dropped(one.id)} />
+          <Row key={one.id} monitor={one} agent={agent} setBy={nameOf(names, one.created_by)} onDrop={() => void dropped(one.id)} />
         ))}
       </Card>
     </Page>

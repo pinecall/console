@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { saidBy } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { dayAndTime } from "../../lib/format";
+import { nameOf, useNames } from "../../lib/names";
 import { useWorld } from "../../lib/world";
 import { Button, Card, CardHead, Empty, Input, Page, PageHead, Pill, Refused, Select, SelectItem, TableHead } from "../../ui";
 import { eraseContact, exportWorld, putPolicy, readPolicy, readTrail, NOTHING_SET, type Erasure, type Policy, type PolicyRow } from "./door";
@@ -266,6 +267,7 @@ function EraseAContact({ onErased, onRefused }: { onErased: () => Promise<void>;
 
 /** Every erasure of the org, newest first. */
 function Trail({ rows }: { rows: Erasure[] | null }): ReactNode {
+  const names = useNames();
   return (
     <Card>
       <CardHead title="Erasures" meta="both worlds · newest first · kept after the org" />
@@ -284,7 +286,9 @@ function Trail({ rows }: { rows: Erasure[] | null }): ReactNode {
                 {row.subject}
               </span>
               <span className="ui-cell-faint ui-clip">{tookLine(row)}</span>
-              <span className="ui-cell-faint ui-clip">{row.asked_by}</span>
+              <span className="ui-cell-faint ui-clip" title={row.asked_by}>
+                {nameOf(names, row.asked_by)}
+              </span>
               <span className="ui-cell-faint">{row.env ?? "—"}</span>
             </div>
           ))}

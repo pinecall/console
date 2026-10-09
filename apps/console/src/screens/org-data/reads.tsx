@@ -4,8 +4,8 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { saidBy } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
-import { readMembers } from "@pinecall/core/members";
 import { dayAndTime } from "../../lib/format";
+import { nameOf, useNames } from "../../lib/names";
 import { Button, Card, CardHead, Empty, Input, Pill, TableHead } from "../../ui";
 import { readReads, type Read } from "./door";
 
@@ -28,7 +28,7 @@ const WHAT: Record<Read["what"], string> = {
 export function ReadsCard({ onRefused }: { onRefused: (said: string | null) => void }): ReactNode {
   const credentials = useCredentials();
   const [rows, setRows] = useState<Read[] | null>(null);
-  const [names, setNames] = useState<Record<string, string>>({});
+  const names = useNames();
   const [subject, setSubject] = useState("");
 
   useEffect(() => {
@@ -40,13 +40,6 @@ export function ReadsCard({ onRefused }: { onRefused: (said: string | null) => v
       (failed: unknown) => {
         if (!gone) onRefused(saidBy(failed));
       },
-    );
-    // Names are a courtesy: a key the members door refuses still reads the log, by id.
-    readMembers(credentials).then(
-      (members) => {
-        if (!gone) setNames(Object.fromEntries(members.map((member) => [member.id, member.name])));
-      },
-      () => undefined,
     );
     return () => {
       gone = true;
@@ -87,7 +80,7 @@ export function ReadsCard({ onRefused }: { onRefused: (said: string | null) => v
                 <span className="ui-cell-faint">{dayAndTime(row.at)}</span>
                 <span>{WHAT[row.what]}</span>
                 <span className="ui-cell-ink ui-clip ui-fixed">{row.subject}</span>
-                <span className="ui-clip">{row.reader === "operator" ? <Pill tone="violet">the operator</Pill> : (names[row.reader] ?? row.reader)}</span>
+                <span className="ui-clip">{row.reader === "operator" ? <Pill tone="violet">the operator</Pill> : nameOf(names, row.reader)}</span>
                 <span className="ui-cell-faint">{row.env ?? "—"}</span>
               </div>
             ))}
