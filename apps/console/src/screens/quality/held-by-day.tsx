@@ -38,6 +38,12 @@ export function HeldByDay({ series }: { series: readonly InsightsDay[] }): React
     run.push(`${run.length === 0 ? "M" : "L"}${x(index)} ${y(share)}`);
   });
   if (run.length > 0) runs.push(run.join(" "));
+  // A day nobody judged is bridged by a dotted stroke between the judged days either side.
+  const judgedDays = shares.map((share, index) => ({ share, index })).filter((one): one is { share: number; index: number } => one.share !== null);
+  const bridges = judgedDays.slice(1).flatMap((here, at) => {
+    const before = judgedDays[at];
+    return before === undefined || here.index - before.index === 1 ? [] : [`M${x(before.index)} ${y(before.share)} L${x(here.index)} ${y(here.share)}`];
+  });
   const last = shares.reduce<number | null>((found, share, index) => (share === null ? found : index), null);
   const hovered = on === null ? undefined : series[on];
   const hoveredShare = on === null ? null : (shares[on] ?? null);
@@ -54,8 +60,14 @@ export function HeldByDay({ series }: { series: readonly InsightsDay[] }): React
             </text>
           </g>
         ))}
+        {bridges.map((path) => (
+          <path key={path} d={path} className="qly-bridge" />
+        ))}
         {runs.map((path) => (
           <path key={path} d={path} className="qly-line" />
+        ))}
+        {judgedDays.map((one) => (
+          <circle key={one.index} cx={x(one.index)} cy={y(one.share)} r={2.5} className="qly-dot" />
         ))}
         {last !== null && shares[last] !== null && <circle cx={x(last)} cy={y(shares[last] ?? 1)} r={3.5} className="qly-dot" />}
         {on !== null && <line x1={x(on)} x2={x(on)} y1={TOP} y2={TOP + PLOT} className="qly-cross" />}

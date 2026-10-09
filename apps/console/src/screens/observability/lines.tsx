@@ -47,6 +47,15 @@ export function Lines({ days, lines, says, label, ceiling }: { days: string[]; l
     if (run.length > 0) runs.push(run.join(" "));
     return runs;
   });
+  // A day with nothing is bridged by a dotted stroke between the days either side that have.
+  const bridges = lines.map((line) => {
+    const known = line.values.map((value, index) => ({ value, index })).filter((one): one is { value: number; index: number } => one.value !== null);
+    return known.slice(1).flatMap((here, at) => {
+      const before = known[at];
+      return before === undefined || here.index - before.index === 1 ? [] : [`M${x(before.index)} ${y(before.value)} L${x(here.index)} ${y(here.value)}`];
+    });
+  });
+  const dots = lines.map((line) => line.values.map((value, index) => ({ value, index })).filter((one): one is { value: number; index: number } => one.value !== null));
   const hovered = on === null ? null : on;
   return (
     <div className="obs-chart">
@@ -59,7 +68,9 @@ export function Lines({ days, lines, says, label, ceiling }: { days: string[]; l
             </text>
           </g>
         ))}
+        {bridges.map((runs, at) => runs.map((path) => <path key={`${lines[at]?.name}-bridge-${path}`} d={path} className={`obs-bridge obs-line-${lines[at]?.tone ?? 1}`} />))}
         {paths.map((runs, at) => runs.map((path) => <path key={`${lines[at]?.name}-${path}`} d={path} className={`obs-line obs-line-${lines[at]?.tone ?? 1}`} />))}
+        {dots.map((known, at) => known.map((one) => <circle key={`${lines[at]?.name}-${one.index}`} cx={x(one.index)} cy={y(one.value)} r={2.5} className={`obs-dot obs-dot-${lines[at]?.tone ?? 1}`} />))}
         {hovered !== null && <line x1={x(hovered)} x2={x(hovered)} y1={TOP} y2={TOP + PLOT} className="obs-cross" />}
         {hovered !== null &&
           lines.map((line) => {

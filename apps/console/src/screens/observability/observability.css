@@ -41,3 +41,4 @@
 .obs-key-fill-5::before { background: var(--ink-faint); }
 .obs-key-fill-6::before { background: var(--line-strong); }
 .obs-grid { margin-top: 16px; }
+.obs-bridge { fill: none; stroke-width: 1.5; stroke-dasharray: 2 5; stroke-linecap: round; opacity: .7; }
