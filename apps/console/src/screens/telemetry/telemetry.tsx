@@ -92,7 +92,7 @@ export function Telemetry(): ReactNode {
         lede="Where the org sends its calls' traces: an OpenTelemetry collector of its own — Datadog, Grafana, Langfuse, Honeycomb, Cekura, or one you run — beside Pinecall's. Every span carries pinecall.org, pinecall.env, pinecall.agent and pinecall.call, so one call is one trace there."
       />
 
-      <Card>
+      <Card pad>
         {collector === undefined ? null : collector === null ? (
           <Empty>Traces go nowhere but Pinecall. Name a collector below, or with `pinecall telemetry set`.</Empty>
         ) : (
