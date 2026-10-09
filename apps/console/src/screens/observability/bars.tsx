@@ -43,7 +43,7 @@ export function Bars({ stacks, keys, label, said }: { stacks: Stack[]; keys: str
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={label} onMouseLeave={() => setOn(null)}>
         {ticks.map((tick) => (
           <g key={tick}>
-            <line x1={LEFT} x2={WIDTH} y1={y(tick)} y2={y(tick)} className="obs-grid" />
+            <line x1={LEFT} x2={WIDTH} y1={y(tick)} y2={y(tick)} className="obs-rule" />
             <text x={LEFT - 8} y={y(tick) + 3.5} className="obs-tick" textAnchor="end">
               {tick}
             </text>
