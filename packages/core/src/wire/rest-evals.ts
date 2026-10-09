@@ -11,6 +11,8 @@ import { SessionScoreSchema } from "./rest.js";
  * own, even under the same name.
  */
 export const PersonaSchema = z.strictObject({
+  /** The agent the caller was written for: every row says whose, so the org's roster reads the same. */
+  agent: z.string(),
   name: z.string(),
   about: z.string(),
   goal: z.string(),
@@ -28,7 +30,7 @@ export const PersonaSchema = z.strictObject({
 
 export type Persona = z.infer<typeof PersonaSchema>;
 
-/** GET /v1/agents/{slug}/personas: every caller written for the agent, by name, the same in both worlds. */
+/** GET /v1/agents/{slug}/personas: every caller written for the agent, by name; GET /v1/personas: every agent's, by agent. The same in both worlds. */
 export const PersonaListSchema = z.strictObject({
   personas: z.array(PersonaSchema),
 });
@@ -60,6 +62,8 @@ export type PersonaPut = z.infer<typeof PersonaPutSchema>;
 export const PersonaRunSchema = z.strictObject({
   call: z.string(),
   agent: z.string(),
+  /** Who played it: every simulated call names its persona. */
+  persona: z.string().nullable(),
   started_at: z.number(),
   ended_at: z.number().nullable(),
   turns: z.int(),
@@ -72,9 +76,9 @@ export const PersonaRunSchema = z.strictObject({
 export type PersonaRun = z.infer<typeof PersonaRunSchema>;
 
 /**
- * Every call this caller has made to the agent, newest first, a page at a time. GET
- * /v1/agents/{slug}/personas/{name}/runs, in the key's own world and corner, paged exactly as the
- * sessions list is.
+ * Simulated calls, newest first, a page at a time: one caller's to the agent (GET
+ * /v1/agents/{slug}/personas/{name}/runs), or every one of the world (GET /v1/simulations) — in the
+ * key's own world and corner, paged exactly as the sessions list is.
  */
 export const PersonaRunListSchema = z.strictObject({
   runs: z.array(PersonaRunSchema),

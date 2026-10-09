@@ -102,6 +102,7 @@ test("an org with no account has none, not a refusal: the door's 404 is the empt
 const A_RUN = {
   call: "call_9f2a",
   agent: "clinica-norte",
+  persona: "office-manager",
   started_at: 1789897543.33,
   ended_at: 1789897601.1,
   turns: 6,
@@ -135,6 +136,7 @@ test("the runs pane asks one agent's caller's door, pages with the gateway's own
 
 // runtime gateway/api/personas.py: PersonaList, one agent's callers.
 const A_PERSONA = {
+  agent: "front-desk",
   name: "office-manager",
   about: "",
   goal: "move the Thursday appointment",
@@ -163,6 +165,27 @@ test("the personas list asks the agent's own door, and a row naming agents is no
 
   answering({ personas: [{ ...A_PERSONA, agents: ["front-desk"] }] });
   await expect(readPersonas(CREDENTIALS, "front-desk")).rejects.toBeInstanceOf(z.ZodError);
+});
+
+// runtime gateway/api/personas.py: every agent's callers and every simulated call, each row saying whose.
+test("the org's harness asks the org's own doors: every caller by agent, and every simulation paged by the cursor", async () => {
+  const { readEveryPersona, readSimulations } = await import("../src/screens/personas/door");
+  const asked: string[] = [];
+  globalThis.fetch = (async (door: URL) => {
+    asked.push(door.toString());
+    const said = door.pathname === "/v1/personas" ? { personas: [A_PERSONA] } : { runs: [A_RUN], total: 2, next: "call_9f2a" };
+    return new Response(JSON.stringify(said), { status: 200, headers: { "content-type": "application/json" } });
+  }) as unknown as typeof fetch;
+
+  expect((await readEveryPersona(CREDENTIALS))[0]?.agent).toBe("front-desk");
+  const page = await readSimulations(CREDENTIALS);
+  expect(page.runs[0]?.persona).toBe("office-manager");
+  await readSimulations(CREDENTIALS, page.next ?? undefined);
+  expect(asked).toEqual([
+    "https://cloud.pinecall.io/v1/personas",
+    "https://cloud.pinecall.io/v1/simulations",
+    "https://cloud.pinecall.io/v1/simulations?before=call_9f2a",
+  ]);
 });
 
 // runtime api/voices.py: VoicesListed, and a WAV sample with vendor timings in Server-Timing.

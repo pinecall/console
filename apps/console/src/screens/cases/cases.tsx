@@ -1,4 +1,4 @@
-/** Cases: the agent's cases down the left, the one chosen read beside them, the loop when none is. */
+/** Cases: the agent's cases (or every agent's) down the left, the one chosen read beside them, the loop when none is. */
 
 import type { ReactNode } from "react";
 import { useParams } from "react-router";
@@ -11,8 +11,9 @@ import { useCases } from "./use-cases";
 import "./cases.css";
 
 /**
- * The screen, under one agent. A case is the org's — kept by the gateway, the same in both worlds —
- * and the URL names the one open: `/a/<agent>/cases/<name>`. What this page decides is what
+ * The screen, under one agent or with every agent in view. A case is the org's — kept by the
+ * gateway, the same in both worlds — and the URL names the one open: `/a/<agent>/cases/<name>`;
+ * with every agent in view a row opens the case under its own agent. What this page decides is what
  * `pinecall cases` and the nightly's `pinecall test --dataset` read, with no deploy between.
  */
 export function Cases(): ReactNode {

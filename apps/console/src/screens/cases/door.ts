@@ -13,9 +13,9 @@ export interface Listed {
   pendingAtMost: number;
 }
 
-/** Every case of one agent, whatever its status: the gateway orders the pending first. */
+/** Every case of one agent, or of every agent when it is "", whatever its status: the gateway orders the pending first. */
 export async function readCases(credentials: Credentials, agent: string): Promise<Listed> {
-  const listed = EvalCaseListSchema.parse(await read(credentials, "/v1/evals/cases", { agent }));
+  const listed = EvalCaseListSchema.parse(await read(credentials, "/v1/evals/cases", agent === "" ? {} : { agent }));
   return { cases: listed.cases, pending: listed.pending, pendingAtMost: listed.pending_at_most };
 }
 

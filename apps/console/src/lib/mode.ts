@@ -57,7 +57,8 @@ export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phon
  * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality —
  * and read the same with every agent in view or one. `build` is what makes one agent, drawn only
  * while one is in view; `harness` is how an agent is put to the test and watched — simulations,
- * the callers they play, the judges and the monitors — drawn whoever is in view; `workspace` is
+ * the callers they play, the real calls a judge broke on, the judges and the monitors — drawn
+ * whoever is in view; `workspace` is
  * the org's own, drawn at the sidebar's foot whatever is; `yours` is the person's, not the org's,
  * reached from their own name at the very foot.
  */
@@ -101,9 +102,10 @@ const THE_WORKSHOPS = ["sandbox"] as const;
 // a section of its own: these are the org's, at the root, and the agent's below are the same
 // screens under `/a/<slug>`. Agents lists them all, with the apps the box runs for the org and the
 // secrets those start with: what is running, and how. Knowledge is every base and every fact of
-// the world, the same row and tabs an agent has with only its own. The harness is the same four rows in both
-// tables: the judges and the monitors are the org's and each agent's, while a simulation and the
-// callers it plays are one agent's, so with every agent in view those two ask which agent first.
+// the world, the same row and tabs an agent has with only its own. The harness is the same five
+// rows in both tables; with every agent in view each lists every agent's — every simulated call,
+// every caller, every case, the org's judges and monitors — and a row opens what it lists under
+// its own agent.
 // What runs the org — numbers, people, the bill, its data and its rights, and Settings, what is set
 // once and rarely — is the workspace, at the sidebar's foot; tokens and provider keys are each
 // instance's own, so each console holds them. What the bell tells a person is theirs, not the org's.
@@ -122,6 +124,7 @@ export const ORG_SCREENS: readonly Screen[] = [
   { key: "org-memory", path: "memory", name: "Memory", in: BOTH, under: "knowledge" },
   { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, icon: "headphones", group: "harness" },
   { key: "personas", path: "personas", name: "Personas", in: BOTH, icon: "persona", group: "harness" },
+  { key: "cases", path: "cases", name: "Cases", in: BOTH, icon: "flask", group: "harness" },
   { key: "judges", path: "judges", name: "Judges", in: BOTH, icon: "scale", group: "harness" },
   { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, icon: "bell", group: "harness" },
   { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
@@ -157,9 +160,9 @@ export const BOX_SCREENS: readonly Screen[] = [
 // each the org's screen with only its calls — then what builds it. Playground is the gateway's
 // room, by voice or in writing, and Dev chat — a written call to the class in a developer's own
 // directory — is its second tab in the workshop. Test is what happens before a change ships: the
-// real calls a judge broke on, waiting for a person, and the goldens and their runs, with an
-// overview of the whole harness first. The harness is its own rows: a caller put on it live, the
-// callers written for it, the judges its real calls are held to, and the monitors over them.
+// goldens and their runs, with an overview of the whole harness first. The harness is its own
+// rows: a caller put on it live, the callers written for it, the real calls a judge broke on
+// waiting for a person, the judges its real calls are held to, and the monitors over them.
 // Knowledge is what it searches and what it learned. Configure is what it runs on, with the
 // pipeline that results, its lexicon and the widget that embeds it.
 export const AGENT_SCREENS: readonly Screen[] = [
@@ -169,8 +172,6 @@ export const AGENT_SCREENS: readonly Screen[] = [
   { key: "talk", path: "playground", name: "Playground", tab: "Chat", in: BOTH, icon: "chat", group: "build" },
   { key: "devchat", path: "dev-chat", name: "Dev chat", in: THE_WORKSHOPS, under: "talk" },
   { key: "test", path: "test", name: "Test", tab: "Overview", in: BOTH, icon: "flask", group: "build" },
-  // A real call a judge broke on waits here for a person.
-  { key: "cases", path: "cases", name: "Cases", in: BOTH, under: "test" },
   { key: "evals", path: "goldens", name: "Goldens", in: BOTH, under: "test" },
   { key: "knowledge", path: "knowledge", name: "Knowledge", in: BOTH, icon: "book", opensOn: "first-tab", group: "build" },
   { key: "docs", path: "docs", name: "Docs", in: BOTH, under: "knowledge" },
@@ -181,6 +182,8 @@ export const AGENT_SCREENS: readonly Screen[] = [
   { key: "widget", path: "widget", name: "Widget", in: BOTH, under: "settings" },
   { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, icon: "headphones", group: "harness" },
   { key: "personas", path: "personas", name: "Personas", in: BOTH, icon: "persona", group: "harness" },
+  // A real call a judge broke on waits here for a person.
+  { key: "cases", path: "cases", name: "Cases", in: BOTH, icon: "flask", group: "harness" },
   { key: "judges", path: "judges", name: "Judges", in: BOTH, icon: "scale", group: "harness" },
   { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, icon: "bell", group: "harness" },
 ];

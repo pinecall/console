@@ -1,4 +1,4 @@
-/** One agent's cases, read once, and set again by what a decision answers. */
+/** One agent's cases, or every agent's, read once, and set again by what a decision answers. */
 
 import { useCallback, useEffect, useState } from "react";
 

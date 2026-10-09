@@ -47,8 +47,8 @@ describe("production's console", () => {
     expect(workspace("production")).not.toContain("Notifications");
   });
 
-  it("puts the harness in its own section: simulations, the callers they play, the judges and the monitors", () => {
-    expect(harness(ORG_SCREENS, "production")).toEqual(["Simulations", "Personas", "Judges", "Monitors"]);
+  it("puts the harness in its own section: simulations, the callers they play, the calls that broke, the judges and the monitors", () => {
+    expect(harness(ORG_SCREENS, "production")).toEqual(["Simulations", "Personas", "Cases", "Judges", "Monitors"]);
     expect(tabs(ORG_SCREENS, "quality", "production")).toEqual(["Quality"]);
     expect(screenAt("/judges")?.key).toBe("judges");
     expect(screenAt("/monitors")?.key).toBe("monitors");
@@ -97,7 +97,7 @@ describe("the sandbox's console", () => {
   });
 
   it("has every screen of an agent, Dev chat among them", () => {
-    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Cases", "Goldens", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget", "Simulations", "Personas", "Judges", "Monitors"]);
+    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Goldens", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget", "Simulations", "Personas", "Cases", "Judges", "Monitors"]);
   });
 });
 
@@ -122,12 +122,12 @@ describe("an agent's screens", () => {
     expect(screenAt("/lexicon")).toBeUndefined();
   });
 
-  it("keeps under Test what comes before a change ships: its overview, the calls that broke and its goldens", () => {
-    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Test", "Cases", "Goldens"]);
+  it("keeps under Test what comes before a change ships: its overview and its goldens", () => {
+    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Test", "Goldens"]);
     expect(tabs(AGENT_SCREENS, "quality", "production")).toEqual(["Quality"]);
   });
 
-  it("has the org's harness rows, its own: simulations, its callers, its judges and its monitors", () => {
+  it("has the org's harness rows, its own: simulations, its callers, its cases, its judges and its monitors", () => {
     expect(harness(AGENT_SCREENS, "production")).toEqual(harness(ORG_SCREENS, "production"));
     expect(screenAt("/a/clinica-norte/simulations/call_9f")?.key).toBe("simulations");
   });

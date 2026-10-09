@@ -5,13 +5,14 @@ import type { ReactNode } from "react";
 import type { Listed } from "./door";
 
 export function TheLoop({ agent, listed }: { agent: string; listed: Listed | null }): ReactNode {
+  const whose = agent === "" ? "every agent" : agent;
   const count = (status: string): number => listed?.cases.filter((kept) => kept.status === status).length ?? 0;
   const steps: { said: string; how: ReactNode; now: string }[] = [
     {
       said: "A judge breaks",
       how: (
         <>
-          Every real call of {agent} is judged at hang-up. One that does not pass is kept here on its own: the caller's words, the
+          Every real call of {whose} is judged at hang-up. One that does not pass is kept here on its own: the caller's words, the
           state it opened in, what memory recalled, and what the broken judges forbid from now on.
         </>
       ),

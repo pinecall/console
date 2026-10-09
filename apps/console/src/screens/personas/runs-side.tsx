@@ -73,7 +73,7 @@ function Run({ run }: { run: PersonaRun }): ReactNode {
 
 // What the judges answered, in one mark. Nobody judged the run is not a failure: it is a run that
 // was never scored, and the pane says exactly that.
-function Verdict({ run }: { run: PersonaRun }): ReactNode {
+export function Verdict({ run }: { run: PersonaRun }): ReactNode {
   if (run.ended_at === null) return <Pill tone="green" small>on a call</Pill>;
   if (run.score === null) {
     return (

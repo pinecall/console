@@ -14,7 +14,7 @@ import { Avatar, Icon } from "../ui";
 // What is looked at, the harness and Knowledge are the same rows whoever is in view, so changing
 // who keeps them: Calls stays Calls, Simulations stays Simulations, Docs stays Docs. Anything else is one table's alone — an
 // agent's Test, the org's Agents — and lands on Overview, the one screen both have at the top.
-const LOOKED_AT = new Set(["calls", "quality", "simulations", "personas", "judges", "monitors", "knowledge", "docs", "memory", "org-docs", "org-memory"]);
+const LOOKED_AT = new Set(["calls", "quality", "simulations", "personas", "cases", "judges", "monitors", "knowledge", "docs", "memory", "org-docs", "org-memory"]);
 
 /** The path the same screen has with `agent` in view, or every agent when it is "". */
 function keptFor(pathname: string, agent: string): string {

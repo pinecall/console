@@ -30,9 +30,8 @@ import { Overview } from "./screens/overview";
 import { Notifications } from "./screens/notifications";
 import { OrgData } from "./screens/org-data";
 import { Pipeline } from "./screens/pipeline";
-import { Personas } from "./screens/personas";
-import { PickAgent } from "./screens/pick-agent";
-import { Simulations } from "./screens/simulations";
+import { EveryPersona, Personas } from "./screens/personas";
+import { EverySimulation, Simulations } from "./screens/simulations";
 import { Settings } from "./screens/settings";
 import { Talk } from "./screens/talk";
 import { BillingHop } from "./screens/billing";
@@ -55,9 +54,10 @@ const ORG: Record<string, ReactNode> = {
   quality: <Quality />,
   judges: <JudgesTab />,
   monitors: <Monitors />,
-  // One agent's harness rows ask whose, with every agent in view.
-  simulations: <PickAgent />,
-  personas: <PickAgent />,
+  // The harness with every agent in view: every agent's, a row opening it under its own.
+  simulations: <EverySimulation />,
+  personas: <EveryPersona />,
+  cases: <Cases />,
   "org-memory": <OrgMemory />,
   "org-docs": <OrgDocs />,
   // A row that is only a place for its tabs lands on the first one this key opens.
@@ -126,8 +126,8 @@ const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls /> };
 // `#seq-93`, lands on what the screen is called now, hash and query and all — nothing pasted
 // before today stops working. The Lexicon was the org's and is an agent's now: a link to the org's
 // lands on Overview, because no agent is named in it to land on. Personas and Simulations are rows
-// of the org's again, asking whose: a simulated call linked under the org's lands on that call, and
-// a persona linked there on Overview.
+// of the org's again, listing every agent's: a simulated call linked under the org's lands on that
+// call, and a persona linked there on Overview.
 const GONE: readonly { path: string; to: string }[] = [
   { path: "live", to: "/calls?status=live" },
   { path: "live/:call", to: "/calls/:call" },

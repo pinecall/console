@@ -1,4 +1,4 @@
-/** Personas doors: CRUD for an agent's synthetic callers and their runs. */
+/** Personas doors: CRUD for an agent's synthetic callers and their runs, and the org's every caller and every run. */
 
 import { type Persona, PersonaListSchema, type PersonaPut, type PersonaRun, type PersonaRunList, PersonaRunListSchema } from "@pinecall/core/wire/rest-evals";
 
@@ -13,6 +13,16 @@ const door = (agent: string, name?: string): string =>
 
 export async function readPersonas(credentials: Credentials, agent: string): Promise<Persona[]> {
   return PersonaListSchema.parse(await read(credentials, door(agent))).personas;
+}
+
+/** Every agent's callers, by agent and then by name. */
+export async function readEveryPersona(credentials: Credentials): Promise<Persona[]> {
+  return PersonaListSchema.parse(await read(credentials, "/v1/personas")).personas;
+}
+
+/** One page of every simulated call of the world, newest first; `before` is the previous page's `next`. */
+export async function readSimulations(credentials: Credentials, before?: string): Promise<PersonaRunList> {
+  return PersonaRunListSchema.parse(await read(credentials, "/v1/simulations", before === undefined ? {} : { before }));
 }
 
 /** Create, replace or rename a persona; resolves to the updated list. */
