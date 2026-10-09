@@ -68,8 +68,8 @@ export function Observability(): ReactNode {
   const tools: Line[] = useMemo(() => {
     const rows = series ?? [];
     return [
-      { name: "Tools ran", values: rows.map((day) => (day.tools_ran === 0 ? null : day.tools_ran)), tone: 1 },
-      { name: "Tools that failed", values: rows.map((day) => (day.tools_ran === 0 ? null : day.tools_failed)), tone: 3 },
+      { name: "Tools ran", values: rows.map((day) => (day.calls === 0 ? null : day.tools_ran)), tone: 1 },
+      { name: "Tools that failed", values: rows.map((day) => (day.calls === 0 ? null : day.tools_failed)), tone: 3 },
     ];
   }, [series]);
   const spend: Line[] = useMemo(() => [{ name: "Spend", values: (series ?? []).map((day) => (day.calls === 0 ? null : day.spend_usd)), tone: 4 }], [series]);
@@ -102,7 +102,7 @@ export function Observability(): ReactNode {
         </Card>
         <Card pad>
           <CardHead title="Judges" meta="the share of verdicts each judge held" />
-          <Lines days={days} lines={judges} says={percent} label="Held rate by judge a day" />
+          <Lines days={days} lines={judges} says={percent} label="Held rate by judge a day" ceiling={1} />
         </Card>
         <Card pad>
           <CardHead title="Calls" meta="and how many a person took over" />

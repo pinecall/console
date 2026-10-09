@@ -23,11 +23,12 @@ function dayAt(day: string): string {
 }
 
 /** `says` turns a value into words for the axis and the tip ("1.2 s", "96%"). */
-export function Lines({ days, lines, says, label }: { days: string[]; lines: Line[]; says: (value: number) => string; label: string }): ReactNode {
+export function Lines({ days, lines, says, label, ceiling }: { days: string[]; lines: Line[]; says: (value: number) => string; label: string; ceiling?: number | undefined }): ReactNode {
   const [on, setOn] = useState<number | null>(null);
   const known = lines.flatMap((line) => line.values.filter((value): value is number => value !== null));
   if (known.length === 0) return <p className="obs-quiet">Nothing in these days.</p>;
-  const top = Math.max(...known) * 1.15 || 1;
+  // A share tops out at 100%; anything else gets headroom over its highest day.
+  const top = ceiling ?? (Math.max(...known) * 1.15 || 1);
   const step = (WIDTH - LEFT) / Math.max(1, days.length - 1);
   const x = (index: number): number => LEFT + index * step;
   const y = (value: number): number => TOP + PLOT - (value / top) * PLOT;
