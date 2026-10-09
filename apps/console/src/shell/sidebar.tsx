@@ -1,4 +1,4 @@
-/** The sidebar: the org and its world, who is in view, what is looked at, what builds the agent in view, the harness, the workspace, and who is signed in. */
+/** The sidebar: the org and its world, who is in view, what is looked at, what builds the agent in view, the harness, the workspace, and who is signed in, their own screens a click on their name. */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
@@ -63,7 +63,17 @@ export function Sidebar({ agent, onSearch }: { agent: string; onSearch: () => vo
   const built = rows.filter((row) => row.group === "build");
   const harness = rows.filter((row) => row.group === "harness");
   const workspace = rowsOf(ORG_SCREENS).filter((row) => row.group === "workspace");
+  const yours = rowsOf(ORG_SCREENS).filter((row) => row.group === "yours" && open(row))[0];
   const box = rowsOf(BOX_SCREENS, WORLD, operator === true);
+  const who = (
+    <>
+      <span className="side-user-avatar">{initialsOf(person || (whose === null ? "?" : orgOf(whose)))}</span>
+      <span className="side-words">
+        <span className="side-user-name">{person || "—"}</span>
+        <span className="side-user-role">{capitalised(role)}</span>
+      </span>
+    </>
+  );
 
   return (
     <aside className={folded ? "side side-folded" : "side"} aria-label="Screens">
@@ -113,13 +123,18 @@ export function Sidebar({ agent, onSearch }: { agent: string; onSearch: () => vo
       </nav>
 
       <div className="side-foot">
-        <div className="side-user" title={whose === null ? person : `${person} · key ${whose.key_id}`}>
-          <span className="side-user-avatar">{initialsOf(person || (whose === null ? "?" : orgOf(whose)))}</span>
-          <span className="side-words">
-            <span className="side-user-name">{person || "—"}</span>
-            <span className="side-user-role">{capitalised(role)}</span>
-          </span>
-        </div>
+        {yours === undefined ? (
+          <div className="side-user" title={whose === null ? person : `${person} · key ${whose.key_id}`}>
+            {who}
+          </div>
+        ) : (
+          <NavLink to={`/${yours.path}`} title={`${yours.name}: what you are told, on every device of yours`} className={({ isActive }) => (isActive ? "side-user side-user-link side-user-on" : "side-user side-user-link")}>
+            {who}
+            <span className="side-user-bell">
+              <Icon name="bell" size={15} />
+            </span>
+          </NavLink>
+        )}
         <button type="button" className="side-fold" onClick={() => setFolded(!folded)} title={folded ? "Open the sidebar" : "Collapse the sidebar"}>
           <Icon name="panel" size={15} />
         </button>

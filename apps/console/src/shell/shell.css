@@ -378,6 +378,27 @@
   color: var(--ink-4);
 }
 
+/* The name is a link to the person's own screens: Notifications. */
+.side-user-link {
+  margin: -4px 0;
+  padding: 4px 6px 4px 4px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.side-user-link:hover,
+.side-user-on {
+  background: var(--ground-5);
+}
+
+.side-user-bell {
+  flex: none;
+  margin-left: auto;
+  display: grid;
+  color: var(--ink-4);
+}
+
 .side-fold {
   flex: none;
   width: 28px;

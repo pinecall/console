@@ -27,9 +27,11 @@ export function Top({ agent }: { agent: string }): ReactNode {
   const leave = useLeaving();
   const { pathname } = useLocation();
   const screen = screenAt(pathname);
-  // Whose calls the screen is about: the agent in view, every agent, or — the box's and the
-  // workspace's screens, which are nobody's calls — nothing at all.
-  const whose = pathname.startsWith("/box/") ? "Box" : agent !== "" ? agent : screen === undefined || screen.group === "workspace" || screen.under !== undefined && ORG_SCREENS.find((one) => one.key === screen.under)?.group === "workspace" ? null : "All agents";
+  // Whose calls the screen is about: the agent in view, every agent, or — the box's, the
+  // workspace's and the person's own screens, which are nobody's calls — nothing at all.
+  const row = screen === undefined ? undefined : rowOf(ORG_SCREENS, screen);
+  const nobodys = row === undefined || row.group === "workspace" || row.group === "yours";
+  const whose = pathname.startsWith("/box/") ? "Box" : agent !== "" ? agent : nobodys ? null : "All agents";
   return (
     <header className="top">
       {whose !== null && <span className="top-crumb">{whose}</span>}

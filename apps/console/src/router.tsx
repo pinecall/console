@@ -62,6 +62,7 @@ const ORG: Record<string, ReactNode> = {
   "org-docs": <OrgDocs />,
   // A row that is only a place for its tabs lands on the first one this key opens.
   "org-settings": <FirstTab />,
+  knowledge: <FirstTab />,
   numbers: <Numbers />,
   phone: <PhoneTesting />,
   tokens: <Tokens />,

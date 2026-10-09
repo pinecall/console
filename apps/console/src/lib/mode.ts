@@ -51,16 +51,17 @@ export function theBoxsOwnName(): string {
 }
 
 /** The sidebar's icons, by name (ui/icon.tsx). */
-export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask" | "bot" | "scale";
+export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask" | "bot" | "scale" | "shield";
 
 /**
  * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality —
  * and read the same with every agent in view or one. `build` is what makes one agent, drawn only
  * while one is in view; `harness` is how an agent is put to the test and watched — simulations,
  * the callers they play, the judges and the monitors — drawn whoever is in view; `workspace` is
- * the org's own, drawn at the sidebar's foot whatever is.
+ * the org's own, drawn at the sidebar's foot whatever is; `yours` is the person's, not the org's,
+ * reached from their own name at the very foot.
  */
-export type ScreenGroup = "build" | "harness" | "workspace";
+export type ScreenGroup = "build" | "harness" | "workspace" | "yours";
 
 /**
  * One screen: where it is, what it is called, which console has it, and where it sits. A screen
@@ -98,17 +99,27 @@ const THE_WORKSHOPS = ["sandbox"] as const;
 // One word, one place. What is looked at — Overview, Calls, Quality — is the same three rows
 // whether every agent is in view or one, and the agent is what the sidebar's Viewing picks, never
 // a section of its own: these are the org's, at the root, and the agent's below are the same
-// screens under `/a/<slug>`. Agents lists them all. The harness is the same four rows in both
+// screens under `/a/<slug>`. Agents lists them all, with the apps the box runs for the org and the
+// secrets those start with: what is running, and how. Knowledge is every base and every fact of
+// the world, the same row and tabs an agent has with only its own. The harness is the same four rows in both
 // tables: the judges and the monitors are the org's and each agent's, while a simulation and the
 // callers it plays are one agent's, so with every agent in view those two ask which agent first.
-// What runs the org — numbers, people, the bill, what is set once and rarely — is the workspace,
-// at the sidebar's foot; tokens and provider keys are each instance's own, so each console holds them.
+// What runs the org — numbers, people, the bill, its data and its rights, and Settings, what is set
+// once and rarely — is the workspace, at the sidebar's foot; tokens and provider keys are each
+// instance's own, so each console holds them. What the bell tells a person is theirs, not the org's.
 export const ORG_SCREENS: readonly Screen[] = [
   { key: "overview", path: "", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
   { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
   { key: "observability", path: "observability", name: "Observability", in: BOTH, icon: "activity" },
   { key: "agents", path: "agents", name: "Agents", in: BOTH, icon: "bot" },
+  // The apps the box hosts for the org in this world (`pinecall deploy`), and what they start with.
+  { key: "apps", path: "apps", name: "Apps", in: BOTH, under: "agents" },
+  { key: "secrets", path: "secrets", name: "Secrets", in: BOTH, under: "agents" },
+  // Every base of the world and who searches it, and every fact any agent's calls taught.
+  { key: "knowledge", path: "knowledge", name: "Knowledge", in: BOTH, icon: "book", opensOn: "first-tab" },
+  { key: "org-docs", path: "docs", name: "Docs", in: BOTH, under: "knowledge" },
+  { key: "org-memory", path: "memory", name: "Memory", in: BOTH, under: "knowledge" },
   { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, icon: "headphones", group: "harness" },
   { key: "personas", path: "personas", name: "Personas", in: BOTH, icon: "persona", group: "harness" },
   { key: "judges", path: "judges", name: "Judges", in: BOTH, icon: "scale", group: "harness" },
@@ -116,22 +127,17 @@ export const ORG_SCREENS: readonly Screen[] = [
   { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
   { key: "team", path: "team", name: "Team", in: PRODUCTIONS, icon: "users", group: "workspace" },
   { key: "usage", path: "usage", name: "Usage", in: PRODUCTIONS, icon: "chart", group: "workspace" },
+  // How long a call is kept, the world exported, a contact erased, and the trail of every erasure.
+  { key: "org-data", path: "data", name: "Privacy", in: BOTH, icon: "shield", group: "workspace" },
   { key: "org-settings", path: "settings", name: "Settings", in: BOTH, icon: "sliders", opensOn: "first-tab", group: "workspace" },
   { key: "tokens", path: "tokens", name: "Tokens", in: BOTH, under: "org-settings" },
   { key: "providers", path: "providers", name: "Providers", in: BOTH, under: "org-settings" },
-  // The apps the box hosts for the org in this world (`pinecall deploy`), and what they start with.
-  { key: "apps", path: "apps", name: "Apps", in: BOTH, under: "org-settings" },
-  { key: "secrets", path: "secrets", name: "Secrets", in: BOTH, under: "org-settings" },
   { key: "telemetry", path: "telemetry", name: "Telemetry", in: BOTH, under: "org-settings" },
   // Where the org's alerts are posted: a webhook of its own, beside the bell.
   { key: "alerts", path: "alerts", name: "Alerts", in: BOTH, under: "org-settings" },
-  // Every base of the world and who searches it, and every fact any agent's calls taught.
-  { key: "org-docs", path: "docs", name: "Docs", in: BOTH, under: "org-settings" },
-  { key: "org-memory", path: "memory", name: "Memory", in: BOTH, under: "org-settings" },
-  { key: "notifications", path: "notifications", name: "Notifications", in: BOTH, under: "org-settings" },
-  // How long a call is kept, the world exported, a contact erased, and the trail of every erasure.
-  { key: "org-data", path: "data", name: "Data & privacy", in: BOTH, under: "org-settings" },
   { key: "phone", path: "phone", name: "Phone testing", in: THE_WORKSHOPS, under: "org-settings" },
+  // What the bell tells this person, on every device of theirs: opened from their name.
+  { key: "notifications", path: "notifications", name: "Notifications", in: BOTH, icon: "bell", group: "yours" },
 ];
 
 // The BOX's screens: every tenant, the fleet under them, the doors, the bill of all of them, and
