@@ -31,6 +31,7 @@ import { Notifications } from "./screens/notifications";
 import { OrgData } from "./screens/org-data";
 import { Pipeline } from "./screens/pipeline";
 import { Personas } from "./screens/personas";
+import { PickAgent } from "./screens/pick-agent";
 import { Simulations } from "./screens/simulations";
 import { Settings } from "./screens/settings";
 import { Talk } from "./screens/talk";
@@ -54,6 +55,9 @@ const ORG: Record<string, ReactNode> = {
   quality: <Quality />,
   judges: <JudgesTab />,
   monitors: <Monitors />,
+  // One agent's harness rows ask whose, with every agent in view.
+  simulations: <PickAgent />,
+  personas: <PickAgent />,
   "org-memory": <OrgMemory />,
   "org-docs": <OrgDocs />,
   // A row that is only a place for its tabs lands on the first one this key opens.
@@ -119,8 +123,10 @@ const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls /> };
 // Conversations, and before one word took one place: Home's Agents tab is Agents, the table of
 // calls is Calls' own `?view=table`, Evals is Quality. A link somebody pasted, or a verdict citing
 // `#seq-93`, lands on what the screen is called now, hash and query and all — nothing pasted
-// before today stops working. Personas, Simulations and the Lexicon were the org's and are an
-// agent's now: a link to the org's lands on Overview, because no agent is named in it to land on.
+// before today stops working. The Lexicon was the org's and is an agent's now: a link to the org's
+// lands on Overview, because no agent is named in it to land on. Personas and Simulations are rows
+// of the org's again, asking whose: a simulated call linked under the org's lands on that call, and
+// a persona linked there on Overview.
 const GONE: readonly { path: string; to: string }[] = [
   { path: "live", to: "/calls?status=live" },
   { path: "live/:call", to: "/calls/:call" },
@@ -130,10 +136,8 @@ const GONE: readonly { path: string; to: string }[] = [
   { path: "c/:call", to: "/calls/:call" },
   { path: "inbox", to: "/calls" },
   { path: "inbox/:call", to: "/calls/:call" },
-  { path: "personas", to: "/" },
   { path: "personas/:call", to: "/" },
-  { path: "simulations", to: "/" },
-  { path: "simulations/:call", to: "/" },
+  { path: "simulations/:call", to: "/calls/:call" },
   { path: "lexicon", to: "/" },
   { path: "overview", to: "/agents" },
   { path: "list", to: "/calls?view=table" },

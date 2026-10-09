@@ -51,14 +51,16 @@ export function theBoxsOwnName(): string {
 }
 
 /** The sidebar's icons, by name (ui/icon.tsx). */
-export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask" | "bot";
+export type ScreenIcon = "home" | "grid" | "activity" | "list" | "chart" | "phone" | "key" | "plug" | "users" | "building" | "server" | "route" | "sliders" | "check" | "memory" | "words" | "book" | "headphones" | "persona" | "bell" | "chat" | "flask" | "bot" | "scale";
 
 /**
- * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality (its judges and monitors under it) —
+ * Where a row sits in the sidebar. Unmarked rows are what is LOOKED AT — Overview, Calls, Quality —
  * and read the same with every agent in view or one. `build` is what makes one agent, drawn only
- * while one is in view; `workspace` is the org's own, drawn at the sidebar's foot whatever is.
+ * while one is in view; `harness` is how an agent is put to the test and watched — simulations,
+ * the callers they play, the judges and the monitors — drawn whoever is in view; `workspace` is
+ * the org's own, drawn at the sidebar's foot whatever is.
  */
-export type ScreenGroup = "build" | "workspace";
+export type ScreenGroup = "build" | "harness" | "workspace";
 
 /**
  * One screen: where it is, what it is called, which console has it, and where it sits. A screen
@@ -96,17 +98,21 @@ const THE_WORKSHOPS = ["sandbox"] as const;
 // One word, one place. What is looked at — Overview, Calls, Quality — is the same three rows
 // whether every agent is in view or one, and the agent is what the sidebar's Viewing picks, never
 // a section of its own: these are the org's, at the root, and the agent's below are the same
-// screens under `/a/<slug>`. Agents lists them all. What runs the org — numbers, people, the bill,
-// what is set once and rarely — is the workspace, at the sidebar's foot; tokens and provider keys
-// are each instance's own, so each console holds them.
+// screens under `/a/<slug>`. Agents lists them all. The harness is the same four rows in both
+// tables: the judges and the monitors are the org's and each agent's, while a simulation and the
+// callers it plays are one agent's, so with every agent in view those two ask which agent first.
+// What runs the org — numbers, people, the bill, what is set once and rarely — is the workspace,
+// at the sidebar's foot; tokens and provider keys are each instance's own, so each console holds them.
 export const ORG_SCREENS: readonly Screen[] = [
   { key: "overview", path: "", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
-  { key: "quality", path: "quality", name: "Quality", tab: "Overview", in: BOTH, icon: "check" },
-  { key: "judges", path: "judges", name: "Judges", in: BOTH, under: "quality" },
-  { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, under: "quality" },
+  { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
   { key: "observability", path: "observability", name: "Observability", in: BOTH, icon: "activity" },
   { key: "agents", path: "agents", name: "Agents", in: BOTH, icon: "bot" },
+  { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, icon: "headphones", group: "harness" },
+  { key: "personas", path: "personas", name: "Personas", in: BOTH, icon: "persona", group: "harness" },
+  { key: "judges", path: "judges", name: "Judges", in: BOTH, icon: "scale", group: "harness" },
+  { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, icon: "bell", group: "harness" },
   { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
   { key: "team", path: "team", name: "Team", in: PRODUCTIONS, icon: "users", group: "workspace" },
   { key: "usage", path: "usage", name: "Usage", in: PRODUCTIONS, icon: "chart", group: "workspace" },
@@ -145,25 +151,21 @@ export const BOX_SCREENS: readonly Screen[] = [
 // each the org's screen with only its calls — then what builds it. Playground is the gateway's
 // room, by voice or in writing, and Dev chat — a written call to the class in a developer's own
 // directory — is its second tab in the workshop. Test is what happens before a change ships: the
-// real calls a judge broke on, waiting for a person, the goldens and their runs, the callers
-// written for it, and a caller put on it live, with an overview of the whole harness first; how
-// its REAL calls are judged is Quality's, its judges and its monitors under it.
+// real calls a judge broke on, waiting for a person, and the goldens and their runs, with an
+// overview of the whole harness first. The harness is its own rows: a caller put on it live, the
+// callers written for it, the judges its real calls are held to, and the monitors over them.
 // Knowledge is what it searches and what it learned. Configure is what it runs on, with the
 // pipeline that results, its lexicon and the widget that embeds it.
 export const AGENT_SCREENS: readonly Screen[] = [
   { key: "agent-overview", path: "overview", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
-  { key: "quality", path: "quality", name: "Quality", tab: "Overview", in: BOTH, icon: "check" },
-  { key: "judges", path: "judges", name: "Judges", in: BOTH, under: "quality" },
-  { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, under: "quality" },
+  { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
   { key: "talk", path: "playground", name: "Playground", tab: "Chat", in: BOTH, icon: "chat", group: "build" },
   { key: "devchat", path: "dev-chat", name: "Dev chat", in: THE_WORKSHOPS, under: "talk" },
   { key: "test", path: "test", name: "Test", tab: "Overview", in: BOTH, icon: "flask", group: "build" },
   // A real call a judge broke on waits here for a person.
   { key: "cases", path: "cases", name: "Cases", in: BOTH, under: "test" },
   { key: "evals", path: "goldens", name: "Goldens", in: BOTH, under: "test" },
-  { key: "personas", path: "personas", name: "Personas", in: BOTH, under: "test" },
-  { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, under: "test" },
   { key: "knowledge", path: "knowledge", name: "Knowledge", in: BOTH, icon: "book", opensOn: "first-tab", group: "build" },
   { key: "docs", path: "docs", name: "Docs", in: BOTH, under: "knowledge" },
   { key: "memory", path: "memory", name: "Memory", in: BOTH, under: "knowledge" },
@@ -171,6 +173,10 @@ export const AGENT_SCREENS: readonly Screen[] = [
   { key: "pipeline", path: "pipeline", name: "Pipeline", in: BOTH, under: "settings" },
   { key: "lexicon", path: "lexicon", name: "Lexicon", in: BOTH, under: "settings" },
   { key: "widget", path: "widget", name: "Widget", in: BOTH, under: "settings" },
+  { key: "simulations", path: "simulations", name: "Simulations", in: BOTH, icon: "headphones", group: "harness" },
+  { key: "personas", path: "personas", name: "Personas", in: BOTH, icon: "persona", group: "harness" },
+  { key: "judges", path: "judges", name: "Judges", in: BOTH, icon: "scale", group: "harness" },
+  { key: "monitors", path: "monitors", name: "Monitors", in: BOTH, icon: "bell", group: "harness" },
 ];
 
 /** The screens of a table this console has, in the table's order; an operator's only for an operator. */

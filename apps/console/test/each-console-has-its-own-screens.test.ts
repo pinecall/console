@@ -21,6 +21,8 @@ const tabs = (table: typeof ORG_SCREENS, key: string, world: "production" | "san
 // sidebar's foot. Nothing that is ONE agent's — its callers, its goldens, its lexicon — is the org's.
 const looked = (table: typeof ORG_SCREENS, world: "production" | "sandbox"): string[] =>
   rowsOf(table, world).filter((screen) => screen.group === undefined).map((screen) => screen.name);
+const harness = (table: typeof ORG_SCREENS, world: "production" | "sandbox"): string[] =>
+  rowsOf(table, world).filter((screen) => screen.group === "harness").map((screen) => screen.name);
 const workspace = (world: "production" | "sandbox"): string[] =>
   rowsOf(ORG_SCREENS, world).filter((screen) => screen.group === "workspace").map((screen) => screen.name);
 
@@ -34,10 +36,12 @@ describe("production's console", () => {
     expect(tabs(ORG_SCREENS, "org-settings", "production")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Telemetry", "Alerts", "Docs", "Memory", "Notifications", "Data & privacy"]);
   });
 
-  it("judges its real calls under Quality, with the judges and the monitors as its tabs", () => {
-    expect(tabs(ORG_SCREENS, "quality", "production")).toEqual(["Quality", "Judges", "Monitors"]);
+  it("puts the harness in its own section: simulations, the callers they play, the judges and the monitors", () => {
+    expect(harness(ORG_SCREENS, "production")).toEqual(["Simulations", "Personas", "Judges", "Monitors"]);
+    expect(tabs(ORG_SCREENS, "quality", "production")).toEqual(["Quality"]);
     expect(screenAt("/judges")?.key).toBe("judges");
     expect(screenAt("/monitors")?.key).toBe("monitors");
+    expect(screenAt("/simulations")?.key).toBe("simulations");
   });
 
   it("reads every call on one screen, with no tab of its own: the table is Calls' own view", () => {
@@ -45,9 +49,7 @@ describe("production's console", () => {
     expect(screenAt("/calls/call_9f")?.key).toBe("calls");
   });
 
-  it("has no org-wide Personas, Simulations or Lexicon: a caller and the words are one agent's", () => {
-    expect(names(ORG_SCREENS, "production")).not.toContain("Personas");
-    expect(names(ORG_SCREENS, "production")).not.toContain("Simulations");
+  it("has no org-wide Lexicon: the words are one agent's", () => {
     expect(names(ORG_SCREENS, "production")).not.toContain("Lexicon");
   });
 
@@ -84,7 +86,7 @@ describe("the sandbox's console", () => {
   });
 
   it("has every screen of an agent, Dev chat among them", () => {
-    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Judges", "Monitors", "Playground", "Dev chat", "Test", "Cases", "Goldens", "Personas", "Simulations", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget"]);
+    expect(names(AGENT_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Playground", "Dev chat", "Test", "Cases", "Goldens", "Knowledge", "Docs", "Memory", "Configure", "Pipeline", "Lexicon", "Widget", "Simulations", "Personas", "Judges", "Monitors"]);
   });
 });
 
@@ -109,9 +111,14 @@ describe("an agent's screens", () => {
     expect(screenAt("/lexicon")).toBeUndefined();
   });
 
-  it("puts the harness under Test: its overview first, then the calls that broke, its goldens, its callers and a simulation", () => {
-    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Test", "Cases", "Goldens", "Personas", "Simulations"]);
-    expect(tabs(AGENT_SCREENS, "quality", "production")).toEqual(["Quality", "Judges", "Monitors"]);
+  it("keeps under Test what comes before a change ships: its overview, the calls that broke and its goldens", () => {
+    expect(tabs(AGENT_SCREENS, "test", "production")).toEqual(["Test", "Cases", "Goldens"]);
+    expect(tabs(AGENT_SCREENS, "quality", "production")).toEqual(["Quality"]);
+  });
+
+  it("has the org's harness rows, its own: simulations, its callers, its judges and its monitors", () => {
+    expect(harness(AGENT_SCREENS, "production")).toEqual(harness(ORG_SCREENS, "production"));
+    expect(screenAt("/a/clinica-norte/simulations/call_9f")?.key).toBe("simulations");
   });
 
   it("read a path in the agent's table, so its Configure is not the org's Settings", () => {

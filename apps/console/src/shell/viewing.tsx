@@ -11,10 +11,10 @@ import { orgOf, useWhoami } from "../lib/whoami";
 import { useWorld } from "../lib/world";
 import { Avatar, Icon } from "../ui";
 
-// What is looked at is the same screen whoever is in view, so changing who keeps it: Calls stays
-// Calls. Anything else is one table's alone — an agent's Test, the org's Agents — and lands on
-// Overview, the one screen both have at the top.
-const LOOKED_AT = new Set(["calls", "quality"]);
+// What is looked at, and the harness, are the same rows whoever is in view, so changing who keeps
+// them: Calls stays Calls, Simulations stays Simulations. Anything else is one table's alone — an
+// agent's Test, the org's Agents — and lands on Overview, the one screen both have at the top.
+const LOOKED_AT = new Set(["calls", "quality", "simulations", "personas", "judges", "monitors"]);
 
 /** The path the same screen has with `agent` in view, or every agent when it is "". */
 function keptFor(pathname: string, agent: string): string {

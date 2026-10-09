@@ -1,0 +1,7 @@
+/* Pick an agent: each agent's avatar beside its name. */
+
+.pick-agent-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}

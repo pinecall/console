@@ -1,4 +1,4 @@
-/** The sidebar: the org and its world, who is in view, what is looked at, what builds the agent in view, the workspace, and who is signed in. */
+/** The sidebar: the org and its world, who is in view, what is looked at, what builds the agent in view, the harness, the workspace, and who is signed in. */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
@@ -61,6 +61,7 @@ export function Sidebar({ agent, onSearch }: { agent: string; onSearch: () => vo
   const rows = rowsOf(table);
   const looked = rows.filter((row) => row.group === undefined);
   const built = rows.filter((row) => row.group === "build");
+  const harness = rows.filter((row) => row.group === "harness");
   const workspace = rowsOf(ORG_SCREENS).filter((row) => row.group === "workspace");
   const box = rowsOf(BOX_SCREENS, WORLD, operator === true);
 
@@ -85,6 +86,12 @@ export function Sidebar({ agent, onSearch }: { agent: string; onSearch: () => vo
           <>
             <div className="side-group">Build</div>
             {built.map((row) => link(table, row, prefix))}
+          </>
+        )}
+        {harness.length > 0 && (
+          <>
+            <div className="side-group">Harness</div>
+            {harness.map((row) => link(table, row, prefix))}
           </>
         )}
       </nav>
