@@ -1,0 +1,30 @@
+/* Observability: a grid of charts, each a card; the lines in the console's four tones. */
+.obs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
+.obs-chart { position: relative; }
+.obs-chart svg { width: 100%; height: auto; display: block; }
+.obs-grid-line, .obs-grid { }
+.obs-chart .obs-grid { stroke: var(--line); stroke-width: 1; }
+.obs-tick { font-size: 10px; fill: var(--ink-faint); }
+.obs-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.obs-line-1 { stroke: var(--accent); }
+.obs-line-2 { stroke: var(--accent-3); }
+.obs-line-3 { stroke: var(--danger); }
+.obs-line-4 { stroke: var(--ok); }
+.obs-dot { stroke: var(--surface); stroke-width: 2; }
+.obs-dot-1 { fill: var(--accent); }
+.obs-dot-2 { fill: var(--accent-3); }
+.obs-dot-3 { fill: var(--danger); }
+.obs-dot-4 { fill: var(--ok); }
+.obs-cross { stroke: var(--line-strong); stroke-width: 1; }
+.obs-hit { fill: transparent; }
+.obs-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12px; color: var(--ink-dim); }
+.obs-key::before { content: ""; display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin: 0 6px 3px 0; background: var(--accent); }
+.obs-key-2::before { background: var(--accent-3); }
+.obs-key-3::before { background: var(--danger); }
+.obs-key-4::before { background: var(--ok); }
+.obs-tip { position: absolute; top: 8px; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 12px; pointer-events: none; box-shadow: 0 4px 16px rgba(0, 0, 0, .08); white-space: nowrap; }
+.obs-tip-head { font-weight: 600; margin-bottom: 2px; }
+.obs-quiet { color: var(--ink-dim); font-size: 13px; margin: 8px 0; }
+.obs-endings { display: grid; gap: 6px; }
+.obs-ending { display: flex; justify-content: space-between; font-size: 13px; }
+.obs-ending-count { font-variant-numeric: tabular-nums; color: var(--ink-dim); }

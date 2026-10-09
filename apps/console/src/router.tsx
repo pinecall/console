@@ -19,6 +19,7 @@ import { Tokens } from "./screens/tokens";
 import { Lexicon } from "./screens/lexicon";
 import { Providers } from "./screens/providers";
 import { Secrets } from "./screens/secrets";
+import { Observability } from "./screens/observability";
 import { Telemetry } from "./screens/telemetry";
 import { Docs } from "./screens/docs";
 import { Memory } from "./screens/memory";
@@ -59,6 +60,7 @@ const ORG: Record<string, ReactNode> = {
   apps: <Apps />,
   secrets: <Secrets />,
   telemetry: <Telemetry />,
+  observability: <Observability />,
   team: <Team />,
   usage: <Usage />,
   notifications: <Notifications />,

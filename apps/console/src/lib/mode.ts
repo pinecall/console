@@ -103,6 +103,7 @@ export const ORG_SCREENS: readonly Screen[] = [
   { key: "overview", path: "", name: "Overview", in: BOTH, icon: "grid" },
   { key: "calls", path: "calls", name: "Calls", in: BOTH, icon: "list" },
   { key: "quality", path: "quality", name: "Quality", in: BOTH, icon: "check" },
+  { key: "observability", path: "observability", name: "Observability", in: BOTH, icon: "activity" },
   { key: "agents", path: "agents", name: "Agents", in: BOTH, icon: "bot" },
   { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
   { key: "team", path: "team", name: "Team", in: PRODUCTIONS, icon: "users", group: "workspace" },
