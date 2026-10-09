@@ -242,7 +242,11 @@
 .num-table-row:hover { background: var(--ground-3); }
 .num-cell-number { font-weight: 600; font-variant-numeric: tabular-nums; }
 .num-cell-agent { color: var(--ink-2); }
-.num-cell-sub { display: block; font-size: 11.5px; color: var(--ink-4); font-weight: 400; }
+/* A cell keeps to its column: a long account id or agent is cut, never written over the next one. */
+.num-cell-number,
+.num-cell-agent,
+.num-cell-through { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.num-cell-sub { display: block; font-size: 11.5px; color: var(--ink-4); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .num-cell-pills { display: flex; gap: 6px; flex-wrap: wrap; }
 .num-caret { color: var(--ink-5); transition: transform 0.15s; }
 .num-table-row[aria-expanded="true"] .num-caret { transform: rotate(90deg); }

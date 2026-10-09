@@ -183,8 +183,10 @@ export function Numbers(): ReactNode {
                         {prettyNumber(number)}
                         {row.route.channel === "whatsapp" && <span className="num-cell-sub">WhatsApp</span>}
                       </span>
-                      <span className="num-cell-agent">→ {row.route.agent}</span>
-                      <span className="num-cell-through">
+                      <span className="num-cell-agent" title={row.route.agent}>
+                        → {row.route.agent}
+                      </span>
+                      <span className="num-cell-through" title={through.sub === "" ? through.name : `${through.name} · ${through.sub}`}>
                         {through.name}
                         <span className="num-cell-sub">{through.sub}</span>
                       </span>
