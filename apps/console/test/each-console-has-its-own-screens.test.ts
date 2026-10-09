@@ -31,7 +31,7 @@ describe("production's console", () => {
 
   it("runs the org from the workspace: its numbers, its people, its bill and its settings", () => {
     expect(workspace("production")).toEqual(["Numbers", "Team", "Usage", "Settings"]);
-    expect(tabs(ORG_SCREENS, "org-settings", "production")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Docs", "Memory", "Notifications", "Data & privacy"]);
+    expect(tabs(ORG_SCREENS, "org-settings", "production")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Telemetry", "Docs", "Memory", "Notifications", "Data & privacy"]);
   });
 
   it("reads every call on one screen, with no tab of its own: the table is Calls' own view", () => {
@@ -74,7 +74,7 @@ describe("the sandbox's console", () => {
   it("is the workshop: the same rows looked at, no numbers, people or bill, and its own tokens, provider keys and notices", () => {
     expect(looked(ORG_SCREENS, "sandbox")).toEqual(["Overview", "Calls", "Quality", "Agents"]);
     expect(workspace("sandbox")).toEqual(["Settings"]);
-    expect(tabs(ORG_SCREENS, "org-settings", "sandbox")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Docs", "Memory", "Notifications", "Data & privacy", "Phone testing"]);
+    expect(tabs(ORG_SCREENS, "org-settings", "sandbox")).toEqual(["Tokens", "Providers", "Apps", "Secrets", "Telemetry", "Docs", "Memory", "Notifications", "Data & privacy", "Phone testing"]);
   });
 
   it("has every screen of an agent, Dev chat among them", () => {
