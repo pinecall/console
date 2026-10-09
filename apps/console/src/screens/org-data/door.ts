@@ -64,7 +64,8 @@ export async function readTrail(credentials: Credentials): Promise<Erasure[]> {
 
 const ReadSchema = z.object({
   subject: z.string(),
-  what: z.enum(["log", "recording", "traceback"]),
+  // runtime wire/rest/calls.py: ReadKind — every read is on the record, so every kind is here.
+  what: z.enum(["log", "recording", "traceback", "listen", "supervise", "export", "memory"]),
   env: z.enum(["production", "sandbox"]).nullable(),
   reader: z.string(),
   at: z.number(),

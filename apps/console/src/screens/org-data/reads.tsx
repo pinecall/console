@@ -11,7 +11,15 @@ import { readReads, type Read } from "./door";
 
 const COLUMNS = "150px 100px minmax(0,1.4fr) minmax(0,1fr) 100px";
 
-const WHAT: Record<Read["what"], string> = { log: "the log", recording: "the recording", traceback: "a traceback" };
+const WHAT: Record<Read["what"], string> = {
+  log: "the log",
+  recording: "the recording",
+  traceback: "a traceback",
+  listen: "listened in",
+  supervise: "the desk",
+  export: "an export",
+  memory: "memory",
+};
 
 /**
  * The org's access log, what a breach notification starts from. A read is written once an hour per
@@ -58,8 +66,9 @@ export function ReadsCard({ onRefused }: { onRefused: (said: string | null) => v
     <Card pad>
       <CardHead title="Who read what" meta="newest first · once an hour per reader" />
       <p className="data-sentence">
-        A person reading a call's log or its recording, here or with their key, and the operator reading one off the box or looking a number up
-        for a carrier's traceback. A server's key and a visitor's page write nothing.
+        A person or a server's key reading a call's log or its recording, a seat listening in or taking the desk, an export, a read of what
+        memory kept about a contact, and the operator reading one off the box or looking a number up for a carrier's traceback. A visitor's page
+        writes nothing.
       </p>
       <form className="data-form" onSubmit={(event) => void look(event)}>
         <Input value={subject} aria-label="A call id or a number" placeholder="a call id or a number, or empty for all" onChange={(event) => setSubject(event.target.value)} />
