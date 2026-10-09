@@ -1,11 +1,15 @@
-/** Telemetry: where the org sends its calls' traces — an OpenTelemetry collector of its own, set with its headers, never shown. */
+/** Telemetry: where the org sends its calls' traces — Langfuse by its two keys, or any OpenTelemetry collector by its URL and headers, never shown back. */
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
 import { saidBy } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
-import { Button, Card, Check, Empty, Field, Input, KV, Page, PageHead, Refused, TextAction } from "../../ui";
+import { Button, Card, Check, Empty, Field, Input, KV, Page, PageHead, Refused, Segmented, TextAction } from "../../ui";
 import { dropCollector, putCollector, readCollector, type Collector } from "../../lib/telemetry";
+import { isLangfuse, LangfuseForm } from "./langfuse";
+import "./telemetry.css";
+
+type Kind = "langfuse" | "otlp";
 
 /** One header of the form: a name and a value, the value sent once and never read back. */
 interface Header {
@@ -25,6 +29,7 @@ export function Telemetry(): ReactNode {
   const [headers, setHeaders] = useState<Header[]>([{ name: "", value: "" }]);
   const [pii, setPii] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<Kind>("langfuse");
   const [refused, setRefused] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,6 +47,21 @@ export function Telemetry(): ReactNode {
     };
   }, [credentials]);
 
+  const kept = async (url: string, sent: Record<string, string>, carries: boolean): Promise<void> => {
+    setBusy(true);
+    setRefused(null);
+    try {
+      await putCollector(credentials, url, sent, carries);
+      setCollector(await readCollector(credentials));
+      setEndpoint("");
+      setHeaders([{ name: "", value: "" }]);
+    } catch (failed) {
+      setRefused(saidBy(failed));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const save = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
     const url = endpoint.trim();
@@ -55,18 +75,7 @@ export function Telemetry(): ReactNode {
       setRefused("A header has a name and a value.");
       return;
     }
-    setBusy(true);
-    setRefused(null);
-    try {
-      await putCollector(credentials, url, Object.fromEntries(named.map((one) => [one.name.trim(), one.value])), pii);
-      setCollector(await readCollector(credentials));
-      setEndpoint("");
-      setHeaders([{ name: "", value: "" }]);
-    } catch (failed) {
-      setRefused(saidBy(failed));
-    } finally {
-      setBusy(false);
-    }
+    await kept(url, Object.fromEntries(named.map((one) => [one.name.trim(), one.value])), pii);
   };
 
   const forget = async (): Promise<void> => {
@@ -89,7 +98,7 @@ export function Telemetry(): ReactNode {
       <PageHead
         title="Telemetry"
         ledeWidth={660}
-        lede="Where the org sends its calls' traces: an OpenTelemetry collector of its own — Datadog, Grafana, Langfuse, Honeycomb, Cekura, or one you run — beside Pinecall's. Every span carries pinecall.org, pinecall.env, pinecall.agent and pinecall.call, so one call is one trace there."
+        lede="Every call is already traced: each model request, each sentence heard and spoken, each tool, with its timings and tokens. Here you send those traces, as they happen, to a tool of yours as well — one call is one trace there, its session the call, its environment sandbox or production. Langfuse takes its two keys; anything else that speaks OpenTelemetry takes its URL and headers."
       />
 
       <Card pad>
@@ -97,7 +106,7 @@ export function Telemetry(): ReactNode {
           <Empty>Traces go nowhere but Pinecall. Name a collector below, or with `pinecall telemetry set`.</Empty>
         ) : (
           <>
-            <KV label="Collector">{collector.endpoint}</KV>
+            <KV label="Collector">{isLangfuse(collector.endpoint) ? `Langfuse · ${new URL(collector.endpoint).host}` : collector.endpoint}</KV>
             <KV label="Headers">{collector.header_names.length > 0 ? collector.header_names.join(", ") : "none"}</KV>
             <KV label="What was said">{collector.pii ? "carried on the spans" : "stripped before export: the timings, tokens and names stay"}</KV>
             <TextAction danger onClick={() => void forget()}>
@@ -108,6 +117,19 @@ export function Telemetry(): ReactNode {
       </Card>
 
       <Card pad>
+        <div className="tel-kind">
+          <Segmented
+            options={[
+              { value: "langfuse", label: "Langfuse" },
+              { value: "otlp", label: "Another OpenTelemetry collector" },
+            ]}
+            value={kind}
+            onChange={setKind}
+          />
+        </div>
+        {kind === "langfuse" ? (
+          <LangfuseForm busy={busy} replacing={collector !== null && collector !== undefined} onSave={(url, sent, carries) => void kept(url, sent, carries)} />
+        ) : (
         <form className="ui-form" onSubmit={(event) => void save(event)}>
           <Field label="Collector, an OTLP/HTTP traces URL" grow minWidth={320}>
             <Input value={endpoint} placeholder="https://otlp.datadoghq.eu/v1/traces" autoComplete="off" spellCheck={false} onChange={(event) => setEndpoint(event.target.value)} />
@@ -130,6 +152,7 @@ export function Telemetry(): ReactNode {
             {busy ? "Saving…" : collector ? "Replace" : "Save"}
           </Button>
         </form>
+        )}
       </Card>
 
       <Refused>{refused}</Refused>
