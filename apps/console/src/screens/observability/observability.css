@@ -28,3 +28,16 @@
 .obs-endings { display: grid; gap: 6px; }
 .obs-ending { display: flex; justify-content: space-between; font-size: 13px; }
 .obs-ending-count { font-variant-numeric: tabular-nums; color: var(--ink-dim); }
+.obs-fill-1 { fill: var(--accent); }
+.obs-fill-2 { fill: var(--accent-3); }
+.obs-fill-3 { fill: var(--danger); }
+.obs-fill-4 { fill: var(--ok); }
+.obs-fill-5 { fill: var(--ink-faint); }
+.obs-fill-6 { fill: var(--line-strong); }
+.obs-key-fill-1::before { background: var(--accent); }
+.obs-key-fill-2::before { background: var(--accent-3); }
+.obs-key-fill-3::before { background: var(--danger); }
+.obs-key-fill-4::before { background: var(--ok); }
+.obs-key-fill-5::before { background: var(--ink-faint); }
+.obs-key-fill-6::before { background: var(--line-strong); }
+.obs-grid { margin-top: 16px; }

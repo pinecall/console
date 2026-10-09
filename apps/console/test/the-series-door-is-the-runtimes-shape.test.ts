@@ -12,6 +12,7 @@ const A_DAY = {
   finished: 3,
   escalated: 1,
   spend_usd: 0.42,
+  mean_length_s: 48.5,
   e2e_median_s: 1.2,
   e2e_p95_s: 2.9,
   endings: [{ reason: "caller_hung_up", count: 3 }],

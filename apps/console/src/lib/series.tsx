@@ -16,6 +16,7 @@ const DaySchema = z.looseObject({
   finished: z.number(),
   escalated: z.number(),
   spend_usd: z.number(),
+  mean_length_s: z.number().nullable(),
   e2e_median_s: z.number().nullable(),
   e2e_p95_s: z.number().nullable(),
   endings: z.array(z.object({ reason: z.string(), count: z.number() })),

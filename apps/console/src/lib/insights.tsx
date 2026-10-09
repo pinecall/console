@@ -27,7 +27,14 @@ const InsightsSchema = z.looseObject({
   series: z.array(ChannelsSchema.extend({ day: z.string(), spend_usd: z.number(), judged: z.number(), passed: z.number() })),
   sessions_total: z.number(),
   live: z.number(),
-  agents: z.array(z.object({ slug: z.string(), calls: z.number(), score: z.number().nullable() })),
+  agents: z.array(
+    z.object({
+      slug: z.string(),
+      calls: z.number(),
+      score: z.number().nullable(),
+      spend: z.object({ llm_usd: z.number(), stt_usd: z.number(), tts_usd: z.number(), phone_usd: z.number(), platform_usd: z.number(), minutes: z.number(), per_minute_usd: z.number().nullable() }),
+    }),
+  ),
   budget: z.object({ limit_usd: z.number().nullable(), spent_usd_month: z.number() }),
 });
 export type Insights = z.infer<typeof InsightsSchema>;
