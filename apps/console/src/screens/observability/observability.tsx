@@ -13,7 +13,7 @@ import "./observability.css";
 const STAGE_NAME: Record<string, string> = { stt: "Transcription", llm: "First token", tts: "First audio" };
 const BY_AGENT = "minmax(0,1.4fr) 90px 110px 110px 100px";
 
-const seconds = (value: number): string => (value >= 10 ? `${Math.round(value)} s` : `${(Math.round(value * 100) / 100).toFixed(2)} s`);
+const seconds = (value: number): string => (value >= 10 ? `${Math.round(value)}s` : `${(Math.round(value * 100) / 100).toFixed(2)}s`);
 const percent = (value: number): string => `${Math.round(value * 100)}%`;
 const count = (value: number): string => `${Math.round(value)}`;
 const dollars = (value: number): string => `$${value.toFixed(2)}`;
@@ -72,7 +72,7 @@ export function Observability(): ReactNode {
   const rows = useMemo(() => series ?? [], [series]);
   const now = useMemo(() => totalsOf(rows), [rows]);
   const before = useMemo(() => totalsOf(earlier?.days === range ? earlier.series : []), [earlier, range]);
-  const said = `vs ${windowSaid(range)} before`;
+  const said = `vs the ${range} d before`;
 
   const latency: Line[] = useMemo(
     () => [
@@ -162,7 +162,7 @@ export function Observability(): ReactNode {
           size="big"
           label="Time to first token"
           value={now.ttft === null ? "—" : seconds(now.ttft)}
-          delta={faster === null ? said : Math.abs(faster) < 0.05 ? "steady" : `${faster > 0 ? "−" : "+"}${Math.abs(faster).toFixed(2)} s`}
+          delta={faster === null ? said : Math.abs(faster) < 0.05 ? "steady" : `${faster > 0 ? "−" : "+"}${Math.abs(faster).toFixed(2)}s`}
           tone={faster === null || Math.abs(faster) < 0.05 ? "flat" : faster > 0 ? "up" : "down"}
         />
         <Stat size="big" label="Mean length" value={now.length === null ? "—" : seconds(now.length)} delta={before.length === null ? said : `${seconds(before.length)} before`} tone="flat" />
