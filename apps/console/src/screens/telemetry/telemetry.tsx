@@ -18,9 +18,10 @@ interface Header {
 }
 
 /**
- * Every call's spans — the model's requests, speech in and out, every tool — go over OTLP to the
- * collector named here, beside Pinecall's own. The headers are a credential: typed here, sent
- * once, and the gateway keeps them sealed; the page reads back their names alone.
+ * A copy of every spoken call's spans — the model's requests, speech in and out, every tool — goes
+ * over OTLP to the collector named here; a chat has no worker and so no spans. The headers are a
+ * credential: typed here, sent once, and the gateway keeps them sealed; the page reads back their
+ * names alone.
  */
 export function Telemetry(): ReactNode {
   const credentials = useCredentials();
@@ -98,7 +99,7 @@ export function Telemetry(): ReactNode {
       <PageHead
         title="Telemetry"
         ledeWidth={660}
-        lede="Every call is already traced: each model request, each sentence heard and spoken, each tool, with its timings and tokens. Here you send those traces, as they happen, to a tool of yours as well — one call is one trace there, its session the call, its environment sandbox or production. Langfuse takes its two keys; anything else that speaks OpenTelemetry takes its URL and headers."
+        lede="Send a copy of every spoken call's trace to a tool of yours: each model request, each sentence heard and spoken, each tool, with its timings and tokens. One call is one trace there, its session the call, its environment sandbox or production. Phone and voice calls are traced; a chat is not. Off until you set it — the rest of this console reads the call's log and changes nothing either way. Langfuse takes its two keys; anything else that speaks OpenTelemetry takes its URL and headers."
       />
 
       <Card pad>
