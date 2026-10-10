@@ -21,6 +21,9 @@ export interface Attachment {
   min_score: string;
 }
 
+/** Set one field of the form. */
+export type Change = <K extends keyof Typed>(field: K, value: Typed[K]) => void;
+
 /** A stage's plugin: a class of the vendor's plugin other than its default, and its keyword arguments as JSON text. */
 export interface Plugin {
   builds: string;
@@ -35,16 +38,25 @@ export interface Typed {
   voice: string;
   /** The model's temperature; "" is the vendor's default. */
   temperature: string;
+  /** Who ends the caller's turn; "" is the operator's choice for the ears. */
+  end_of_turn: "" | "stt" | "livekit" | "smart-turn";
   plugins: Record<Modality, Plugin>;
   /** A language tag; "" is not set, and the vendors run their own default. */
   language: string;
   /** Opening: literal words, or an instruction for the model. */
   opening: "say" | "reply";
   say: string;
+  /** An instruction for the model's opening; "" is the prompt alone. */
   reply: string;
+  /** Whether the caller may cut the opening short; by default they cannot. */
+  interruptible: boolean;
+  /** Whether the model may end the call: never, whenever it judges, or when `hangup` says. */
+  hangs_up: "never" | "any" | "when";
   hangup: string;
   endpointing_ms: string;
   min_interruption_words: string;
+  eot_threshold: string;
+  eager_eot_threshold: string;
   /** Record audio; "" is unset and falls through. */
   record: "" | "on" | "off";
   /** Max voice call duration in seconds; "0" is no limit, "" falls through. */
@@ -78,25 +90,32 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
   const tts = knobOf(config.tts, vendors);
   // Legacy `tts_model` wins on the wire; it is folded into the pick and never written back.
   const ttsModel = config.tts_model ?? undefined;
-  const reply = config.greeting?.reply ?? "";
+  const greeting = config.greeting ?? undefined;
+  const when = config.hangup?.when ?? undefined;
   return {
     stt: knobOf(config.stt, vendors),
     llm: knobOf(config.llm, vendors),
     tts: ttsModel === undefined || ttsModel === "" ? tts : { ...tts, model: ttsModel },
     voice: config.voice ?? "",
     temperature: typeof config.temperature === "number" ? String(config.temperature) : "",
+    end_of_turn: config.end_of_turn ?? "",
     plugins: {
       stt: pluginOf(config.stt_builds, config.stt_options),
       llm: pluginOf(config.llm_builds, config.llm_options),
       tts: pluginOf(config.tts_builds, config.tts_options),
     },
     language: config.language ?? "",
-    opening: reply !== "" ? "reply" : "say",
-    say: config.greeting?.say ?? "",
-    reply,
-    hangup: config.hangup?.when ?? "",
+    // A reply, even empty, is the model's own opening.
+    opening: typeof greeting?.reply === "string" ? "reply" : "say",
+    say: greeting?.say ?? "",
+    reply: greeting?.reply ?? "",
+    interruptible: greeting?.allow_interruptions === true,
+    hangs_up: config.hangup === undefined || config.hangup === null ? "never" : when === undefined || when === null || when === "" ? "any" : "when",
+    hangup: when ?? "",
     endpointing_ms: typeof turn?.endpointing_ms === "number" ? String(turn.endpointing_ms) : "",
     min_interruption_words: typeof turn?.min_interruption_words === "number" ? String(turn.min_interruption_words) : "",
+    eot_threshold: typeof turn?.eot_threshold === "number" ? String(turn.eot_threshold) : "",
+    eager_eot_threshold: typeof turn?.eager_eot_threshold === "number" ? String(turn.eager_eot_threshold) : "",
     // Keep absent and false distinct: absent falls through to the corner below.
     record: typeof config.record === "boolean" ? (config.record ? "on" : "off") : "",
     max_duration_s: typeof config.max_duration_s === "number" ? String(config.max_duration_s) : "",
@@ -116,7 +135,7 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
 /** The wire fields each setting the class may declare covers, by the declaration's name. */
 export const COVERED: Readonly<Record<string, readonly (keyof TuningBody)[]>> = {
   voice: ["voice", "tts", "tts_model", "tts_builds", "tts_options"],
-  stt: ["stt", "stt_builds", "stt_options"],
+  stt: ["stt", "stt_builds", "stt_options", "end_of_turn"],
   llm: ["llm", "temperature", "llm_builds", "llm_options"],
   language: ["language"],
   greeting: ["greeting"],
@@ -157,15 +176,20 @@ function fromTheForm(typed: Typed, wordsOnly: boolean, standing: TuningBody): Tu
       if (options !== undefined) config[`${field}_options`] = options;
     }
     if (typed.temperature.trim() !== "") config.temperature = Number(typed.temperature);
+    if (typed.end_of_turn !== "") config.end_of_turn = typed.end_of_turn;
     const voice = typed.voice.trim();
     if (voice !== "") config.voice = voice;
     const language = typed.language.trim();
     if (language !== "") config.language = language;
     const hangup = typed.hangup.trim();
-    if (hangup !== "") config.hangup = { when: hangup };
-    const turn: NonNullable<TuningBody["turn"]> = {};
-    if (typed.endpointing_ms.trim() !== "") turn.endpointing_ms = Number(typed.endpointing_ms);
-    if (typed.min_interruption_words.trim() !== "") turn.min_interruption_words = Number(typed.min_interruption_words);
+    if (typed.hangs_up === "any" || (typed.hangs_up === "when" && hangup === "")) config.hangup = { when: "" };
+    else if (typed.hangs_up === "when") config.hangup = { when: hangup };
+    // Over the corner's own turn, so a knob this form does not show is kept, not dropped.
+    const turn: NonNullable<TuningBody["turn"]> = { ...(standing.turn ?? {}) };
+    numberInto(turn, "endpointing_ms", typed.endpointing_ms);
+    numberInto(turn, "min_interruption_words", typed.min_interruption_words);
+    numberInto(turn, "eot_threshold", typed.eot_threshold);
+    numberInto(turn, "eager_eot_threshold", typed.eager_eot_threshold);
     if (Object.keys(turn).length > 0) config.turn = turn;
     if (typed.record !== "") config.record = typed.record === "on";
     if (typed.max_duration_s !== "") config.max_duration_s = Number(typed.max_duration_s);
@@ -175,9 +199,10 @@ function fromTheForm(typed: Typed, wordsOnly: boolean, standing: TuningBody): Tu
     config.bases = bases;
   }
   const say = typed.say.trim();
-  const reply = typed.reply.trim();
-  if (typed.opening === "say" && say !== "") config.greeting = { say };
-  else if (typed.opening === "reply" && reply !== "" && !wordsOnly) config.greeting = { reply };
+  const interruptible = typed.interruptible ? { allow_interruptions: true } : {};
+  // The model's own opening needs no instruction: empty, it opens on the prompt alone.
+  if (typed.opening === "say" && say !== "") config.greeting = { say, ...interruptible };
+  else if (typed.opening === "reply" && !wordsOnly) config.greeting = { reply: typed.reply.trim(), ...interruptible };
   else delete config.greeting;
   const remember = lines(typed.remember);
   const forget = lines(typed.forget);
@@ -186,6 +211,14 @@ function fromTheForm(typed: Typed, wordsOnly: boolean, standing: TuningBody): Tu
   if (typed.knowledge.trim() !== "") config.knowledge = typed.knowledge;
   else delete config.knowledge;
   return config;
+}
+
+type Knobs = NonNullable<TuningBody["turn"]>;
+
+// An empty field takes the knob out; a number sets it.
+function numberInto(turn: Knobs, knob: keyof Knobs, said: string): void {
+  if (said.trim() === "") delete turn[knob];
+  else turn[knob] = Number(said);
 }
 
 function pluginOf(builds: string | null | undefined, options: Record<string, unknown> | null | undefined): Plugin {

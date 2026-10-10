@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 
-import { Input, Label, TextArea } from "../../ui";
-import type { Modality, Plugin } from "./typed";
+import { Input, Label, Select, SelectItem, TextArea } from "../../ui";
+import type { Modality, Plugin, Typed } from "./typed";
 
 const EXAMPLES: Readonly<Record<Modality, { builds: string; options: string }>> = {
   llm: { builds: "responses.LLM", options: '{ "use_websocket": true }' },
@@ -37,6 +37,32 @@ export function PluginFields({ modality, vendor, plugin, onChange }: { modality:
         <Label>Plugin options</Label>
         <TextArea value={plugin.options} rows={3} aria-label="Plugin options" spellCheck={false} placeholder={example.options} onChange={(event) => onChange({ ...plugin, options: event.target.value })} />
         <p className="set-help">Its keyword arguments as JSON, named as the plugin names them. Both run only on your org&apos;s own {vendor} key, never on one Pinecall lends.</p>
+      </div>
+    </div>
+  );
+}
+
+const ENDINGS: readonly { value: Typed["end_of_turn"]; label: string }[] = [
+  { value: "", label: "The box's choice for these ears" },
+  { value: "stt", label: "The ears themselves · Deepgram Flux" },
+  { value: "smart-turn", label: "Smart Turn v3, read off the audio" },
+  { value: "livekit", label: "LiveKit's detector, read off the audio" },
+];
+
+/** Who says the caller's turn is over. */
+export function EndOfTurnField({ endOfTurn, onChange }: { endOfTurn: Typed["end_of_turn"]; onChange: (endOfTurn: Typed["end_of_turn"]) => void }): ReactNode {
+  return (
+    <div className="set-row">
+      <div className="set-field">
+        <Label>End of turn</Label>
+        <Select value={endOfTurn} aria-label="End of turn" onValueChange={(value) => onChange(value as Typed["end_of_turn"])}>
+          {ENDINGS.map((one) => (
+            <SelectItem key={one.value} value={one.value}>
+              {one.label}
+            </SelectItem>
+          ))}
+        </Select>
+        <p className="set-help">Who says the caller has finished. The ears end it only where they can (Flux); Smart Turn and LiveKit&apos;s detector run beside any ears, on any key.</p>
       </div>
     </div>
   );

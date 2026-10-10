@@ -187,3 +187,40 @@ describe("a setting the class declares", () => {
     });
   });
 });
+
+describe("how a call opens, ends and is cut", () => {
+  it("keeps the turn's knobs the form does not change, and sends the two confidences it now shows", () => {
+    const standing = { turn: { endpointing_ms: 900, eot_threshold: 0.8, eager_eot_threshold: 0.5 } };
+    const typed = typedOf(standing, VENDORS);
+    typed.min_interruption_words = "3";
+
+    expect(typed.eot_threshold).toBe("0.8");
+    expect(configOf(typed, false, standing).turn).toEqual({ endpointing_ms: 900, eot_threshold: 0.8, eager_eot_threshold: 0.5, min_interruption_words: 3 });
+  });
+
+  it("lets the model improvise with no instruction, and an opening the caller may cut short", () => {
+    const typed = typedOf({ greeting: { reply: "" } }, VENDORS);
+
+    expect(typed.opening).toBe("reply");
+    typed.interruptible = true;
+    expect(configOf(typed, false, {}).greeting).toEqual({ reply: "", allow_interruptions: true });
+  });
+
+  it("reads and sends the three ways the model may hang up", () => {
+    expect(typedOf({}, VENDORS).hangs_up).toBe("never");
+    expect(typedOf({ hangup: { when: "" } }, VENDORS).hangs_up).toBe("any");
+    const when = typedOf({ hangup: { when: "the caller says goodbye" } }, VENDORS);
+    expect(when.hangs_up).toBe("when");
+    expect(configOf(when, false, {}).hangup).toEqual({ when: "the caller says goodbye" });
+    when.hangs_up = "never";
+    expect(configOf(when, false, {}).hangup).toBeUndefined();
+  });
+
+  it("sends who ends the turn, and keeps it as the corner had it when the class declares the ears", () => {
+    const typed = typedOf({ end_of_turn: "stt" }, VENDORS);
+    typed.end_of_turn = "smart-turn";
+
+    expect(configOf(typed, false, {}).end_of_turn).toBe("smart-turn");
+    expect(configOf(typed, false, { end_of_turn: "stt" }, new Set(["stt"])).end_of_turn).toBe("stt");
+  });
+});

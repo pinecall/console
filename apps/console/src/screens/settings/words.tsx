@@ -3,9 +3,9 @@
 import type { ReactNode } from "react";
 
 import { Label, TextArea } from "../../ui";
-import type { Typed } from "./typed";
+import type { Change, Typed } from "./typed";
 
-export function MemorySection({ typed, change }: { typed: Typed; change: (field: keyof Typed, value: string) => void }): ReactNode {
+export function MemorySection({ typed, change }: { typed: Typed; change: Change }): ReactNode {
   return (
     <section className="set-section">
       <div className="set-section-head">
@@ -28,7 +28,7 @@ export function MemorySection({ typed, change }: { typed: Typed; change: (field:
   );
 }
 
-export function KnowledgeSection({ typed, change }: { typed: Typed; change: (field: keyof Typed, value: string) => void }): ReactNode {
+export function KnowledgeSection({ typed, change }: { typed: Typed; change: Change }): ReactNode {
   return (
     <section className="set-section">
       <div className="set-section-head">

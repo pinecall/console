@@ -11,9 +11,9 @@ import { BasesSection } from "./bases";
 import { ConversationSection } from "./conversation";
 import { LanguageField } from "./language";
 import type { Stage } from "../pipeline/door";
-import { FixedByTheClass, PluginFields, TemperatureField } from "./plugin";
+import { EndOfTurnField, FixedByTheClass, PluginFields, TemperatureField } from "./plugin";
 import { StageSection, VoiceField } from "./stages";
-import { configOf, typedOf, type Modality, type Plugin, type Typed } from "./typed";
+import { configOf, typedOf, type Change, type Modality, type Plugin, type Typed } from "./typed";
 import { KnowledgeSection, MemorySection } from "./words";
 
 export type Section = "hears" | "decides" | "speaks" | "conversation" | "memory" | "knowledge" | "bases";
@@ -78,7 +78,7 @@ export function SettingsForm({
   const [typed, setTyped] = useState<Typed>(() => typedOf(standing, vendors));
   const [saved, setSaved] = useState(false);
   const [invalid, setInvalid] = useState<string | null>(null);
-  const change = (field: keyof Typed, value: string): void => {
+  const change: Change = (field, value) => {
     setSaved(false);
     setTyped({ ...typed, [field]: value });
   };
@@ -115,6 +115,7 @@ export function SettingsForm({
       </div>
       {section === "hears" && (
         <StageSection modality="stt" title="Speech to text" blurb="What turns the caller's voice into words, and in which language." knob={typed.stt} providers={providers} defaults={defaults} models={models} onChange={knob("stt")} fixed={fixed.has("stt") ? { value: said(running?.hears) } : undefined}>
+          {!fixed.has("stt") && <EndOfTurnField endOfTurn={typed.end_of_turn} onChange={(picked) => change("end_of_turn", picked)} />}
           {!fixed.has("stt") && <PluginFields modality="stt" vendor={vendorOf(typed.stt.vendor, defaults["stt"])} plugin={typed.plugins.stt} onChange={plug("stt")} />}
           {fixed.has("language") ? <FixedByTheClass label="Language" value={running?.hears.language} /> : <LanguageField language={typed.language} onChange={(language) => change("language", language)} />}
         </StageSection>

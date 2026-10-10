@@ -106,6 +106,8 @@ export const TuningBodySchema = z.strictObject({
   llm: z.string().nullish(),
   /** The model's temperature, in its vendor's range. */
   temperature: z.number().nullish(),
+  /** Who says the caller's turn is over: `stt` (the ears themselves), `livekit` or `smart-turn`. */
+  end_of_turn: z.enum(["stt", "livekit", "smart-turn"]).nullish(),
   /** A class of each stage's plugin other than its default, and its keyword arguments: the org's own key alone runs them. */
   llm_builds: z.string().nullish(),
   llm_options: z.record(z.string(), z.unknown()).nullish(),

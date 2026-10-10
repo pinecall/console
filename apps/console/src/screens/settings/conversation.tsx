@@ -2,14 +2,24 @@
 
 import type { ReactNode } from "react";
 
-import { Input, Label, Segmented, Select, SelectItem, TextArea } from "../../ui";
+import { Check, Input, Label, Segmented, Select, SelectItem, TextArea } from "../../ui";
 import { FixedByTheClass } from "./plugin";
-import type { Typed } from "./typed";
+import type { Change, Typed } from "./typed";
 
 const OPENINGS = [
   { value: "say", label: "Say these words" },
-  { value: "reply", label: "Let the model open" },
+  { value: "reply", label: "Let the model improvise" },
 ] as const;
+
+const HANGS_UP = [
+  { value: "never", label: "Never" },
+  { value: "any", label: "Whenever it judges" },
+  { value: "when", label: "When…" },
+] as const;
+
+// The bands the ears take the two confidences in (the gateway refuses outside them).
+const SURE = ["0.5", "0.6", "0.7", "0.8", "0.9"];
+const EAGER = ["0.3", "0.4", "0.5", "0.6", "0.7"];
 
 // The two numbers of a turn, as lists of values that run: the ears take 500 to 3000 ms of silence
 // (soniox/stt.py:145), and the runtime's defaults are 1000 ms and two words.
@@ -39,7 +49,7 @@ export function ConversationSection({
   wordsOnly: boolean;
   /** The settings the agent's class declares itself: shown, never edited. */
   fixed: ReadonlySet<string>;
-  change: (field: keyof Typed, value: string) => void;
+  change: Change;
 }): ReactNode {
   return (
     <section className="set-section">
@@ -56,24 +66,32 @@ export function ConversationSection({
           {typed.opening === "say" || wordsOnly ? (
             <TextArea value={typed.say} rows={2} aria-label="Opening" placeholder="The exact words the caller hears first" onChange={(event) => change("say", event.target.value)} />
           ) : (
-            <TextArea value={typed.reply} rows={2} aria-label="Opening" placeholder="What the model is told about how to open the call" onChange={(event) => change("reply", event.target.value)} />
+            <TextArea value={typed.reply} rows={2} aria-label="Opening" placeholder="Empty: the model opens on its prompt alone. Or what it is told about this opening" onChange={(event) => change("reply", event.target.value)} />
           )}
           <p className="set-help">
             {typed.opening === "say" || wordsOnly
               ? "Said exactly as written, before the model runs: the caller hears it at once."
-              : "An instruction the model reads to find its own opening. It costs a model round trip before the caller hears anything."}
+              : "The model finds its own opening, on its prompt or this instruction. It costs a model round trip before the caller hears anything."}
           </p>
+          {!wordsOnly && (
+            <Check checked={typed.interruptible} onChange={(checked) => change("interruptible", checked)}>
+              The caller may cut the opening short — otherwise a &ldquo;hello?&rdquo; over it does not stop the agent
+            </Check>
+          )}
         </div>
       )}
       {!wordsOnly && (
         <>
           {fixed.has("hangup") ? (
-            <FixedByTheClass label="May hang up when" />
+            <FixedByTheClass label="May hang up" />
           ) : (
             <div className="set-field set-wide">
-              <Label>May hang up when</Label>
-              <Input value={typed.hangup} aria-label="May hang up when" placeholder="the person has what they came for, or asks you to end the call" onChange={(event) => change("hangup", event.target.value)} />
-              <p className="set-help">In your words. Empty: the agent never ends the call itself.</p>
+              <Label>May hang up</Label>
+              <Segmented options={HANGS_UP} value={typed.hangs_up} onChange={(picked) => change("hangs_up", picked)} />
+              {typed.hangs_up === "when" && (
+                <Input value={typed.hangup} aria-label="May hang up when" placeholder="the person has what they came for, or asks you to end the call" onChange={(event) => change("hangup", event.target.value)} />
+              )}
+              <p className="set-help">Never: the call ends when the caller or a person ends it. Whenever it judges: the model ends it once the caller is clearly done. When: in your words.</p>
             </div>
           )}
           {fixed.has("turn") ? (
@@ -103,6 +121,34 @@ export function ConversationSection({
                   ))}
                 </Select>
                 <p className="set-help">How many words a caller says over the agent before it stops talking. A cough is not an interruption.</p>
+              </div>
+            </div>
+          )}
+          {!fixed.has("turn") && (
+            <div className="set-row">
+              <div className="set-field">
+                <Label>How sure the ears must be</Label>
+                <Select value={typed.eot_threshold} aria-label="How sure the ears must be" onValueChange={(value) => change("eot_threshold", value)}>
+                  <SelectItem value="">Runtime default</SelectItem>
+                  {listed(SURE, typed.eot_threshold).map((sure) => (
+                    <SelectItem key={sure} value={sure}>
+                      {sure}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <p className="set-help">For ears that end the turn themselves (Flux): the confidence it needs to end one. Higher waits for a caller who pauses mid-sentence.</p>
+              </div>
+              <div className="set-field">
+                <Label>When it may guess early</Label>
+                <Select value={typed.eager_eot_threshold} aria-label="When it may guess early" onValueChange={(value) => change("eager_eot_threshold", value)}>
+                  <SelectItem value="">Runtime default</SelectItem>
+                  {listed(EAGER, typed.eager_eot_threshold).map((eager) => (
+                    <SelectItem key={eager} value={eager}>
+                      {eager}
+                    </SelectItem>
+                  ))}
+                </Select>
+                <p className="set-help">The lower bar at which the model starts an answer that is thrown away if the caller carries on. Faster, and more model calls.</p>
               </div>
             </div>
           )}
