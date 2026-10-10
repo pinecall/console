@@ -136,7 +136,7 @@ export function Settings(): ReactNode {
             )}
             <SettingsForm
               // Re-key once vendors arrive: wire words are parsed as vendor or model against them.
-              key={`${agent}-${team}-${standing?.version ?? 0}-${inEffect?.version ?? 0}-${report === null ? "asking" : "read"}`}
+              key={`${agent}-${team}-${standing?.version ?? 0}-${inEffect?.version ?? 0}-${report === null ? "asking" : "read"}-${answer.fixed.join(",")}`}
               standing={inEffect?.config ?? {}}
               version={standing?.version ?? null}
               wordsOnly={wordsOnly}
@@ -145,6 +145,8 @@ export function Settings(): ReactNode {
               defaults={report?.defaults ?? {}}
               models={report?.models ?? {}}
               bases={bases}
+              fixed={new Set(answer.fixed)}
+              running={report === null ? null : { hears: report.hears, decides: report.decides, speaks: report.speaks }}
               section={section}
               onPickSection={(picked) => setParams(picked === offered[0]!.tab ? {} : { section: picked })}
               saving={saving}

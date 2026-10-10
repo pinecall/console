@@ -146,3 +146,44 @@ describe("what the form sends", () => {
     });
   });
 });
+
+describe("a model's temperature and a plugin's own", () => {
+  it("opens on what the corner set and sends it back, the options as an object", () => {
+    const typed = typedOf({ llm: "openai/gpt-5.4-mini", temperature: 0.3, llm_builds: "responses.LLM", llm_options: { use_websocket: true } }, VENDORS);
+    typed.plugins.stt = { builds: "", options: '{ "eot_timeout_ms": 900 }' };
+
+    expect(typed.temperature).toBe("0.3");
+    expect(configOf(typed, false, {})).toMatchObject({
+      temperature: 0.3,
+      llm_builds: "responses.LLM",
+      llm_options: { use_websocket: true },
+      stt_options: { eot_timeout_ms: 900 },
+    });
+  });
+
+  it("refuses options that are not a JSON object, in a sentence", () => {
+    const typed = typedOf({}, VENDORS);
+    typed.plugins.tts = { builds: "", options: "speed=1.1" };
+
+    expect(() => configOf(typed, false, {})).toThrow("The TTS plugin's options are not a JSON object");
+  });
+});
+
+describe("a setting the class declares", () => {
+  it("is sent as the corner had it, whatever the form holds, so the save changes nothing the class wins", () => {
+    const standing = { voice: "carolina", tts: "elevenlabs", llm: "anthropic/claude-haiku-5-5", temperature: 0.2 };
+    const typed = typedOf(standing, VENDORS);
+    typed.voice = "mateo";
+    typed.llm = { vendor: "openai", model: "gpt-5.4-mini" };
+    typed.temperature = "0.9";
+    typed.language = "es";
+
+    expect(configOf(typed, false, standing, new Set(["voice", "llm"]))).toMatchObject({
+      voice: "carolina",
+      tts: "elevenlabs",
+      llm: "anthropic/claude-haiku-5-5",
+      temperature: 0.2,
+      language: "es",
+    });
+  });
+});

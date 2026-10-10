@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { doing, named, type Provider } from "../../lib/catalogue";
 import { Label, Select, SelectItem } from "../../ui";
+import { FixedByTheClass } from "./plugin";
 import type { Knob, Modality } from "./typed";
 import { VoiceById } from "./voice-by-id";
 import { VoicePicker } from "./voice-picker";
@@ -19,6 +20,7 @@ export function StageSection({
   defaults,
   models,
   onChange,
+  fixed,
   children,
 }: {
   modality: Modality;
@@ -29,8 +31,22 @@ export function StageSection({
   defaults: Readonly<Record<string, string>>;
   models: Readonly<Record<string, readonly string[]>>;
   onChange: (knob: Knob) => void;
+  /** Set when the agent's class declares this stage: what it runs, read-only. */
+  fixed?: { value: string | null } | undefined;
   children?: ReactNode;
 }): ReactNode {
+  if (fixed !== undefined) {
+    return (
+      <section className="set-section">
+        <div className="set-section-head">
+          <h2 className="set-section-title">{title}</h2>
+          <p className="set-section-blurb">{blurb}</p>
+        </div>
+        <FixedByTheClass label="Vendor and model" value={fixed.value} />
+        {children}
+      </section>
+    );
+  }
   // Only what this box can run: a vendor with a key here AND models this build runs at it. A vendor
   // with no key is a line that would go out silent, and one with no models is a name to guess at.
   // A vendor set from the terminal that is neither still shows, said so, rather than a list that

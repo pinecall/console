@@ -104,6 +104,15 @@ export const TuningBodySchema = z.strictObject({
   /** A language tag (`en`, `es`, `pt-BR`); unset pins none, and each vendor runs its own default. */
   language: z.string().nullish(),
   llm: z.string().nullish(),
+  /** The model's temperature, in its vendor's range. */
+  temperature: z.number().nullish(),
+  /** A class of each stage's plugin other than its default, and its keyword arguments: the org's own key alone runs them. */
+  llm_builds: z.string().nullish(),
+  llm_options: z.record(z.string(), z.unknown()).nullish(),
+  stt_builds: z.string().nullish(),
+  stt_options: z.record(z.string(), z.unknown()).nullish(),
+  tts_builds: z.string().nullish(),
+  tts_options: z.record(z.string(), z.unknown()).nullish(),
   greeting: GreetingConfigSchema.nullish(),
   hangup: HangupConfigSchema.nullish(),
   turn: TurnConfigSchema.nullish(),
@@ -140,6 +149,8 @@ export const TuningAnswerSchema = z.strictObject({
   yours: TuningRowSchema.nullable(),
   team: TuningRowSchema.nullable(),
   production: TuningRowSchema.nullable(),
+  /** The settings the class holding the agent declares itself, by the declaration's names: each wins over these. */
+  fixed: z.array(z.string()),
 });
 
 export type TuningAnswer = z.infer<typeof TuningAnswerSchema>;
@@ -155,7 +166,7 @@ export type TuningHistory = z.infer<typeof TuningHistorySchema>;
 
 /**
  * An agent's lexicon: how the voice says the words it would get wrong, and the words the ears must
- * know. The class sets neither: these are the agent's says and hears.
+ * know: the agent's says and hears, unless its class declares them.
  */
 export const LexiconBodySchema = z.strictObject({
   said: z.array(PronunciationSchema),
@@ -185,6 +196,8 @@ export const LexiconAnswerSchema = z.strictObject({
   yours: LexiconRowSchema.nullable(),
   team: LexiconRowSchema.nullable(),
   production: LexiconRowSchema.nullable(),
+  /** Which of `says` and `hears` the class holding the agent declares itself. */
+  fixed: z.array(z.string()),
 });
 
 export type LexiconAnswer = z.infer<typeof LexiconAnswerSchema>;

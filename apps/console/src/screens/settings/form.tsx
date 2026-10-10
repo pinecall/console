@@ -10,8 +10,10 @@ import { Button, Input, Tabs } from "../../ui";
 import { BasesSection } from "./bases";
 import { ConversationSection } from "./conversation";
 import { LanguageField } from "./language";
+import type { Stage } from "../pipeline/door";
+import { FixedByTheClass, PluginFields, TemperatureField } from "./plugin";
 import { StageSection, VoiceField } from "./stages";
-import { configOf, typedOf, type Typed } from "./typed";
+import { configOf, typedOf, type Modality, type Plugin, type Typed } from "./typed";
 import { KnowledgeSection, MemorySection } from "./words";
 
 export type Section = "hears" | "decides" | "speaks" | "conversation" | "memory" | "knowledge" | "bases";
@@ -43,6 +45,8 @@ export function SettingsForm({
   defaults,
   models,
   bases,
+  fixed,
+  running,
   section,
   onPickSection,
   saving,
@@ -60,6 +64,10 @@ export function SettingsForm({
   models: Readonly<Record<string, readonly string[]>>;
   /** Bases in this world for the Bases section; null while loading. */
   bases: readonly KnowledgeBase[] | null;
+  /** The settings the agent's class declares itself, by the declaration's names: shown, never edited. */
+  fixed: ReadonlySet<string>;
+  /** What the next call runs at each stage, where the class's value is read from; null while asked for. */
+  running: { hears: Stage; decides: Stage; speaks: Stage } | null;
   section: Section;
   onPickSection: (section: Section) => void;
   saving: boolean;
@@ -69,9 +77,15 @@ export function SettingsForm({
   const vendors = new Set(providers.map((one) => one.name));
   const [typed, setTyped] = useState<Typed>(() => typedOf(standing, vendors));
   const [saved, setSaved] = useState(false);
+  const [invalid, setInvalid] = useState<string | null>(null);
   const change = (field: keyof Typed, value: string): void => {
     setSaved(false);
     setTyped({ ...typed, [field]: value });
+  };
+  const plug = (modality: Modality) => (plugin: Plugin) => {
+    setSaved(false);
+    setInvalid(null);
+    setTyped({ ...typed, plugins: { ...typed.plugins, [modality]: plugin } });
   };
   const knob = (field: "stt" | "llm" | "tts") => (picked: Typed["stt"]) => {
     setSaved(false);
@@ -83,7 +97,14 @@ export function SettingsForm({
 
   const save = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
-    await onSave(configOf(typed, wordsOnly, standing), version, typed.note.trim() === "" ? null : typed.note.trim());
+    let config;
+    try {
+      config = configOf(typed, wordsOnly, standing, fixed);
+    } catch (refused) {
+      setInvalid(refused instanceof Error ? refused.message : String(refused));
+      return;
+    }
+    await onSave(config, version, typed.note.trim() === "" ? null : typed.note.trim());
     setSaved(true);
   };
 
@@ -93,22 +114,36 @@ export function SettingsForm({
         <Tabs label="Settings" tabs={sectionsFor(wordsOnly)} on={section} onPick={onPickSection} />
       </div>
       {section === "hears" && (
-        <StageSection modality="stt" title="Speech to text" blurb="What turns the caller's voice into words, and in which language." knob={typed.stt} providers={providers} defaults={defaults} models={models} onChange={knob("stt")}>
-          <LanguageField language={typed.language} onChange={(language) => change("language", language)} />
+        <StageSection modality="stt" title="Speech to text" blurb="What turns the caller's voice into words, and in which language." knob={typed.stt} providers={providers} defaults={defaults} models={models} onChange={knob("stt")} fixed={fixed.has("stt") ? { value: said(running?.hears) } : undefined}>
+          {!fixed.has("stt") && <PluginFields modality="stt" vendor={vendorOf(typed.stt.vendor, defaults["stt"])} plugin={typed.plugins.stt} onChange={plug("stt")} />}
+          {fixed.has("language") ? <FixedByTheClass label="Language" value={running?.hears.language} /> : <LanguageField language={typed.language} onChange={(language) => change("language", language)} />}
         </StageSection>
       )}
       {section === "decides" && (
-        <StageSection modality="llm" title="Language model" blurb="The model that reads what the caller said and writes the answer." knob={typed.llm} providers={providers} defaults={defaults} models={models} onChange={knob("llm")} />
-      )}
-      {section === "speaks" && (
-        <StageSection modality="tts" title="Voice" blurb="What says the answer out loud, and in which voice." knob={typed.tts} providers={providers} defaults={defaults} models={models} onChange={knob("tts")}>
-          <VoiceField vendor={speaking} providers={providers} model={typed.tts.model === "" ? null : typed.tts.model} language={language} opening={typed.say} voice={typed.voice} onChange={(voice) => change("voice", voice)} />
+        <StageSection modality="llm" title="Language model" blurb="The model that reads what the caller said and writes the answer." knob={typed.llm} providers={providers} defaults={defaults} models={models} onChange={knob("llm")} fixed={fixed.has("llm") ? { value: said(running?.decides) } : undefined}>
+          {!fixed.has("llm") && (
+            <>
+              <TemperatureField temperature={typed.temperature} onChange={(temperature) => change("temperature", temperature)} />
+              <PluginFields modality="llm" vendor={vendorOf(typed.llm.vendor, defaults["llm"])} plugin={typed.plugins.llm} onChange={plug("llm")} />
+            </>
+          )}
         </StageSection>
       )}
-      {section === "conversation" && <ConversationSection typed={typed} wordsOnly={wordsOnly} change={change} />}
-      {section === "memory" && <MemorySection typed={typed} change={change} />}
-      {section === "knowledge" && <KnowledgeSection typed={typed} change={change} />}
-      {section === "bases" && (
+      {section === "speaks" && (
+        <StageSection modality="tts" title="Voice" blurb="What says the answer out loud, and in which voice." knob={typed.tts} providers={providers} defaults={defaults} models={models} onChange={knob("tts")} fixed={fixed.has("voice") ? { value: said(running?.speaks, true) } : undefined}>
+          {!fixed.has("voice") && (
+            <>
+              <VoiceField vendor={speaking} providers={providers} model={typed.tts.model === "" ? null : typed.tts.model} language={language} opening={typed.say} voice={typed.voice} onChange={(voice) => change("voice", voice)} />
+              <PluginFields modality="tts" vendor={vendorOf(typed.tts.vendor, defaults["tts"])} plugin={typed.plugins.tts} onChange={plug("tts")} />
+            </>
+          )}
+        </StageSection>
+      )}
+      {section === "conversation" && <ConversationSection typed={typed} wordsOnly={wordsOnly} fixed={fixed} change={change} />}
+      {section === "memory" && (fixed.has("memory") ? <ClassOnly title="Memory" label="What it remembers and never keeps" /> : <MemorySection typed={typed} change={change} />)}
+      {section === "knowledge" && (fixed.has("knowledge") ? <ClassOnly title="Knowledge" label="What it knows by heart" /> : <KnowledgeSection typed={typed} change={change} />)}
+      {section === "bases" && fixed.has("docs") && <ClassOnly title="Bases" label="The base it searches" />}
+      {section === "bases" && !fixed.has("docs") && (
         <BasesSection
           rows={typed.bases}
           offered={bases}
@@ -123,10 +158,33 @@ export function SettingsForm({
         <Button kind="primary" size="form" type="submit" disabled={saving}>
           {saving ? "Saving…" : version === null ? "Save as the first version" : `Save as v${version + 1}`}
         </Button>
-        <span className={error !== null ? "set-save-said set-save-error" : "set-save-said"}>
-          {error !== null ? error : saved ? "Kept. The next call runs on it." : "Every section is saved together, as one version. An empty field is the runtime's default."}
+        <span className={(invalid ?? error) !== null ? "set-save-said set-save-error" : "set-save-said"}>
+          {invalid !== null ? invalid : error !== null ? error : saved ? "Kept. The next call runs on it." : "Every section is saved together, as one version. An empty field is the runtime's default."}
         </span>
       </div>
     </form>
+  );
+}
+
+// What a stage runs, as one word: vendor/model, and the voice where there is one.
+function said(stage: Stage | undefined, voiced = false): string | null {
+  if (stage === undefined) return null;
+  const word = stage.model === null ? stage.vendor : `${stage.vendor}/${stage.model}`;
+  return voiced && stage.voice_id !== null ? `${word} · ${stage.voice_id}` : word;
+}
+
+function vendorOf(picked: string, runtimeDefault: string | undefined): string {
+  return picked === "" ? (runtimeDefault ?? "the vendor") : picked;
+}
+
+/** A whole section the agent's class declares. */
+function ClassOnly({ title, label }: { title: string; label: string }): ReactNode {
+  return (
+    <section className="set-section">
+      <div className="set-section-head">
+        <h2 className="set-section-title">{title}</h2>
+      </div>
+      <FixedByTheClass label={label} />
+    </section>
   );
 }

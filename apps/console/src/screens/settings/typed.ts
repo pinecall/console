@@ -21,12 +21,21 @@ export interface Attachment {
   min_score: string;
 }
 
+/** A stage's plugin: a class of the vendor's plugin other than its default, and its keyword arguments as JSON text. */
+export interface Plugin {
+  builds: string;
+  options: string;
+}
+
 /** Form fields as strings; lists are one item per line. */
 export interface Typed {
   stt: Knob;
   llm: Knob;
   tts: Knob;
   voice: string;
+  /** The model's temperature; "" is the vendor's default. */
+  temperature: string;
+  plugins: Record<Modality, Plugin>;
   /** A language tag; "" is not set, and the vendors run their own default. */
   language: string;
   /** Opening: literal words, or an instruction for the model. */
@@ -75,6 +84,12 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
     llm: knobOf(config.llm, vendors),
     tts: ttsModel === undefined || ttsModel === "" ? tts : { ...tts, model: ttsModel },
     voice: config.voice ?? "",
+    temperature: typeof config.temperature === "number" ? String(config.temperature) : "",
+    plugins: {
+      stt: pluginOf(config.stt_builds, config.stt_options),
+      llm: pluginOf(config.llm_builds, config.llm_options),
+      tts: pluginOf(config.tts_builds, config.tts_options),
+    },
     language: config.language ?? "",
     opening: reply !== "" ? "reply" : "say",
     say: config.greeting?.say ?? "",
@@ -98,16 +113,50 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
   };
 }
 
+/** The wire fields each setting the class may declare covers, by the declaration's name. */
+export const COVERED: Readonly<Record<string, readonly (keyof TuningBody)[]>> = {
+  voice: ["voice", "tts", "tts_model", "tts_builds", "tts_options"],
+  stt: ["stt", "stt_builds", "stt_options"],
+  llm: ["llm", "temperature", "llm_builds", "llm_options"],
+  language: ["language"],
+  greeting: ["greeting"],
+  hangup: ["hangup"],
+  turn: ["turn"],
+  memory: ["memory"],
+  record: ["record"],
+  knowledge: ["knowledge"],
+  docs: ["bases"],
+};
+
+export const NOT_AN_OBJECT = (stage: Modality): string => `The ${stage.toUpperCase()} plugin's options are not a JSON object: write them as {"name": value, …}, or leave the field empty.`;
+
 // Empty fields are omitted (the door refuses ""), reverting to the runtime default. A words-only
-// key keeps the corner's other fields and rewrites only its own three.
-/** Full config to send from the form's fields. */
-export function configOf(typed: Typed, wordsOnly: boolean, standing: TuningBody): TuningBody {
+// key keeps the corner's other fields and rewrites only its own three. A field the class fixes is
+// sent as the corner had it: the class wins over it, and a change would be refused.
+/** Full config to send from the form's fields; throws on plugin options that are not a JSON object. */
+export function configOf(typed: Typed, wordsOnly: boolean, standing: TuningBody, fixed: ReadonlySet<string> = new Set()): TuningBody {
+  const config = fromTheForm(typed, wordsOnly, standing);
+  for (const name of fixed) {
+    for (const field of COVERED[name] ?? []) {
+      if (standing[field] === undefined || standing[field] === null) delete config[field];
+      else (config as Record<string, unknown>)[field] = standing[field];
+    }
+  }
+  return config;
+}
+
+function fromTheForm(typed: Typed, wordsOnly: boolean, standing: TuningBody): TuningBody {
   const config: TuningBody = wordsOnly ? { ...standing } : {};
   if (!wordsOnly) {
     for (const field of ["stt", "llm", "tts"] as const) {
       const word = wordOf(typed[field]);
       if (word !== "") config[field] = word;
+      const plugin = typed.plugins[field];
+      if (plugin.builds.trim() !== "") config[`${field}_builds`] = plugin.builds.trim();
+      const options = optionsOf(field, plugin.options);
+      if (options !== undefined) config[`${field}_options`] = options;
     }
+    if (typed.temperature.trim() !== "") config.temperature = Number(typed.temperature);
     const voice = typed.voice.trim();
     if (voice !== "") config.voice = voice;
     const language = typed.language.trim();
@@ -137,6 +186,22 @@ export function configOf(typed: Typed, wordsOnly: boolean, standing: TuningBody)
   if (typed.knowledge.trim() !== "") config.knowledge = typed.knowledge;
   else delete config.knowledge;
   return config;
+}
+
+function pluginOf(builds: string | null | undefined, options: Record<string, unknown> | null | undefined): Plugin {
+  return { builds: builds ?? "", options: options === null || options === undefined ? "" : JSON.stringify(options, null, 2) };
+}
+
+function optionsOf(stage: Modality, text: string): Record<string, unknown> | undefined {
+  if (text.trim() === "") return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error(NOT_AN_OBJECT(stage));
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(NOT_AN_OBJECT(stage));
+  return parsed as Record<string, unknown>;
 }
 
 function attachmentOf(one: Attachment): NonNullable<TuningBody["bases"]>[number] {

@@ -155,7 +155,15 @@ export function Lexicon(): ReactNode {
             </button>
           </div>
 
-          {tab === "said" ? <Pronunciation words={words} onChange={setWords} /> : <Recognition words={words} onChange={setWords} />}
+          {answer.fixed.includes(tab === "said" ? "says" : "hears") ? (
+            <section className="lex-panel">
+              <p className="lex-none">Set by the class: these words are declared in the agent&apos;s code and win over the lexicon. Change them there, or take them out of the class to set them here.</p>
+            </section>
+          ) : tab === "said" ? (
+            <Pronunciation words={words} onChange={setWords} />
+          ) : (
+            <Recognition words={words} onChange={setWords} />
+          )}
 
           <div className="lex-save">
             <Input className="lex-note" value={note} placeholder="Why, for the history (optional)" aria-label="Why, for the history (optional)" onChange={(event) => setNote(event.target.value)} />
