@@ -1,17 +1,17 @@
-/** Hook for one list of judges, the org's or an agent's own, loaded when it changes. */
+/** Hook for the judges one list holds — the org's, or an agent's — loaded when it changes. */
 
 import { useEffect, useState } from "react";
 
 import { useCredentials } from "@pinecall/core/credentials";
-import { readJudges, type Judge, type Whose } from "./judges-door";
+import { readJudges, type JudgeRow, type Whose } from "./judges-door";
 
 export function useJudges(whose: Whose): {
-  judges: Judge[] | null;
+  judges: JudgeRow[] | null;
   error: string | null;
-  setJudges: (judges: Judge[]) => void;
+  setJudges: (judges: JudgeRow[]) => void;
 } {
   const credentials = useCredentials();
-  const [judges, setJudges] = useState<Judge[] | null>(null);
+  const [judges, setJudges] = useState<JudgeRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

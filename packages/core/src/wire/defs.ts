@@ -49,10 +49,12 @@ export const EndedBySchema = z.enum(["caller", "agent", "supervisor", "platform"
 
 /**
  * What one judge answered about a finished call. Held: the rule held. Broken: it did not, and the
- * reason names the evidence. Deferred: the judge was asked and could not settle it. Skipped:
- * nobody asked it — no model was reachable inside the call's judging budget.
+ * reason names the evidence. Classified: a judge that picks a choice or gives a score answered, in
+ * `choice` or `score`. N/A: the question did not apply to this call, never billed. Deferred: the
+ * judge was asked and could not settle it. Skipped: nobody asked it — no model was reachable, the
+ * call's judging ceiling was reached, or the org's evals for the month are used up.
  */
-export const ScoreVerdictSchema = z.enum(["held", "broken", "deferred", "skipped"]);
+export const ScoreVerdictSchema = z.enum(["held", "broken", "classified", "na", "deferred", "skipped"]);
 
 /**
  * Cold: the caller is sent on with a REFER on their SIP leg and the call ends here. Warm: the

@@ -12,6 +12,41 @@ import {
   TurnConfigSchema,
 } from "./defs.js";
 
+/**
+ * A model as the runtime names one: its vendor, its model, and the plugin's own class and keyword
+ * arguments (`options` `{ base_url }` points it at a server of the org's own).
+ */
+export const ModelConfigSchema = z.strictObject({
+  provider: z.string(),
+  model: z.string(),
+  temperature: z.number().nullish(),
+  builds: z.string().nullish(),
+  options: z.record(z.string(), z.unknown()).nullish(),
+  end_of_turn: z.enum(["stt", "livekit", "smart-turn"]).nullish(),
+});
+
+export type ModelConfig = z.infer<typeof ModelConfigSchema>;
+
+/**
+ * GET /v1/org/judging, and what PUT answers: whether the org's calls are judged at hang-up, the
+ * model they are judged on (null: Pinecall's), and the platform's ceiling per call in dollars.
+ */
+export const JudgingSettingsSchema = z.strictObject({
+  on: z.boolean(),
+  ceiling_usd: z.number().nullable(),
+  model: ModelConfigSchema.nullish(),
+});
+
+export type JudgingSettings = z.infer<typeof JudgingSettingsSchema>;
+
+/** PUT /v1/org/judging, whole: on or off, and the model; a model left out is Pinecall's. */
+export const JudgingRequestSchema = z.strictObject({
+  on: z.boolean(),
+  model: ModelConfigSchema.nullish(),
+});
+
+export type JudgingRequest = z.infer<typeof JudgingRequestSchema>;
+
 /** One quota: the limit the org was given, and how much of it is used. */
 export const LimitSchema = z.strictObject({
   limit: z.int().nullable(),
@@ -115,6 +150,10 @@ export const TuningBodySchema = z.strictObject({
   stt_options: z.record(z.string(), z.unknown()).nullish(),
   tts_builds: z.string().nullish(),
   tts_options: z.record(z.string(), z.unknown()).nullish(),
+  /** The model the agent's calls are judged on, `vendor/model`; unset, the org's choice, else Pinecall's. Its class and options run on the org's own key alone. */
+  judge: z.string().nullish(),
+  judge_builds: z.string().nullish(),
+  judge_options: z.record(z.string(), z.unknown()).nullish(),
   greeting: GreetingConfigSchema.nullish(),
   hangup: HangupConfigSchema.nullish(),
   turn: TurnConfigSchema.nullish(),

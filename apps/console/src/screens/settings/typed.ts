@@ -4,6 +4,9 @@ import { type TuningBody } from "@pinecall/core/wire/rest-org";
 
 export type Modality = "stt" | "llm" | "tts";
 
+/** What takes a model of its own: the three stages, and the model the agent's calls are judged on. */
+export type Modeled = Modality | "judge";
+
 /** A model knob as vendor + model picks; empty means the default. */
 export interface Knob {
   vendor: string;
@@ -35,12 +38,14 @@ export interface Typed {
   stt: Knob;
   llm: Knob;
   tts: Knob;
+  /** The model the agent's calls are judged on; empty is the org's choice, else Pinecall's. */
+  judge: Knob;
   voice: string;
   /** The model's temperature; "" is the vendor's default. */
   temperature: string;
   /** Who ends the caller's turn; "" is the operator's choice for the ears. */
   end_of_turn: "" | "stt" | "livekit" | "smart-turn";
-  plugins: Record<Modality, Plugin>;
+  plugins: Record<Modeled, Plugin>;
   /** A language tag; "" is not set, and the vendors run their own default. */
   language: string;
   /** Opening: literal words, or an instruction for the model. */
@@ -95,6 +100,7 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
   return {
     stt: knobOf(config.stt, vendors),
     llm: knobOf(config.llm, vendors),
+    judge: knobOf(config.judge, vendors),
     tts: ttsModel === undefined || ttsModel === "" ? tts : { ...tts, model: ttsModel },
     voice: config.voice ?? "",
     temperature: typeof config.temperature === "number" ? String(config.temperature) : "",
@@ -103,6 +109,7 @@ export function typedOf(config: TuningBody, vendors: ReadonlySet<string>): Typed
       stt: pluginOf(config.stt_builds, config.stt_options),
       llm: pluginOf(config.llm_builds, config.llm_options),
       tts: pluginOf(config.tts_builds, config.tts_options),
+      judge: pluginOf(config.judge_builds, config.judge_options),
     },
     language: config.language ?? "",
     // A reply, even empty, is the model's own opening.
@@ -137,6 +144,7 @@ export const COVERED: Readonly<Record<string, readonly (keyof TuningBody)[]>> = 
   voice: ["voice", "tts", "tts_model", "tts_builds", "tts_options"],
   stt: ["stt", "stt_builds", "stt_options", "end_of_turn"],
   llm: ["llm", "temperature", "llm_builds", "llm_options"],
+  judge: ["judge", "judge_builds", "judge_options"],
   language: ["language"],
   greeting: ["greeting"],
   hangup: ["hangup"],
@@ -147,7 +155,7 @@ export const COVERED: Readonly<Record<string, readonly (keyof TuningBody)[]>> = 
   docs: ["bases"],
 };
 
-export const NOT_AN_OBJECT = (stage: Modality): string => `The ${stage.toUpperCase()} plugin's options are not a JSON object: write them as {"name": value, …}, or leave the field empty.`;
+export const NOT_AN_OBJECT = (stage: Modeled): string => `The ${stage.toUpperCase()} plugin's options are not a JSON object: write them as {"name": value, …}, or leave the field empty.`;
 
 // Empty fields are omitted (the door refuses ""), reverting to the runtime default. A words-only
 // key keeps the corner's other fields and rewrites only its own three. A field the class fixes is
@@ -167,7 +175,7 @@ export function configOf(typed: Typed, wordsOnly: boolean, standing: TuningBody,
 function fromTheForm(typed: Typed, wordsOnly: boolean, standing: TuningBody): TuningBody {
   const config: TuningBody = wordsOnly ? { ...standing } : {};
   if (!wordsOnly) {
-    for (const field of ["stt", "llm", "tts"] as const) {
+    for (const field of ["stt", "llm", "tts", "judge"] as const) {
       const word = wordOf(typed[field]);
       if (word !== "") config[field] = word;
       const plugin = typed.plugins[field];
@@ -225,7 +233,7 @@ function pluginOf(builds: string | null | undefined, options: Record<string, unk
   return { builds: builds ?? "", options: options === null || options === undefined ? "" : JSON.stringify(options, null, 2) };
 }
 
-function optionsOf(stage: Modality, text: string): Record<string, unknown> | undefined {
+function optionsOf(stage: Modeled, text: string): Record<string, unknown> | undefined {
   if (text.trim() === "") return undefined;
   let parsed: unknown;
   try {

@@ -3,12 +3,13 @@
 import type { ReactNode } from "react";
 
 import { Input, Label, Select, SelectItem, TextArea } from "../../ui";
-import type { Modality, Plugin, Typed } from "./typed";
+import type { Modeled, Plugin, Typed } from "./typed";
 
-const EXAMPLES: Readonly<Record<Modality, { builds: string; options: string }>> = {
+const EXAMPLES: Readonly<Record<Modeled, { builds: string; options: string }>> = {
   llm: { builds: "responses.LLM", options: '{ "use_websocket": true }' },
   stt: { builds: "STTv2", options: '{ "eot_timeout_ms": 900 }' },
   tts: { builds: "", options: '{ "speed": 1.1 }' },
+  judge: { builds: "", options: '{ "base_url": "http://your-gpu:8000/v1" }' },
 };
 
 export function TemperatureField({ temperature, onChange }: { temperature: string; onChange: (temperature: string) => void }): ReactNode {
@@ -24,7 +25,7 @@ export function TemperatureField({ temperature, onChange }: { temperature: strin
 }
 
 /** The plugin's class and its keyword arguments, for a vendor whose plugin takes more than the form asks. */
-export function PluginFields({ modality, vendor, plugin, onChange }: { modality: Modality; vendor: string; plugin: Plugin; onChange: (plugin: Plugin) => void }): ReactNode {
+export function PluginFields({ modality, vendor, plugin, onChange }: { modality: Modeled; vendor: string; plugin: Plugin; onChange: (plugin: Plugin) => void }): ReactNode {
   const example = EXAMPLES[modality];
   return (
     <div className="set-row">

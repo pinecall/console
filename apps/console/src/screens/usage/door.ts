@@ -19,6 +19,10 @@ const RowSchema = z.object({
   output_tokens: z.number(),
   characters: z.number(),
   judge_calls: z.number(),
+  /** The judges that answered this call on Pinecall's key: the evals billed (a call.score row's). */
+  evals: z.number(),
+  /** A call.summary row of a call a simulated caller played: billed as one simulation, not minutes. */
+  simulated: z.boolean(),
   cost_usd: z.number(),
 });
 export type UsageRow = z.infer<typeof RowSchema>;
@@ -30,6 +34,8 @@ const TotalsSchema = z.object({
   output_tokens: z.number(),
   characters: z.number(),
   judge_calls: z.number(),
+  evals: z.number(),
+  simulations: z.number(),
   cost_usd: z.number(),
   calls: z.number(),
 });

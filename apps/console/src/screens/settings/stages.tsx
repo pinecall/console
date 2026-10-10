@@ -21,6 +21,7 @@ export function StageSection({
   models,
   onChange,
   fixed,
+  unset,
   children,
 }: {
   modality: Modality;
@@ -33,6 +34,8 @@ export function StageSection({
   onChange: (knob: Knob) => void;
   /** Set when the agent's class declares this stage: what it runs, read-only. */
   fixed?: { value: string | null } | undefined;
+  /** What no vendor picked means, where it is not the runtime's default; no model is listed until one is. */
+  unset?: string | undefined;
   children?: ReactNode;
 }): ReactNode {
   if (fixed !== undefined) {
@@ -67,7 +70,7 @@ export function StageSection({
         <div className="set-field">
           <Label>Vendor</Label>
           <Select value={knob.vendor} aria-label="Vendor" onValueChange={(value) => onChange({ vendor: value, model: "" })}>
-            <SelectItem value="">Runtime default · {runtimeDefault}</SelectItem>
+            <SelectItem value="">{unset ?? `Runtime default · ${runtimeDefault}`}</SelectItem>
             {listed.map((one) => (
               <SelectItem key={one.name} value={one.name}>
                 {one.name}
@@ -77,19 +80,21 @@ export function StageSection({
           </Select>
           <p className="set-help">The vendors this box has a key for. Another one appears here once its key is added in Providers.</p>
         </div>
-        <div className="set-field">
-          <Label>Model</Label>
-          <Select value={knob.model} aria-label="Model" onValueChange={(value) => onChange({ ...knob, model: value })}>
-            <SelectItem value="">{vendor}'s default{known[0] === undefined ? "" : ` · ${known[0]}`}</SelectItem>
-            {options.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
-                {known.includes(name) ? "" : " · as set"}
-              </SelectItem>
-            ))}
-          </Select>
-          <p className="set-help">{known.length === 0 ? `${vendor} runs its own default; there is no model to pick.` : "The models that run on this box. The default is the one tuned for phone calls."}</p>
-        </div>
+        {(unset === undefined || knob.vendor !== "") && (
+          <div className="set-field">
+            <Label>Model</Label>
+            <Select value={knob.model} aria-label="Model" onValueChange={(value) => onChange({ ...knob, model: value })}>
+              <SelectItem value="">{vendor}'s default{known[0] === undefined ? "" : ` · ${known[0]}`}</SelectItem>
+              {options.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                  {known.includes(name) ? "" : " · as set"}
+                </SelectItem>
+              ))}
+            </Select>
+            <p className="set-help">{known.length === 0 ? `${vendor} runs its own default; there is no model to pick.` : "The models that run on this box. The default is the one tuned for phone calls."}</p>
+          </div>
+        )}
       </div>
       {children}
     </section>

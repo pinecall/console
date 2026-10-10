@@ -9,6 +9,10 @@ export interface Sum {
   minutes: number;
   messages: number;
   judge_calls: number;
+  /** Judges that answered on Pinecall's key: what the evals meter bills. */
+  evals: number;
+  /** Calls a simulated caller played: what the simulations meter bills. */
+  simulations: number;
   cost_usd: number;
 }
 
@@ -29,10 +33,12 @@ export interface Group extends Sum {
 export function byCall(rows: readonly UsageRow[]): CallBill[] {
   const bills = new Map<string, CallBill>();
   for (const row of rows) {
-    const bill = bills.get(row.call) ?? { call: row.call, agent: row.agent, at: row.at, calls: 1, minutes: 0, messages: 0, judge_calls: 0, cost_usd: 0 };
+    const bill = bills.get(row.call) ?? { call: row.call, agent: row.agent, at: row.at, calls: 1, minutes: 0, messages: 0, judge_calls: 0, evals: 0, simulations: 0, cost_usd: 0 };
     bill.minutes += row.minutes;
     bill.messages += row.messages;
     bill.judge_calls += row.judge_calls;
+    bill.evals += row.evals;
+    if (row.simulated) bill.simulations = 1;
     bill.cost_usd += row.cost_usd;
     bill.at = Math.min(bill.at, row.at);
     bills.set(row.call, bill);
@@ -44,11 +50,13 @@ function grouped(bills: readonly CallBill[], nameOf: (bill: CallBill) => string)
   const groups = new Map<string, Group>();
   for (const bill of bills) {
     const name = nameOf(bill);
-    const group = groups.get(name) ?? { name, calls: 0, minutes: 0, messages: 0, judge_calls: 0, cost_usd: 0 };
+    const group = groups.get(name) ?? { name, calls: 0, minutes: 0, messages: 0, judge_calls: 0, evals: 0, simulations: 0, cost_usd: 0 };
     group.calls += 1;
     group.minutes += bill.minutes;
     group.messages += bill.messages;
     group.judge_calls += bill.judge_calls;
+    group.evals += bill.evals;
+    group.simulations += bill.simulations;
     group.cost_usd += bill.cost_usd;
     groups.set(name, group);
   }
@@ -67,5 +75,5 @@ export function byAgent(bills: readonly CallBill[]): Group[] {
 
 /** Everything, summed. */
 export function total(bills: readonly CallBill[]): Sum {
-  return grouped(bills, () => "")[0] ?? { calls: 0, minutes: 0, messages: 0, judge_calls: 0, cost_usd: 0 };
+  return grouped(bills, () => "")[0] ?? { calls: 0, minutes: 0, messages: 0, judge_calls: 0, evals: 0, simulations: 0, cost_usd: 0 };
 }

@@ -84,6 +84,8 @@ export function Usage(): ReactNode {
           <Stat size="small" label="Today" value={usd(spentToday)} />
           <Stat size="small" label="Calls" value={all.calls} />
           <Stat size="small" label="Minutes" value={all.minutes.toFixed(1)} />
+          <Stat size="small" label="Evals" value={all.evals} />
+          <Stat size="small" label="Simulations" value={all.simulations} />
           <Stat size="small" label="Per call" value={all.calls === 0 ? "—" : usd(all.cost_usd / all.calls)} />
           <Stat size="small" label="Per minute" value={all.minutes === 0 ? "—" : usd(all.cost_usd / all.minutes)} />
         </Stats>

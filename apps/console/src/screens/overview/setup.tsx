@@ -3,10 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
-import { z } from "zod";
-
 import { put, read } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
+import { JudgingSettingsSchema } from "@pinecall/core/wire/rest-org";
 import { has, ORG_SCREENS } from "../../lib/mode";
 import { opens } from "@pinecall/core/scopes";
 import { useScopes } from "../../lib/whoami";
@@ -22,9 +21,6 @@ interface Step {
   /** Inline action, when the step is done here rather than on another screen. */
   run?: () => Promise<void>;
 }
-
-// GET/PUT /v1/org/judging (runtime console-api.md §3).
-const JudgingSchema = z.object({ on: z.boolean(), ceiling_usd: z.number().nullable() });
 
 export function Setup(): ReactNode {
   const credentials = useCredentials();
@@ -47,14 +43,15 @@ export function Setup(): ReactNode {
         found.push({ done: pointed > 0, name: pointed > 1 ? `Point ${pointed} numbers at an agent` : "Point a number at an agent", action: "Add", to: "/numbers" });
       }
       // Any call reader can read judging; enabling it needs the `usage` scope.
-      const judging = await read(credentials, "/v1/org/judging").then((answer) => JudgingSchema.parse(answer), () => null);
+      const judging = await read(credentials, "/v1/org/judging").then((answer) => JudgingSettingsSchema.parse(answer), () => null);
       if (judging !== null && scopes !== null && scopes.includes("usage")) {
         found.push({
           done: judging.on,
           name: "Add a judge so calls get scored",
           action: "Turn on",
           run: async () => {
-            await put(credentials, "/v1/org/judging", { on: true });
+            // The PUT is whole: the model the org chose is sent back as it stands.
+            await put(credentials, "/v1/org/judging", { on: true, model: judging.model ?? null });
             setTick((now) => now + 1);
           },
         });

@@ -1,4 +1,4 @@
-/** Judges, a tab of Quality: every judge a call meets at hang-up, how each has held, and the form a new one is written in. */
+/** Judges, a tab of Quality: the model the org's calls are judged on, every judge a call meets at hang-up, how each has held, and the form a new one is written in. */
 
 import { useMemo, type ReactNode } from "react";
 import { useParams } from "react-router";
@@ -7,8 +7,9 @@ import { useOrg } from "../../lib/org";
 import { useScores } from "../../lib/use-scores";
 import { Page, PageHead } from "../../ui";
 import { useDrift } from "./drift";
+import { JudgeModel } from "./judge-model";
 import { Judges } from "./judges";
-import { heldRates } from "./panel";
+import { heldRates } from "./held-rates";
 import "./quality.css";
 
 /** The held-rates are folded from the newest verdicts the page read; the drift is the process holding the agent's count. */
@@ -28,10 +29,11 @@ export function JudgesTab(): ReactNode {
         ledeWidth={660}
         lede={
           agent === ""
-            ? "Every judge a real call meets at hang-up: the runtime's panel, and the org's own, asked of every agent. A verdict that breaks opens a case."
-            : `Every judge ${agent}'s real calls meet at hang-up: the runtime's panel, the org's, and ${agent}'s own. A verdict that breaks opens a case.`
+            ? "Every judge a real call meets at hang-up: Pinecall's, switched on or off for every agent, and the org's own. Each is one question a model answers; a verdict that breaks opens a case."
+            : `Every judge ${agent}'s real calls meet at hang-up: Pinecall's as switched for ${agent}, the org's own, and ${agent}'s own. Each is one question a model answers; a verdict that breaks opens a case.`
         }
       />
+      {agent === "" && <JudgeModel />}
       <Judges agent={agent} rates={rates} read={verdicts.length} drifted={drifted} />
     </Page>
   );

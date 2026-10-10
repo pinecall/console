@@ -54,6 +54,9 @@ export const JudgmentSchema = z.strictObject({
   criteria: z.string(),
   reason: z.string(),
   evidence: JudgmentEvidenceSchema,
+  /** What a classifying judge answered (verdict `classified`): one of its choices, or 1 to 5. */
+  choice: z.string().nullish(),
+  score: z.int().nullish(),
 });
 
 export type Judgment = z.infer<typeof JudgmentSchema>;

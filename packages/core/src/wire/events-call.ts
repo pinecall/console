@@ -174,7 +174,12 @@ export const CallScoreSchema = z.preprocess(
     not_judged: z.string().nullish(),
     judges: z.array(JudgmentSchema),
     panel: z.array(z.string()).nullish(),
+    /** Every request the panel put to the judge model, a trigger's yes-or-no among them. */
     judge_calls: z.int(),
+    /** The judges that answered (held, broken or classified): what the org is billed for, unless `own_key`. */
+    evals: z.int().nullish(),
+    /** The judge model ran on a key of the org's own: its evals are never billed. */
+    own_key: z.boolean().nullish(),
     judge_cost_usd: z.number().nullish(),
     /** Absent on a score from before judges were named, or with nothing judged. */
     judged_by: JudgedBySchema.nullish(),
@@ -195,6 +200,8 @@ export const CallSummarySchema = z.strictObject({
   usage: z.array(ModelUsageSchema),
   cost: CostSchema,
   recording: z.string().nullish(),
+  /** A simulated caller played the other end: the call is billed as one simulation, not minutes. */
+  simulated: z.boolean().nullish(),
 });
 
 /** A transfer asked for by the agent or a supervisor finished, one way or the other. */

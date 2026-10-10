@@ -169,6 +169,30 @@ describe("a model's temperature and a plugin's own", () => {
   });
 });
 
+describe("the model the calls are judged on", () => {
+  it("opens on the corner's judge and its own server, and sends both back", () => {
+    const standing = { judge: "openai/qwen3-32b", judge_options: { base_url: "http://gpu:8000/v1" } };
+    const typed = typedOf(standing, new Set([...VENDORS, "openai"]));
+
+    expect(typed.judge).toEqual({ vendor: "openai", model: "qwen3-32b" });
+    expect(configOf(typed, false, {})).toMatchObject(standing);
+  });
+
+  it("sends nothing when no judge is picked, so the org's choice stands", () => {
+    const config = configOf(typedOf({}, VENDORS), false, {});
+
+    expect([config.judge, config.judge_builds, config.judge_options]).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("keeps the corner's judge when the class declares one", () => {
+    const standing = { judge: "anthropic/claude-haiku-5-5" };
+    const typed = typedOf(standing, VENDORS);
+    typed.judge = { vendor: "openai", model: "gpt-5.4-mini" };
+
+    expect(configOf(typed, false, standing, new Set(["judge"])).judge).toBe("anthropic/claude-haiku-5-5");
+  });
+});
+
 describe("a setting the class declares", () => {
   it("is sent as the corner had it, whatever the form holds, so the save changes nothing the class wins", () => {
     const standing = { voice: "carolina", tts: "elevenlabs", llm: "anthropic/claude-haiku-5-5", temperature: 0.2 };

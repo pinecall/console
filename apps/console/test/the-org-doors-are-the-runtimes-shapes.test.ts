@@ -13,9 +13,9 @@ const CREDENTIALS = { base: "/", key: "pk_test" };
 // runtime log/usage.py: UsageRow and Totals, as asdict() writes them.
 const A_USAGE_PAGE = {
   rows: [
-    { cursor: 7, org: "clinica", agent: "clinica-norte", call: "CA_1", type: "call.summary", at: 1.5, minutes: 1.5, messages: 6, input_tokens: 1200, output_tokens: 300, characters: 0, judge_calls: 0, cost_usd: 0.0021 },
+    { cursor: 7, org: "clinica", agent: "clinica-norte", call: "CA_1", type: "call.summary", at: 1.5, minutes: 1.5, messages: 6, input_tokens: 1200, output_tokens: 300, characters: 0, judge_calls: 0, evals: 0, simulated: true, cost_usd: 0.0021 },
   ],
-  totals: { minutes: 1.5, messages: 6, input_tokens: 1200, output_tokens: 300, characters: 0, judge_calls: 0, cost_usd: 0.0021, calls: 1 },
+  totals: { minutes: 1.5, messages: 6, input_tokens: 1200, output_tokens: 300, characters: 0, judge_calls: 0, evals: 0, simulations: 1, cost_usd: 0.0021, calls: 1 },
   next: 7,
 };
 
@@ -35,6 +35,7 @@ test("usage is the runtime's rows and totals, field for field", async () => {
   const page = await readUsage(CREDENTIALS);
   expect(page.totals?.calls).toBe(1);
   expect(page.rows[0]?.cost_usd).toBe(0.0021);
+  expect([page.rows[0]?.simulated, page.totals?.simulations, page.totals?.evals]).toEqual([true, 1, 0]);
   answering({ ...A_USAGE_PAGE, rows: [{ ...A_USAGE_PAGE.rows[0], minutes: undefined }] });
   await expect(readUsage(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
 });
@@ -220,31 +221,34 @@ test("a sample is the WAV handed to the player as a blob, with the vendor's wait
   expect(JSON.parse(sent[0]!.body)).toEqual({ tts: "cartesia", voice: MARTA.id, model: "sonic-3", language: "es" });
 });
 
-// runtime gateway/api/judges.py: JudgeList, as every one of the three doors answers it.
-const A_JUDGE = { name: "offers-next-slot", question: "The agent offered the next free slot.", runs_on: "every-call", author: "m_ana", set_at: 1789897543.33 };
+// runtime gateway/api/judges.py: JudgeList, as every one of the doors answers it — Pinecall's first, then the org's own.
+const LIBRARY_JUDGE = { name: "consent", owner: "pinecall", on: true, question: "…", answer: "verdict", choices: [], when: "always", trigger: "", reads: ["facts"], summary: "Every irreversible tool ran after a yes.", version: 1 };
+const A_JUDGE = { name: "offers-next-slot", owner: "clinica-norte", on: true, question: "The agent offered the next free slot.", answer: "verdict", choices: [], when: "always", trigger: "", reads: [], author: "m_ana", set_at: 1789897543.33 };
 
-test("an agent's own judges are read, written and dropped at the agent's door, and a renamed field is refused", async () => {
+test("an agent's judges are read, written, switched and dropped at the agent's door, and the old shape is refused", async () => {
   const { dropJudge, readJudges, writeJudge } = await import("../src/screens/quality/judges-door");
   const asked: { method: string; url: string; body: string | undefined }[] = [];
   globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
     asked.push({ method: init?.method ?? "GET", url: door.toString(), body: init?.body === undefined ? undefined : String(init.body) });
-    return new Response(JSON.stringify({ judges: [A_JUDGE] }), { status: 200, headers: { "content-type": "application/json" } });
+    return new Response(JSON.stringify({ judges: [LIBRARY_JUDGE, A_JUDGE] }), { status: 200, headers: { "content-type": "application/json" } });
   }) as unknown as typeof fetch;
 
-  expect((await readJudges(CREDENTIALS, "clinica-norte"))[0]?.runs_on).toBe("every-call");
-  await writeJudge(CREDENTIALS, "clinica-norte", "offers-next-slot", { question: A_JUDGE.question, runs_on: "simulations" });
+  expect((await readJudges(CREDENTIALS, "clinica-norte")).map((judge) => judge.owner)).toEqual(["pinecall", "clinica-norte"]);
+  await writeJudge(CREDENTIALS, "clinica-norte", "offers-next-slot", { question: A_JUDGE.question, answer: "choice", choices: ["offered", "not offered"], when: "simulations", reads: ["prompt"] });
+  await writeJudge(CREDENTIALS, "clinica-norte", "consent", { on: false });
   await dropJudge(CREDENTIALS, "clinica-norte", "offers-next-slot");
   expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual([
     "GET https://cloud.pinecall.io/v1/agents/clinica-norte/judges",
     "PUT https://cloud.pinecall.io/v1/agents/clinica-norte/judges/offers-next-slot",
+    "PUT https://cloud.pinecall.io/v1/agents/clinica-norte/judges/consent",
     "DELETE https://cloud.pinecall.io/v1/agents/clinica-norte/judges/offers-next-slot",
   ]);
-  expect(JSON.parse(asked[1]?.body ?? "{}")).toEqual({ question: A_JUDGE.question, runs_on: "simulations" });
+  expect(JSON.parse(asked[2]?.body ?? "{}")).toEqual({ on: false });
 
-  answering({ judges: [{ ...A_JUDGE, runs_on: "sometimes" }] });
+  answering({ judges: [{ ...A_JUDGE, when: "sometimes" }] });
   await expect(readJudges(CREDENTIALS, "clinica-norte")).rejects.toBeInstanceOf(z.ZodError);
-  answering({ judges: [{ ...A_JUDGE, question: undefined, asks: A_JUDGE.question }] });
+  answering({ judges: [{ name: A_JUDGE.name, question: A_JUDGE.question, runs_on: "every-call", author: "m_ana", set_at: 1 }] });
   await expect(readJudges(CREDENTIALS, "clinica-norte")).rejects.toBeInstanceOf(z.ZodError);
 });
 
@@ -254,16 +258,48 @@ test("the org's judges are read, written and dropped at the org's door, the same
   globalThis.window = { location: { origin: "https://cloud.pinecall.io" } } as unknown as Window & typeof globalThis;
   globalThis.fetch = (async (door: URL, init?: RequestInit) => {
     asked.push({ method: init?.method ?? "GET", url: door.toString() });
-    return new Response(JSON.stringify({ judges: [A_JUDGE] }), { status: 200, headers: { "content-type": "application/json" } });
+    return new Response(JSON.stringify({ judges: [LIBRARY_JUDGE, { ...A_JUDGE, owner: "org" }] }), { status: 200, headers: { "content-type": "application/json" } });
   }) as unknown as typeof fetch;
-  expect((await readJudges(CREDENTIALS, null))[0]?.name).toBe(A_JUDGE.name);
-  await writeJudge(CREDENTIALS, null, "never-medical-advice", { question: "No medical advice.", runs_on: "every-call" });
+  expect((await readJudges(CREDENTIALS, null))[1]?.owner).toBe("org");
+  await writeJudge(CREDENTIALS, null, "never-medical-advice", { question: "No medical advice." });
   await dropJudge(CREDENTIALS, null, "never-medical-advice");
   expect(asked.map(({ method, url }) => `${method} ${url}`)).toEqual([
     "GET https://cloud.pinecall.io/v1/org/judges",
     "PUT https://cloud.pinecall.io/v1/org/judges/never-medical-advice",
     "DELETE https://cloud.pinecall.io/v1/org/judges/never-medical-advice",
   ]);
+});
+
+// runtime gateway/api/judges.py try_judge: JudgeTried, nothing written.
+test("a judge is tried on the agent's last calls by its name or written whole, and each call's answer comes back", async () => {
+  const { tryJudge } = await import("../src/screens/quality/judges-door");
+  const sent: { url: string; body: unknown }[] = [];
+  globalThis.fetch = (async (door: URL, init?: RequestInit) => {
+    sent.push({ url: door.toString(), body: JSON.parse(String(init?.body ?? "null")) });
+    const judgment = { name: "consent", verdict: "na", criteria: "…", reason: "no irreversible tool ran", evidence: { seqs: [] } };
+    return new Response(JSON.stringify({ rows: [{ call: "call_1", judgment }, { call: "call_2", judgment: null, not_judged: "the call has not finished" }], evals: 0, cost_usd: 0 }), { status: 200, headers: { "content-type": "application/json" } });
+  }) as unknown as typeof fetch;
+
+  const tried = await tryJudge(CREDENTIALS, "clinica-norte", { name: "consent", last: 2 });
+  expect(tried.rows.map((row) => row.judgment?.verdict ?? row.not_judged)).toEqual(["na", "the call has not finished"]);
+  expect(sent).toEqual([{ url: "https://cloud.pinecall.io/v1/agents/clinica-norte/judges/try", body: { name: "consent", last: 2 } }]);
+});
+
+// runtime gateway/api/org.py: JudgingSettings, the model kept as the org named it.
+test("judging is read and written whole with the model it runs on, null being Pinecall's", async () => {
+  const { readJudging, writeJudging } = await import("../src/screens/quality/judges-door");
+  const local = { provider: "openai", model: "qwen3-32b", options: { base_url: "http://gpu:8000/v1" } };
+  const sent: { method: string; body: unknown }[] = [];
+  globalThis.fetch = (async (_door: URL, init?: RequestInit) => {
+    sent.push({ method: init?.method ?? "GET", body: init?.body === undefined ? undefined : JSON.parse(String(init.body)) });
+    return new Response(JSON.stringify({ on: true, ceiling_usd: 0.05, model: local }), { status: 200, headers: { "content-type": "application/json" } });
+  }) as unknown as typeof fetch;
+
+  expect((await readJudging(CREDENTIALS)).model).toEqual(local);
+  await writeJudging(CREDENTIALS, { on: true, model: null });
+  expect(sent[1]).toEqual({ method: "PUT", body: { on: true, model: null } });
+  answering({ on: true, ceiling_usd: null, model: { vendor: "openai" } });
+  await expect(readJudging(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
 });
 
 // runtime gateway/api/simulations.py: the gateway plays the persona against whoever holds the agent.

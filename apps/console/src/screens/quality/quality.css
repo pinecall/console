@@ -269,3 +269,55 @@
   color: var(--red);
 }
 .qly-bridge { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 2 5; stroke-linecap: round; opacity: .7; }
+
+/* ── what turning a judge on costs, its switch, and a try ─────────────────── */
+
+.qly-bill {
+  margin: 0;
+  padding: 0 18px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-4);
+}
+
+.qly-on {
+  display: flex;
+  justify-content: center;
+}
+
+.qly-try {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 18px 14px;
+}
+
+.qly-try-count {
+  width: 56px;
+}
+
+.qly-tried {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qly-tried-row {
+  display: grid;
+  grid-template-columns: 180px 90px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  font-size: 12.5px;
+}
+
+.qly-tried-call {
+  font-family: var(--face-fixed);
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qly-tried-answer {
+  font-weight: 600;
+  color: var(--ink);
+}

@@ -53,7 +53,7 @@ export function TestOverview(): ReactNode {
   const stations: Station[] = [
     { name: "Personas", to: `${base}/personas`, does: "The callers written for the agent: a goal, a manner, the facts they know. A model plays each.", now: personas === null ? "…" : `${personas.length} written` },
     { name: "Simulations", to: `${base}/simulations`, does: "A persona on the line, in writing or out loud, watched here as it happens and judged at hang-up.", now: standings.read ? `${simulated} run` : "…" },
-    { name: "Judges", to: `${base}/judges`, does: "The questions every call is held to at hang-up — the runtime's panel, the org's, the agent's own.", now: "every call, every simulation" },
+    { name: "Judges", to: `${base}/judges`, does: "The questions every call is held to at hang-up, each one asked of a model — Pinecall's, switched on or off, the org's and the agent's own.", now: "every call, every simulation" },
     { name: "Goldens", to: `${base}/goldens`, does: "Fixed questions replayed under every model you name: is a change safe to ship? The gate in CI.", now: latest === undefined ? "no run yet" : `${tally.passing} passing · ${tally.failing} failing` },
     { name: "Cases", to: `${base}/cases`, does: "A real call a judge broke on, kept whole: reproduce it, fix it where it belongs, approve it into the nightly.", now: listed === null ? "…" : `${listed.pending} waiting` },
     { name: "Monitors", to: `${base}/monitors`, does: "The numbers of the agent's calls watched over a window — latency, the judges, spend — and the line each must not cross.", now: "fires once a day" },

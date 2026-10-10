@@ -13,15 +13,16 @@ import { LanguageField } from "./language";
 import type { Stage } from "../pipeline/door";
 import { EndOfTurnField, FixedByTheClass, PluginFields, TemperatureField } from "./plugin";
 import { StageSection, VoiceField } from "./stages";
-import { configOf, typedOf, type Change, type Modality, type Plugin, type Typed } from "./typed";
+import { configOf, typedOf, type Change, type Modeled, type Plugin, type Typed } from "./typed";
 import { KnowledgeSection, MemorySection } from "./words";
 
-export type Section = "hears" | "decides" | "speaks" | "conversation" | "memory" | "knowledge" | "bases";
+export type Section = "hears" | "decides" | "speaks" | "judged" | "conversation" | "memory" | "knowledge" | "bases";
 
 const SECTIONS: readonly { tab: Section; name: string }[] = [
   { tab: "hears", name: "STT" },
   { tab: "decides", name: "LLM" },
   { tab: "speaks", name: "Voice" },
+  { tab: "judged", name: "Judge" },
   { tab: "conversation", name: "Conversation" },
   { tab: "memory", name: "Memory" },
   { tab: "knowledge", name: "Knowledge" },
@@ -82,12 +83,12 @@ export function SettingsForm({
     setSaved(false);
     setTyped({ ...typed, [field]: value });
   };
-  const plug = (modality: Modality) => (plugin: Plugin) => {
+  const plug = (modality: Modeled) => (plugin: Plugin) => {
     setSaved(false);
     setInvalid(null);
     setTyped({ ...typed, plugins: { ...typed.plugins, [modality]: plugin } });
   };
-  const knob = (field: "stt" | "llm" | "tts") => (picked: Typed["stt"]) => {
+  const knob = (field: "stt" | "llm" | "tts" | "judge") => (picked: Typed["stt"]) => {
     setSaved(false);
     // Voices are per vendor: changing the TTS vendor clears the voice.
     setTyped(field === "tts" && picked.vendor !== typed.tts.vendor ? { ...typed, tts: picked, voice: "" } : { ...typed, [field]: picked });
@@ -138,6 +139,22 @@ export function SettingsForm({
               <PluginFields modality="tts" vendor={vendorOf(typed.tts.vendor, defaults["tts"])} plugin={typed.plugins.tts} onChange={plug("tts")} />
             </>
           )}
+        </StageSection>
+      )}
+      {section === "judged" && (
+        <StageSection
+          modality="llm"
+          title="Judge model"
+          blurb="The model this agent's calls are judged on at hang-up. Unset, the org's choice in Quality ▸ Judges, else Pinecall's. On your org's own key — a model on your own server among them, through base_url — its evals are not billed."
+          knob={typed.judge}
+          providers={providers}
+          defaults={defaults}
+          models={models}
+          onChange={knob("judge")}
+          unset="The org's choice, else Pinecall's"
+          fixed={fixed.has("judge") ? { value: null } : undefined}
+        >
+          {!fixed.has("judge") && typed.judge.vendor !== "" && <PluginFields modality="judge" vendor={typed.judge.vendor} plugin={typed.plugins.judge} onChange={plug("judge")} />}
         </StageSection>
       )}
       {section === "conversation" && <ConversationSection typed={typed} wordsOnly={wordsOnly} fixed={fixed} change={change} />}

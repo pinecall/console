@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { EndReasonSchema } from "./defs.js";
+import { JudgmentSchema } from "./events.js";
 import { SessionScoreSchema } from "./rest.js";
 
 /**
@@ -130,38 +131,90 @@ export const VoiceSampleSchema = z.strictObject({
 
 export type VoiceSample = z.infer<typeof VoiceSampleSchema>;
 
-/** When one of the agent's own judges reads a call: every call, or only one a persona played. */
-export const RunsOnSchema = z.enum(["every-call", "simulations"]);
+/** How a judge answers: held or broken, one of its choices, or a score from 1 to 5. */
+export const JudgeAnswerSchema = z.enum(["verdict", "choice", "score"]);
 
-export type RunsOn = z.infer<typeof RunsOnSchema>;
+export type JudgeAnswer = z.infer<typeof JudgeAnswerSchema>;
+
+/** When a judge runs: every call, only a call a simulated caller played, or a call its trigger says it applies to. */
+export const JudgeOnSchema = z.enum(["always", "simulations", "trigger"]);
+
+export type JudgeOn = z.infer<typeof JudgeOnSchema>;
+
+/** What a judge reads beyond the call and its tool calls, each one more block of its question. */
+export const JudgeReadSchema = z.enum(["prompt", "evidence", "facts"]);
+
+export type JudgeRead = z.infer<typeof JudgeReadSchema>;
 
 /**
- * One judge of an agent's own, kept by the gateway: a question about the agent's job that the
- * judge model answers held or broken at hang-up, beside the runtime's panel. One list per agent,
- * the same in both worlds.
+ * One judge as a list shows it: Pinecall's library's (`owner` "pinecall", switched by `on`), the
+ * org's own (`owner` "org") or an agent's own (`owner` its slug), what it asks, how it answers,
+ * when it runs and what it reads. One list serves both worlds.
  */
-export const JudgeSchema = z.strictObject({
+export const JudgeRowSchema = z.strictObject({
   name: z.string(),
+  owner: z.string(),
+  on: z.boolean(),
   question: z.string(),
-  runs_on: RunsOnSchema,
-  author: z.string(),
-  set_at: z.number(),
+  answer: JudgeAnswerSchema,
+  choices: z.array(z.string()),
+  when: JudgeOnSchema,
+  trigger: z.string(),
+  reads: z.array(JudgeReadSchema),
+  /** The library's: one line on what it holds a call to, and the version of its question. */
+  summary: z.string().nullish(),
+  version: z.int().nullish(),
+  /** One of the org's own: who wrote it last, and when. */
+  author: z.string().nullish(),
+  set_at: z.number().nullish(),
 });
 
-export type Judge = z.infer<typeof JudgeSchema>;
+export type JudgeRow = z.infer<typeof JudgeRowSchema>;
 
-/** GET /v1/agents/{slug}/judges, and what PUT and DELETE answer: the agent's own judges, by name. */
+/** GET /v1/org/judges and /v1/agents/{slug}/judges, and what PUT and DELETE answer: the library first, then the org's own, then the agent's. */
 export const JudgeListSchema = z.strictObject({
-  judges: z.array(JudgeSchema),
+  judges: z.array(JudgeRowSchema),
 });
 
-/** PUT /v1/agents/{slug}/judges/{name}, the body: the question, and which calls it reads. */
-export const JudgePutSchema = z.strictObject({
-  question: z.string(),
-  runs_on: RunsOnSchema.nullish(),
+/** PUT …/judges/{name}: one of the org's own written whole, or for one of Pinecall's only `on`. */
+export const JudgeRequestSchema = z.strictObject({
+  question: z.string().nullish(),
+  answer: JudgeAnswerSchema.nullish(),
+  choices: z.array(z.string()).nullish(),
+  when: JudgeOnSchema.nullish(),
+  trigger: z.string().nullish(),
+  reads: z.array(JudgeReadSchema).nullish(),
+  on: z.boolean().nullish(),
 });
 
-export type JudgePut = z.infer<typeof JudgePutSchema>;
+export type JudgeRequest = z.infer<typeof JudgeRequestSchema>;
+
+/** POST /v1/agents/{slug}/judges/try: one judge, by name alone or written whole, asked of the agent's last calls or of the calls named. Nothing is kept. */
+export const JudgeTrySchema = JudgeRequestSchema.extend({
+  name: z.string(),
+  last: z.int().min(1).max(50).nullish(),
+  calls: z.array(z.string()).max(50).nullish(),
+});
+
+export type JudgeTry = z.infer<typeof JudgeTrySchema>;
+
+/** What the judge answered of one call, or why it did not. */
+export const JudgeTriedRowSchema = z.strictObject({
+  call: z.string(),
+  judgment: JudgmentSchema.nullable(),
+  not_judged: z.string().nullish(),
+});
+
+export type JudgeTriedRow = z.infer<typeof JudgeTriedRowSchema>;
+
+/** The try's answer: every call's row, the evals it spent and what they cost. */
+export const JudgeTriedSchema = z.strictObject({
+  rows: z.array(JudgeTriedRowSchema),
+  evals: z.int(),
+  cost_usd: z.number(),
+});
+
+export type JudgeTried = z.infer<typeof JudgeTriedSchema>;
 
 /**
  * What a golden expects: each field set is one judge, settled by code — except `judges`, the

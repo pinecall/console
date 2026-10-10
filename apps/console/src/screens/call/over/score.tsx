@@ -1,4 +1,4 @@
-/** Post-call score card: per-judge verdicts, cited evidence, and judging cost. */
+/** Post-call score card: each judge's answer (held, broken, N/A, a choice or a score), cited evidence, the evals billed and the judging cost. */
 
 import { type Entry } from "@pinecall/core/wire/envelope";
 import { type Judgment } from "@pinecall/core/wire/events";
@@ -10,10 +10,11 @@ import { Link } from "react-router";
 import { GatewayError, post } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { usd } from "../../../lib/format";
+import { answerOf } from "../../../lib/judgment";
 import { useScopes } from "../../../lib/whoami";
 import { Button, Card, CardHead, Pill, type Tone } from "../../../ui";
 
-const VERDICT_TONE: Record<string, Tone> = { held: "green", broken: "red", deferred: "amber", skipped: "muted" };
+const VERDICT_TONE: Record<string, Tone> = { held: "green", broken: "red", classified: "indigo", na: "muted", deferred: "amber", skipped: "muted" };
 
 /** The `call.score` verdict from the log, or null if the call is not scored. */
 export function scoreIn(entries: Entry[]): CallScore | null {
@@ -28,7 +29,7 @@ export function ScoreCard({ call, base, score: sealed, turns, ended }: { call: s
   const score = asked ?? sealed;
   return (
     <Card>
-      <CardHead title="Score" meta={score !== null && score.passed != null ? `${held(score)} of ${score.judges.length} held` : undefined} />
+      <CardHead title="Score" meta={score !== null && score.passed != null ? `${held(score)} of ${settled(score)} held` : undefined} />
       <div className="ui-card-body">
         {score === null ? (
           <>
@@ -39,7 +40,7 @@ export function ScoreCard({ call, base, score: sealed, turns, ended }: { call: s
             </p>
             {ended && <AttachAJudge call={call} onJudged={setAsked} />}
           </>
-        ) : score.passed == null ? (
+        ) : score.passed == null && !score.judges.some(answered) ? (
           <>
             <div className="over-standing over-standing-amber">No judge was given to this session</div>
             {saysMore(score.not_judged) && <p className="over-sentence">{score.not_judged}</p>}
@@ -48,9 +49,11 @@ export function ScoreCard({ call, base, score: sealed, turns, ended }: { call: s
           </>
         ) : (
           <>
-            <div className={score.passed ? "over-standing over-standing-green" : "over-standing over-standing-red"}>
-              {score.passed ? "Passed" : "Did not pass"}
-            </div>
+            {score.passed == null ? (
+              <div className="over-standing over-standing-amber">No judge held or broke: each classified the call or did not apply</div>
+            ) : (
+              <div className={score.passed ? "over-standing over-standing-green" : "over-standing over-standing-red"}>{score.passed ? "Passed" : "Did not pass"}</div>
+            )}
             <div className="over-judges">
               {score.judges.map((judge) => (
                 <JudgeRow key={judge.name} base={base} call={call} judgment={judge} />
@@ -80,7 +83,7 @@ function JudgeRow({ base, call, judgment }: { base: string; call: string; judgme
     <div className="over-judge">
       <div className="over-judge-line">
         <span className="over-judge-name">{judgment.name}</span>
-        <Pill tone={VERDICT_TONE[judgment.verdict] ?? "muted"}>{judgment.verdict}</Pill>
+        <Pill tone={VERDICT_TONE[judgment.verdict] ?? "muted"}>{answerOf(judgment)}</Pill>
         {judgment.evidence.seqs.map((seq) => (
           <Link key={seq} className="over-seq" to={`${base}/${call}#seq-${seq}`}>
             seq {seq}
@@ -103,10 +106,21 @@ function held(score: CallScore): number {
   return score.judges.filter((judge) => judge.verdict === "held").length;
 }
 
+// Only held and broken pass or fail a call: N/A and a classification are answers, never a verdict.
+function settled(score: CallScore): number {
+  return score.judges.filter((judge) => judge.verdict === "held" || judge.verdict === "broken").length;
+}
+
+function answered(judgment: Judgment): boolean {
+  return judgment.verdict !== "deferred" && judgment.verdict !== "skipped";
+}
+
 function billOf(score: CallScore, turns: number): string {
   const replayed = `${turns === 1 ? "One turn" : `${turns} turns`} replayed from the log`;
-  if (score.judge_calls === 0) return `${replayed}; the hard policies alone, and they cost nothing.`;
-  return `${replayed}; ${score.judge_calls} judge call${score.judge_calls === 1 ? "" : "s"} for ${usd(score.judge_cost_usd)}.`;
+  if (score.judge_calls === 0) return `${replayed}; no judge asked the model, and nothing was billed.`;
+  const evals = score.evals ?? 0;
+  const billed = score.own_key === true ? `${evals} eval${evals === 1 ? "" : "s"} on your own key, not billed` : `${evals} eval${evals === 1 ? "" : "s"} billed`;
+  return `${replayed}; ${score.judge_calls} judge call${score.judge_calls === 1 ? "" : "s"} for ${usd(score.judge_cost_usd)} · ${billed}.`;
 }
 
 /** Run the hang-up judges on an unscored call (POST /v1/evals/judge/{call}); the verdict is written to its log. */
