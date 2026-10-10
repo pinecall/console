@@ -1,5 +1,5 @@
-// A number of the box says how it came and what a call to it does now: another org's older row
-// takes it, nobody runs the agent, or it is picked up; a search finds it by digits, org or agent.
+// A number of the box says how it came and what a call to it does now: no call opens until the
+// operator approves it, nobody runs the agent, or it is picked up; a search finds it by digits, org or agent.
 
 import { describe, expect, it } from "vitest";
 
@@ -14,15 +14,16 @@ const row = (changes: Partial<BoxNumber> = {}): BoxNumber => ({
   agent: "recepcion",
   came_in: "twilio",
   running: true,
-  answered_by: null,
+  via: null,
+  approved: true,
   ...changes,
 });
 
 describe("a number of the box", () => {
-  it("is picked up only when its own row answers and a process runs the agent", () => {
+  it("is picked up only once approved and while a process runs the agent", () => {
     expect(whenItRings(row()).text).toBe("picked up");
     expect(whenItRings(row({ running: false })).tone).toBe("amber");
-    expect(whenItRings(row({ answered_by: "otra" })).text).toBe("otra answers it");
+    expect(whenItRings(row({ approved: false })).text).toBe("waits for your approval");
   });
 
   it("says how it came, and a way the runtime adds later as the runtime names it", () => {
@@ -37,3 +38,4 @@ describe("a number of the box", () => {
     expect(matching(rows, " ")).toHaveLength(2);
   });
 });
+

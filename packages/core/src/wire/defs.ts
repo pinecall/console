@@ -187,8 +187,20 @@ export const DocSourceSchema = z.strictObject({
   excerpt: z.string().nullish(),
 });
 
+/**
+ * A log written before money in dollars said a sum in euros: the same number, read as dollars and
+ * never converted, and the rate it carried dropped — as the runtime reads it (wire/parts.py,
+ * wire/scores.py, `AliasChoices`). A log is never rewritten, so its old word is read here, once.
+ */
+export function inDollars(raw: unknown, said: string, means: string, carried: readonly string[] = []): unknown {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw) || !(said in raw)) return raw;
+  const { [said]: sum, ...rest } = raw as Record<string, unknown>;
+  for (const word of carried) delete rest[word];
+  return means in rest ? rest : { ...rest, [means]: sum };
+}
+
 /** One priced line: a model, what was counted, how much, and what it came to. */
-export const CostRowSchema = z.strictObject({
+const CostRowShape = z.strictObject({
   provider: z.string(),
   model: z.string(),
   unit: z.enum(["input_tokens", "cached_input_tokens", "cache_creation_tokens", "output_tokens", "characters", "audio_seconds", "requests", "session_seconds", "minutes"]),
@@ -196,6 +208,8 @@ export const CostRowSchema = z.strictObject({
   unit_price_usd: z.number(),
   usd: z.number(),
 });
+
+export const CostRowSchema = z.preprocess((raw) => inDollars(raw, "eur", "usd"), CostRowShape);
 
 /** A usage row the price table does not know. It is listed, never priced at zero. */
 export const UnpricedRowSchema = z.strictObject({
@@ -207,11 +221,14 @@ export const UnpricedRowSchema = z.strictObject({
  * What the call cost in provider fees, informational, in US dollars, the currency providers price
  * in. The runtime never prices commercially; this is the provider's bill as best we know it.
  */
-export const CostSchema = z.strictObject({
-  usd: z.number(),
-  rows: z.array(CostRowSchema),
-  unpriced: z.array(UnpricedRowSchema),
-});
+export const CostSchema = z.preprocess(
+  (raw) => inDollars(raw, "eur", "usd", ["rate"]),
+  z.strictObject({
+    usd: z.number(),
+    rows: z.array(CostRowSchema),
+    unpriced: z.array(UnpricedRowSchema),
+  }),
+);
 
 export type Cost = z.infer<typeof CostSchema>;
 

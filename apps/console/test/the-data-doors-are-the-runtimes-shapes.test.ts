@@ -27,7 +27,7 @@ const A_TRACEBACK = {
 };
 
 // runtime wire/rest/ops.py: BoxNumber, a number another org's older row answers.
-const A_BOX_NUMBER = { number: "+14155550142", channel: "phone", org: "otra", env: "production", agent: "agenda", came_in: "hooked", running: false, answered_by: "clinica" };
+const A_BOX_NUMBER = { number: "+14155550142", channel: "phone", org: "otra", env: "production", agent: "agenda", came_in: "hooked", running: false, via: "telnyx", approved: false };
 
 /** Answers every request with the body, and keeps what was asked. */
 function answering(body: unknown): { method: string; url: string; body: string | null }[] {
@@ -90,11 +90,11 @@ test("a traceback is asked by number and day and read as the runtime's calls and
   await expect(readTraceback(CREDENTIALS, "+14155550142", null)).rejects.toBeInstanceOf(z.ZodError);
 });
 
-test("the box's numbers are read whole at one door, and a row without who answers it is refused", async () => {
+test("the box's numbers are read whole at one door, and a row without whether it is approved is refused", async () => {
   const asked = answering([A_BOX_NUMBER]);
   expect(await readBoxNumbers(CREDENTIALS)).toEqual([A_BOX_NUMBER]);
   expect(asked[0]?.url).toBe("https://cloud.pinecall.io/v1/ops/numbers");
-  answering([{ ...A_BOX_NUMBER, answered_by: undefined }]);
+  answering([{ ...A_BOX_NUMBER, approved: undefined }]);
   await expect(readBoxNumbers(CREDENTIALS)).rejects.toBeInstanceOf(z.ZodError);
 });
 

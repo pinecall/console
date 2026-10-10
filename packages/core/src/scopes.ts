@@ -32,6 +32,10 @@ export const SCOPE_OF: Record<string, string> = {
   team: "team",
   usage: "usage",
   "org-data": "team",
+  "data-rules": "team",
+  "data-consent": "team",
+  "data-erasures": "team",
+  "data-reads": "team",
 };
 
 /** Whether a key with these scopes opens this screen. A screen nobody gated is open. */

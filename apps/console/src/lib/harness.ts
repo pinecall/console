@@ -1,4 +1,8 @@
-/** Where a harness row and what it lists open, whoever is in view: the same screen under the agent in view, or under the org's row with its owner in the path. */
+/** Where a harness row and what it lists open, whoever is in view, and whose agents it lists: the agent in view, or the org's — the ones Viewing offers. */
+
+import { useMemo } from "react";
+
+import { useOrg } from "./org";
 
 /** The row itself: `/a/<agent>/<row>` with one agent in view, `/<row>` with every agent. */
 export function rowAt(inView: string, row: string): string {
@@ -18,4 +22,19 @@ export function ownedAt(inView: string, row: string, owner: string, name: string
 /** Who a person sees named on a row's screen: the agent in view, or every agent. */
 export function whoseIs(inView: string): string {
   return inView === "" ? "every agent" : inView;
+}
+
+/**
+ * The agents a harness row lists: the one in view, or — every agent in view — the org's, the very
+ * ones Viewing offers. A persona or a run kept for a slug the org does not hold is not the org's
+ * agent's, whatever it was written under. Null until the org's agents are read.
+ */
+export function useHarnessAgents(inView: string): readonly string[] | null {
+  const { agents, agentsLoaded } = useOrg();
+  const slugs = agents.map((one) => one.slug).join("\n");
+  return useMemo(() => {
+    if (inView !== "") return [inView];
+    if (!agentsLoaded) return null;
+    return slugs === "" ? [] : slugs.split("\n");
+  }, [inView, agentsLoaded, slugs]);
 }

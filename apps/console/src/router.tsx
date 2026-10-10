@@ -28,7 +28,7 @@ import { Memory } from "./screens/memory";
 import { Numbers, PhoneTesting } from "./screens/numbers";
 import { Overview } from "./screens/overview";
 import { Notifications } from "./screens/notifications";
-import { OrgData } from "./screens/org-data";
+import { PrivacyConsent, PrivacyErasures, PrivacyReads, PrivacyRules } from "./screens/org-data";
 import { Pipeline } from "./screens/pipeline";
 import { Personas } from "./screens/personas";
 import { Simulations } from "./screens/simulations";
@@ -75,7 +75,11 @@ const ORG: Record<string, ReactNode> = {
   team: <Team />,
   usage: <Usage />,
   notifications: <Notifications />,
-  "org-data": <OrgData />,
+  "org-data": <FirstTab />,
+  "data-rules": <PrivacyRules />,
+  "data-consent": <PrivacyConsent />,
+  "data-erasures": <PrivacyErasures />,
+  "data-reads": <PrivacyReads />,
 };
 
 // The box's. They are routed for anybody on the gateway's page, because the router is built before

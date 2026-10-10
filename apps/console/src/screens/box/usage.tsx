@@ -10,6 +10,8 @@ import { saidBy } from "./use-door";
 import "./box.css";
 
 const A_PAGE = 100;
+// What the table shows at once: a page of the rows read, the next fetched only when it is asked for.
+const SHOWN = 25;
 const ORGS = "minmax(0,1.2fr) 110px 110px 140px 140px";
 const ROWS = "130px minmax(0,1fr) minmax(0,1.4fr) 110px 80px 80px 90px";
 
@@ -25,9 +27,11 @@ export function BoxUsage(): ReactNode {
   const [read, setRead] = useState(false);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
+  const [at, setAt] = useState(0);
 
   const page = async (after: number, fresh: boolean): Promise<void> => {
     setBusy(true);
+    if (fresh) setAt(0);
     try {
       const answered = await readUsage(credentials, after, A_PAGE);
       setRows((kept) => (fresh ? answered.rows : [...kept, ...answered.rows]));
@@ -46,6 +50,13 @@ export function BoxUsage(): ReactNode {
   }, [credentials]);
 
   const cost = (org: string): number => rows.filter((row) => row.org === org).reduce((sum, row) => sum + row.cost_usd, 0);
+  const shown = rows.slice(at * SHOWN, at * SHOWN + SHOWN);
+  const lastRead = (at + 1) * SHOWN >= rows.length;
+  // Forward past the rows read: the log's next page first, then the table's.
+  const forward = async (): Promise<void> => {
+    if (lastRead && next !== null) await page(next, false);
+    setAt((one) => one + 1);
+  };
 
   return (
     <Page tight>
@@ -77,9 +88,9 @@ export function BoxUsage(): ReactNode {
 
       {rows.length > 0 && (
         <Card>
-          <CardHead title="Metered rows" meta={`${rows.length} read, oldest first`} />
+          <CardHead title="Metered rows" meta={`oldest first · ${at * SHOWN + 1}–${at * SHOWN + shown.length} of ${rows.length}${next === null ? "" : "+"}`} />
           <TableHead columns={ROWS} labels={["When", "Organization", "Agent · call", "What", "Min>", "Msgs>", "Cost>"]} />
-          {rows.map((row) => (
+          {shown.map((row) => (
             <TableRow key={`${row.cursor}-${row.call}-${row.type}`} columns={ROWS}>
               <span className="ui-cell-faint">{when(row.at)}</span>
               <span className="ui-cell-ink ui-clip">{row.org}</span>
@@ -92,11 +103,17 @@ export function BoxUsage(): ReactNode {
               <span className="ui-cell-ink ui-cell-right">{usd(row.cost_usd)}</span>
             </TableRow>
           ))}
-          {next !== null && (
+          {(at > 0 || !lastRead || next !== null) && (
             <CardFoot>
-              <Button size="sm" disabled={busy} onClick={() => void page(next, false)}>
-                {busy ? "Reading…" : "Read on"}
-              </Button>
+              <div className="box-pager">
+                <Button size="sm" disabled={busy || at === 0} onClick={() => setAt((one) => one - 1)}>
+                  Previous
+                </Button>
+                <span className="box-pager-at">Page {at + 1}</span>
+                <Button size="sm" disabled={busy || (lastRead && next === null)} onClick={() => void forward()}>
+                  {busy ? "Reading…" : "Next"}
+                </Button>
+              </div>
             </CardFoot>
           )}
         </Card>

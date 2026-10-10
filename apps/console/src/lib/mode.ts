@@ -130,8 +130,13 @@ export const ORG_SCREENS: readonly Screen[] = [
   { key: "numbers", path: "numbers", name: "Numbers", in: PRODUCTIONS, icon: "phone", group: "workspace" },
   { key: "team", path: "team", name: "Team", in: PRODUCTIONS, icon: "users", group: "workspace" },
   { key: "usage", path: "usage", name: "Usage", in: PRODUCTIONS, icon: "chart", group: "workspace" },
-  // How long a call is kept, the world exported, a contact erased, and the trail of every erasure.
-  { key: "org-data", path: "data", name: "Privacy", in: BOTH, icon: "shield", group: "workspace" },
+  // The org's data, a tab each: its rules and what a call says first, who may be called, the world
+  // exported and a contact erased with the trail of every erasure, and who read what.
+  { key: "org-data", path: "data", name: "Privacy", in: BOTH, icon: "shield", opensOn: "first-tab", group: "workspace" },
+  { key: "data-rules", path: "data/rules", name: "Rules", in: BOTH, under: "org-data" },
+  { key: "data-consent", path: "data/consent", name: "Consent", in: BOTH, under: "org-data" },
+  { key: "data-erasures", path: "data/erasures", name: "Export & erase", in: BOTH, under: "org-data" },
+  { key: "data-reads", path: "data/reads", name: "Access log", in: BOTH, under: "org-data" },
   { key: "org-settings", path: "settings", name: "Settings", in: BOTH, icon: "sliders", opensOn: "first-tab", group: "workspace" },
   { key: "tokens", path: "tokens", name: "Tokens", in: BOTH, under: "org-settings" },
   { key: "providers", path: "providers", name: "Providers", in: BOTH, under: "org-settings" },

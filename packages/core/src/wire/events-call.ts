@@ -10,6 +10,7 @@ import {
   EndedBySchema,
   EndReasonSchema,
   EnvSchema,
+  inDollars,
   MediumSchema,
   RouteSchema,
   TransferModeSchema,
@@ -166,16 +167,19 @@ export const JudgedBySchema = z.strictObject({
   criteria: z.string(),
 });
 
-export const CallScoreSchema = z.strictObject({
-  passed: z.boolean().nullish(),
-  not_judged: z.string().nullish(),
-  judges: z.array(JudgmentSchema),
-  panel: z.array(z.string()).nullish(),
-  judge_calls: z.int(),
-  judge_cost_usd: z.number().nullish(),
-  /** Absent on a score from before judges were named, or with nothing judged. */
-  judged_by: JudgedBySchema.nullish(),
-});
+export const CallScoreSchema = z.preprocess(
+  (raw) => inDollars(raw, "judge_cost_eur", "judge_cost_usd"),
+  z.strictObject({
+    passed: z.boolean().nullish(),
+    not_judged: z.string().nullish(),
+    judges: z.array(JudgmentSchema),
+    panel: z.array(z.string()).nullish(),
+    judge_calls: z.int(),
+    judge_cost_usd: z.number().nullish(),
+    /** Absent on a score from before judges were named, or with nothing judged. */
+    judged_by: JudgedBySchema.nullish(),
+  }),
+);
 
 export type CallScore = z.infer<typeof CallScoreSchema>;
 

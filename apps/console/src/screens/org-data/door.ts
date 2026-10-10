@@ -7,7 +7,7 @@ import { drop, headersFor, post, put, read, doorUrl, GatewayError, type Credenti
 const ErasureSchema = z.object({
   id: z.number(),
   at: z.number(),
-  what: z.enum(["call", "contact", "org"]),
+  what: z.enum(["call", "contact", "org", "agent"]),
   subject: z.string(),
   env: z.enum(["production", "sandbox"]).nullable(),
   asked_by: z.string(),

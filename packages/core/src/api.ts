@@ -96,7 +96,8 @@ export function doorUrl(credentials: Credentials, path: string, params: Params =
   return doorAt(credentials, path, params).toString();
 }
 
-type Params = Record<string, string | number>;
+/** A query's values; a list repeats its name, once per value (`?agent=a&agent=b`). */
+type Params = Record<string, string | number | readonly string[]>;
 
 const NO_BODY = 204;
 const UNAUTHORIZED = 401;
@@ -120,7 +121,8 @@ export function gatewayUrl(base: string, path: string): URL {
 function doorAt(credentials: Credentials, path: string, params: Params): URL {
   const door = gatewayUrl(credentials.base, path);
   for (const [name, value] of Object.entries(params)) {
-    door.searchParams.set(name, String(value));
+    if (Array.isArray(value)) for (const one of value as readonly string[]) door.searchParams.append(name, one);
+    else door.searchParams.set(name, String(value));
   }
   return door;
 }

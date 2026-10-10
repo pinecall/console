@@ -178,14 +178,14 @@ test("the org's harness asks the org's own doors: every caller by agent, and the
   }) as unknown as typeof fetch;
 
   expect((await readEveryPersona(CREDENTIALS))[0]?.agent).toBe("front-desk");
-  const page = await readSimulations(CREDENTIALS, "");
+  const page = await readSimulations(CREDENTIALS, ["pinecall", "bernardo"]);
   expect(page.runs[0]?.persona).toBe("office-manager");
-  await readSimulations(CREDENTIALS, "", page.next ?? undefined);
-  await readSimulations(CREDENTIALS, "clinica-norte");
+  await readSimulations(CREDENTIALS, ["pinecall", "bernardo"], page.next ?? undefined);
+  await readSimulations(CREDENTIALS, ["clinica-norte"]);
   expect(asked).toEqual([
     "https://cloud.pinecall.io/v1/personas",
-    "https://cloud.pinecall.io/v1/simulations",
-    "https://cloud.pinecall.io/v1/simulations?before=call_9f2a",
+    "https://cloud.pinecall.io/v1/simulations?agent=pinecall&agent=bernardo",
+    "https://cloud.pinecall.io/v1/simulations?agent=pinecall&agent=bernardo&before=call_9f2a",
     "https://cloud.pinecall.io/v1/simulations?agent=clinica-norte",
   ]);
 });

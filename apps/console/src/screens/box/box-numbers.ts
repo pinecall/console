@@ -19,9 +19,9 @@ export function cameIn(row: BoxNumber): string {
   return CAME_IN[row.came_in] ?? row.came_in;
 }
 
-/** What a call to the number does now: another org's older row takes it, nobody runs the agent, or it is picked up. */
+/** What a call to the number does now: none opens until the operator approves it, nobody runs the agent, or it is picked up. */
 export function whenItRings(row: BoxNumber): { tone: Tone; text: string } {
-  if (row.answered_by !== null) return { tone: "red", text: `${row.answered_by} answers it` };
+  if (!row.approved) return { tone: "red", text: "waits for your approval" };
   if (!row.running) return { tone: "amber", text: "nobody runs the agent" };
   return { tone: "green", text: "picked up" };
 }

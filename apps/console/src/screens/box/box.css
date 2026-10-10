@@ -287,3 +287,7 @@
 .box-fence-why {
   color: var(--ink-5);
 }
+
+/* Box usage's pager: a page of the rows read at a time, with where it is between the two moves. */
+.box-pager { display: flex; align-items: center; gap: 12px; }
+.box-pager-at { font-size: 12.5px; color: var(--ink-4); }

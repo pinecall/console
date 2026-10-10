@@ -3,8 +3,7 @@
 import type { ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 
-import { ownedAt, rowAt } from "../../lib/harness";
-import { useOrg } from "../../lib/org";
+import { ownedAt, rowAt, useHarnessAgents } from "../../lib/harness";
 import { usePane } from "../../ui";
 import type { Persona } from "./door";
 import { PersonaEditor } from "./persona-editor";
@@ -31,12 +30,14 @@ export function Personas(): ReactNode {
   const named = params["call"];
   const [search] = useSearchParams();
   const navigate = useNavigate();
-  const { agents } = useOrg();
   const pane = usePane({ name: "personas.list", initial: 320, min: 260, max: 480, side: "left" });
   // Two panes on one screen, each on its own element: `--pane` is set per grid, and the inner one
   // is the runs'. The floor does the same with the call it watches.
   const runs = usePane({ name: "personas.runs", initial: 340, min: 280, max: 560, side: "right" });
-  const { personas, asking, setPersonas, reread } = usePersonas(agent);
+  const { personas: kept, asking, setPersonas, reread } = usePersonas(agent);
+  // With every agent in view, the org's agents' callers: the ones Viewing offers, and no other slug.
+  const theOrgs = useHarnessAgents(agent);
+  const personas = kept === null || theOrgs === null ? null : kept.filter((one) => theOrgs.includes(one.agent));
   // What every caller has done, read once here for the overview's standing.
   const standings = useRunStandings(personas);
   const adding = search.get("new") === "1";
@@ -45,7 +46,7 @@ export function Personas(): ReactNode {
   // The caller being READ, which is the only state the runs pane stands beside.
   const reading = chosen !== undefined && !adding && !editing ? chosen : null;
   // Whom a new caller may be written for: the agent in view, or any agent of the org.
-  const owners = agent === "" ? [...new Set([...agents.map((one) => one.slug), ...(personas ?? []).map((one) => one.agent)])].sort() : [agent];
+  const owners = [...(theOrgs ?? [])].sort();
 
   const go = (persona: Pick<Persona, "agent" | "name"> | null, how: "" | "edit" | "new" = ""): void => {
     const asked = how === "" ? "" : `?${how}=1`;

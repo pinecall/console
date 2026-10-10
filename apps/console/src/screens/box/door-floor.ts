@@ -23,7 +23,8 @@ export type Worker = z.infer<typeof WorkerSchema>;
 const FleetSchema = z.looseObject({ now: z.number(), stale_after_s: z.number(), workers: z.array(WorkerSchema) });
 export type TheFleet = z.infer<typeof FleetSchema>;
 
-// Mirrors runtime wire/rest/ops.py `BoxNumber`: `org` is the slug, `answered_by` the org whose older row answers instead.
+// Mirrors runtime wire/rest/ops.py `BoxNumber`: `org` is the slug, one org holds a number, `via` the
+// catalog carrier a number the org hooked comes through, and `approved` false while it waits for the operator.
 const BoxNumberSchema = z.looseObject({
   number: z.string(),
   channel: z.string(),
@@ -32,7 +33,8 @@ const BoxNumberSchema = z.looseObject({
   agent: z.string(),
   came_in: z.string(),
   running: z.boolean(),
-  answered_by: z.string().nullable(),
+  via: z.string().nullish(),
+  approved: z.boolean(),
 });
 export type BoxNumber = z.infer<typeof BoxNumberSchema>;
 

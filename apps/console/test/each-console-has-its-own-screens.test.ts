@@ -42,6 +42,11 @@ describe("production's console", () => {
     expect(tabs(ORG_SCREENS, "org-settings", "production")).toEqual(["Tokens", "Providers", "Telemetry", "Alerts"]);
   });
 
+  it("keeps the org's data under Privacy, a tab each: its rules, consent, export and erasure, who read what", () => {
+    expect(tabs(ORG_SCREENS, "org-data", "production")).toEqual(["Rules", "Consent", "Export & erase", "Access log"]);
+    expect(screenAt("/data/erasures")?.key).toBe("data-erasures");
+  });
+
   it("keeps what the bell tells a person as theirs, never a row of the org's", () => {
     expect(rowsOf(ORG_SCREENS, "production").filter((screen) => screen.group === "yours").map((screen) => screen.name)).toEqual(["Notifications"]);
     expect(workspace("production")).not.toContain("Notifications");
