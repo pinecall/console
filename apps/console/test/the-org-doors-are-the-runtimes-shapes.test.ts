@@ -265,3 +265,19 @@ test("the org's judges are read, written and dropped at the org's door, the same
     "DELETE https://cloud.pinecall.io/v1/org/judges/never-medical-advice",
   ]);
 });
+
+// runtime gateway/api/simulations.py: the gateway plays the persona against whoever holds the agent.
+test("a simulation is asked of the gateway by the persona's name, and its call comes back at once", async () => {
+  const { startSimulation } = await import("../src/screens/simulations/simulating");
+  const sent: { url: string; body: unknown }[] = [];
+  globalThis.fetch = (async (door: URL, init?: RequestInit) => {
+    sent.push({ url: door.toString(), body: JSON.parse(String(init?.body ?? "null")) });
+    return new Response(JSON.stringify({ call: "call_9f2a", voice: true }), { status: 200, headers: { "content-type": "application/json" } });
+  }) as unknown as typeof fetch;
+
+  const call = await startSimulation(CREDENTIALS, { agent: "bernardo", persona: "cto-books-a-call", voice: true, turns: 15 });
+  expect(call).toBe("call_9f2a");
+  expect(sent).toEqual([{ url: "https://cloud.pinecall.io/v1/simulations", body: { agent: "bernardo", persona: "cto-books-a-call", voice: true, turns: 15 } }]);
+  answering({ call: "call_9f2a" });
+  await expect(startSimulation(CREDENTIALS, { agent: "bernardo", persona: "x", voice: false, turns: 2 })).rejects.toBeInstanceOf(z.ZodError);
+});

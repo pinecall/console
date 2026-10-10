@@ -24,9 +24,9 @@ const NOISE_DB = 15;
 const LOSS_PERCENT = 0;
 
 /**
- * The form. It asks the process holding the agent, through the gateway: a simulation mounts the
- * class of the directory `pinecall start` runs in, so only that process can start one. The call is
- * answered by its id, handed to the screen, which watches and plays it.
+ * The form. The gateway plays the caller and calls the agent as anybody calls it, so whatever holds
+ * the agent answers — the one deployed, or a `pinecall start` in its directory — and the call is
+ * judged at hang-up like any other. The call's id comes back at once and the screen watches it.
  */
 export function SimulateForm({
   inView,
@@ -58,7 +58,6 @@ export function SimulateForm({
   const [persona, setPersona] = useState("");
   // The screen is for listening: a spoken line unless somebody wants a written one.
   const [voice, setVoice] = useState(true);
-  const [judge, setJudge] = useState(false);
   const [turns, setTurns] = useState(TURNS);
   const [noise, setNoise] = useState(NOISE_DB);
   const [loss, setLoss] = useState(LOSS_PERCENT);
@@ -86,9 +85,8 @@ export function SimulateForm({
         agent,
         persona,
         voice,
-        judge,
         turns,
-        ...(voice && spoiled ? { background_noise: noise, packet_loss: loss } : {}),
+        ...(voice && spoiled ? { interferer_db: noise, packet_loss: loss / 100 } : {}),
       });
       onStarted(call, voice);
     } catch (failed) {
@@ -112,7 +110,7 @@ export function SimulateForm({
           ))}
         </Select>
       </Field>
-      {agent === "" && <p className="sim-note">{agents.length === 0 ? "No agent is held right now: start one with pinecall start, and it is listed here." : "Pick the agent the caller rings."}</p>}
+      {agent === "" && <p className="sim-note">{agents.length === 0 ? "No agent is running in this world: deploy one, or run pinecall start in its directory." : "Pick the agent the caller rings."}</p>}
       {agent !== "" && personas === null && asking !== null && <p className="sim-note">{asking}</p>}
       {agent !== "" && why !== null && <p className="sim-note">{why}</p>}
       {agent !== "" && personas !== null && why === null && (
@@ -154,7 +152,6 @@ export function SimulateForm({
           </div>
           <div className="sim-checks">
             <Option on={voice} onChange={setVoice} name="Voice" says="a real line, and you can listen" />
-            <Option on={judge} onChange={setJudge} name="Judge at hang-up" says="the panel scores the call the moment it ends" />
             {voice && <Option on={spoiled} onChange={setSpoiled} name="Noisy line" says="a TV behind the caller, packets lost" />}
           </div>
           <Button type="submit" kind="primary" size="md" disabled={starting || persona === ""}>

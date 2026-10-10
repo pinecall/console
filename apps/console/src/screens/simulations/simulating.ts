@@ -1,26 +1,29 @@
-/** Start a simulated call through the local dev process. */
+/** Start a simulated call: the gateway plays the persona against whatever holds the agent — deployed, or a `pinecall start` — written or spoken. */
 
 import { z } from "zod";
 
-import type { Credentials } from "@pinecall/core/api";
-import { dev } from "../../lib/dev";
+import { post, type Credentials } from "@pinecall/core/api";
 
-const StartedSchema = z.object({ call: z.string() });
+// runtime wire/rest/evals.py SimulationStarted.
+const StartedSchema = z.strictObject({ call: z.string(), voice: z.boolean() });
 
-/** Simulate request; the server validates it. */
+/** What a simulation is started with (runtime wire/rest/evals.py SimulationRequest). */
 export interface Wanted {
   agent: string;
   persona: string;
   voice: boolean;
-  judge: boolean;
   turns: number;
-  background_noise?: number;
+  /** Spoken alone: dB of a voice under the caller's. */
+  interferer_db?: number;
+  /** Spoken alone: the share of the caller's packets lost, 0 to 1. */
   packet_loss?: number;
 }
 
-/** Start a simulated call; resolves with its id while the call keeps running. */
+/**
+ * POST /v1/simulations answers the call's id at once and plays the conversation in the gateway, so
+ * the screen opens the call and watches it as any call is watched. What can be refused — a persona
+ * nobody wrote, nobody holding the agent, the org's limits — is refused here, in the gateway's words.
+ */
 export async function startSimulation(credentials: Credentials, wanted: Wanted): Promise<string> {
-  return StartedSchema.parse(await dev(credentials, wanted.agent, "simulate.start", wanted)).call;
+  return StartedSchema.parse(await post(credentials, "/v1/simulations", wanted)).call;
 }
-
-
