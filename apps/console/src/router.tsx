@@ -30,8 +30,8 @@ import { Overview } from "./screens/overview";
 import { Notifications } from "./screens/notifications";
 import { OrgData } from "./screens/org-data";
 import { Pipeline } from "./screens/pipeline";
-import { EveryPersona, Personas } from "./screens/personas";
-import { EverySimulation, Simulations } from "./screens/simulations";
+import { Personas } from "./screens/personas";
+import { Simulations } from "./screens/simulations";
 import { Settings } from "./screens/settings";
 import { Talk } from "./screens/talk";
 import { BillingHop } from "./screens/billing";
@@ -54,9 +54,9 @@ const ORG: Record<string, ReactNode> = {
   quality: <Quality />,
   judges: <JudgesTab />,
   monitors: <Monitors />,
-  // The harness with every agent in view: every agent's, a row opening it under its own.
-  simulations: <EverySimulation />,
-  personas: <EveryPersona />,
+  // The harness: the same screen as an agent's, listing every agent's.
+  simulations: <Simulations />,
+  personas: <Personas />,
   cases: <Cases />,
   "org-memory": <OrgMemory />,
   "org-docs": <OrgDocs />,
@@ -117,8 +117,12 @@ const AGENT: Record<string, ReactNode> = {
 // conversations beside it — the conversation Dev chat is one of, the simulation watched, or, under
 // Personas, the caller open, or under Cases the case open: the same screen one level deeper.
 const DEEPER: Record<string, ReactNode> = { devchat: <Chat />, calls: <Calls />, simulations: <Simulations />, personas: <Personas />, cases: <Cases /> };
-// The org's, by the same rule: `/calls/:call` is the call named, shown beside every conversation.
-const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls /> };
+// The org's, by the same rule: `/calls/:call` is the call named, shown beside every conversation,
+// and `/simulations/:call` the simulation open beside every one run.
+const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls />, simulations: <Simulations /> };
+// What the org's harness lists that is one agent's opens on the same screen with its owner in the
+// path: `/personas/<agent>/<name>`, `/cases/<agent>/<name>` (lib/harness.ts).
+const ORG_OWNED: Record<string, ReactNode> = { personas: <Personas />, cases: <Cases /> };
 
 // The URLs the console had before Calls and the Inbox replaced Live, Sessions and — for a day —
 // Conversations, and before one word took one place: Home's Agents tab is Agents, the table of
@@ -126,8 +130,8 @@ const ORG_DEEPER: Record<string, ReactNode> = { calls: <Calls /> };
 // `#seq-93`, lands on what the screen is called now, hash and query and all — nothing pasted
 // before today stops working. The Lexicon was the org's and is an agent's now: a link to the org's
 // lands on Overview, because no agent is named in it to land on. Personas and Simulations are rows
-// of the org's again, listing every agent's: a simulated call linked under the org's lands on that
-// call, and a persona linked there on Overview.
+// of the org's again, listing every agent's: a persona linked there by its name alone, from before,
+// lands on the org's Personas, which lists it under its agent.
 const GONE: readonly { path: string; to: string }[] = [
   { path: "live", to: "/calls?status=live" },
   { path: "live/:call", to: "/calls/:call" },
@@ -137,8 +141,7 @@ const GONE: readonly { path: string; to: string }[] = [
   { path: "c/:call", to: "/calls/:call" },
   { path: "inbox", to: "/calls" },
   { path: "inbox/:call", to: "/calls/:call" },
-  { path: "personas/:call", to: "/" },
-  { path: "simulations/:call", to: "/calls/:call" },
+  { path: "personas/:call", to: "/personas" },
   { path: "lexicon", to: "/" },
   { path: "overview", to: "/agents" },
   { path: "list", to: "/calls?view=table" },
@@ -179,7 +182,12 @@ function routesOf(table: readonly Screen[], elements: Record<string, ReactNode>)
     const element = elements[screen.key];
     if (screen.path === "") return [{ index: true, element }];
     const deeper = (elements === AGENT ? DEEPER : ORG_DEEPER)[screen.key];
-    return deeper === undefined ? [{ path: screen.path, element }] : [{ path: screen.path, element }, { path: `${screen.path}/:call`, element: deeper }];
+    const owned = elements === ORG ? ORG_OWNED[screen.key] : undefined;
+    return [
+      { path: screen.path, element },
+      ...(deeper === undefined ? [] : [{ path: `${screen.path}/:call`, element: deeper }]),
+      ...(owned === undefined ? [] : [{ path: `${screen.path}/:owner/:call`, element: owned }]),
+    ];
   });
 }
 

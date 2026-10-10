@@ -1,6 +1,6 @@
 /** Test's overview: the harness an agent goes through before a change ships and after — each station with its number, and the latest runs. */
 
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { dayAndTime } from "../../lib/format";
@@ -44,8 +44,7 @@ export function TestOverview(): ReactNode {
   const runs = useEvalRuns(agent);
   const { listed } = useCases(agent);
   const { personas } = usePersonas(agent);
-  const names = useMemo(() => (personas === null ? null : personas.map((one) => one.name)), [personas]);
-  const standings = useRunStandings(agent, names);
+  const standings = useRunStandings(personas);
   const latest = runs.runs.find((run) => run.matrix !== null);
   const tally = tallyOf(latest);
   const simulated = Object.values(standings.by).reduce((sum, one) => sum + one.total, 0);

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { ago, duration, usd } from "../../lib/format";
+import { rowAt } from "../../lib/harness";
 import { Button, Dot, Pill } from "../../ui";
 import type { Persona, PersonaRun } from "./door";
 import { usePersonaRuns } from "./use-persona-runs";
@@ -13,8 +14,9 @@ import { usePersonaRuns } from "./use-persona-runs";
  * own corner: a developer sees the runs they ran, production sees production's. A caller that has
  * never been called says so and points at the screen that calls it.
  */
-export function RunsSide({ agent, persona }: { agent: string; persona: Persona }): ReactNode {
-  const { runs, total, asking, error, more } = usePersonaRuns(agent, persona.name);
+export function RunsSide({ inView, persona }: { inView: string; persona: Persona }): ReactNode {
+  const { runs, total, asking, error, more } = usePersonaRuns(persona.agent, persona.name);
+  const simulations = rowAt(inView, "simulations");
   return (
     <aside className="psn-runs" aria-label={`what ${persona.name} has done`}>
       <div className="psn-runs-head">
@@ -22,13 +24,14 @@ export function RunsSide({ agent, persona }: { agent: string; persona: Persona }
           <span className="psn-title">Runs</span>
           <span className="psn-count">{runs === null ? "" : total}</span>
         </div>
-        <p className="psn-lede">Every simulation this caller has run, newest first. A row opens the conversation it was.</p>
+        <p className="psn-lede">Every simulation this caller has run, newest first. A row opens it in Simulations.</p>
       </div>
       <div className="psn-runs-list">
-        {runs?.map((run) => <Run key={run.call} run={run} />)}
+        {runs?.map((run) => <Run key={run.call} run={run} to={`${simulations}/${run.call}`} />)}
         {runs !== null && runs.length === 0 && !asking && (
           <p className="psn-empty">
-            Nobody has called as {persona.name} yet. Put them on {agent} in <Link to={`/a/${encodeURIComponent(agent)}/simulations?persona=${encodeURIComponent(persona.name)}`}>Simulations</Link>, or
+            Nobody has called as {persona.name} yet. Put them on {persona.agent} in{" "}
+            <Link to={`${simulations}?agent=${encodeURIComponent(persona.agent)}&persona=${encodeURIComponent(persona.name)}`}>Simulations</Link>, or
             run <code>pinecall simulate --persona {persona.name}</code>.
           </p>
         )}
@@ -48,10 +51,10 @@ export function RunsSide({ agent, persona }: { agent: string; persona: Persona }
 
 // One run: which agent answered and when, how it went, and the line the call came to. A run still
 // going has no end and no verdict yet, and says that rather than showing an empty one.
-function Run({ run }: { run: PersonaRun }): ReactNode {
+function Run({ run, to }: { run: PersonaRun; to: string }): ReactNode {
   const running = run.ended_at === null;
   return (
-    <Link to={`/calls/${run.call}`} className="psn-run">
+    <Link to={to} className="psn-run">
       <span className="psn-run-top">
         <span className="psn-run-agent">{run.agent}</span>
         {running && <Dot tone="green" small />}

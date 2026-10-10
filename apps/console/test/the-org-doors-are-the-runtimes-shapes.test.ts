@@ -168,7 +168,7 @@ test("the personas list asks the agent's own door, and a row naming agents is no
 });
 
 // runtime gateway/api/personas.py: every agent's callers and every simulated call, each row saying whose.
-test("the org's harness asks the org's own doors: every caller by agent, and every simulation paged by the cursor", async () => {
+test("the org's harness asks the org's own doors: every caller by agent, and the simulations — every agent's or one's — paged by the cursor", async () => {
   const { readEveryPersona, readSimulations } = await import("../src/screens/personas/door");
   const asked: string[] = [];
   globalThis.fetch = (async (door: URL) => {
@@ -178,13 +178,15 @@ test("the org's harness asks the org's own doors: every caller by agent, and eve
   }) as unknown as typeof fetch;
 
   expect((await readEveryPersona(CREDENTIALS))[0]?.agent).toBe("front-desk");
-  const page = await readSimulations(CREDENTIALS);
+  const page = await readSimulations(CREDENTIALS, "");
   expect(page.runs[0]?.persona).toBe("office-manager");
-  await readSimulations(CREDENTIALS, page.next ?? undefined);
+  await readSimulations(CREDENTIALS, "", page.next ?? undefined);
+  await readSimulations(CREDENTIALS, "clinica-norte");
   expect(asked).toEqual([
     "https://cloud.pinecall.io/v1/personas",
     "https://cloud.pinecall.io/v1/simulations",
     "https://cloud.pinecall.io/v1/simulations?before=call_9f2a",
+    "https://cloud.pinecall.io/v1/simulations?agent=clinica-norte",
   ]);
 });
 

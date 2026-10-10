@@ -1,8 +1,10 @@
-/** Personas: the agent's callers down the left, the one chosen read — or written — beside them. */
+/** Personas: the callers down the left — the agent in view's, or every agent's — the one chosen read, or written, beside them. */
 
 import type { ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 
+import { ownedAt, rowAt } from "../../lib/harness";
+import { useOrg } from "../../lib/org";
 import { usePane } from "../../ui";
 import type { Persona } from "./door";
 import { PersonaEditor } from "./persona-editor";
@@ -15,71 +17,77 @@ import { useRunStandings } from "./use-run-standings";
 import "./personas.css";
 
 /**
- * The screen, under one agent. A caller is written to test ONE agent — the patient who cancels is
- * the clinic's — and the gateway keeps them so (`/v1/agents/<agent>/personas`). The URL says which
- * one is open:
- * `/a/<agent>/personas/<name>` the one read, `?edit=1` that one being written, `?new=1` a new one.
- * What this page writes is what `pinecall simulate --persona` finds, in every console, with no
- * deploy between.
+ * One screen whoever is in view. A caller is written to test ONE agent — the patient who cancels is
+ * the clinic's — and the gateway keeps them so (`/v1/agents/<agent>/personas`); with every agent in
+ * view the roster is every agent's (`/v1/personas`), each under its agent's name. The URL says which
+ * one is open: `/a/<agent>/personas/<name>`, or `/personas/<agent>/<name>` with every agent in view;
+ * `?edit=1` that one being written, `?new=1` a new one. What this page writes is what `pinecall
+ * simulate --persona` finds, in every console, with no deploy between.
  */
 export function Personas(): ReactNode {
-  const agent = useParams()["agent"] ?? "";
-  const base = `/a/${encodeURIComponent(agent)}`;
-  const named = useParams()["call"];
+  const params = useParams();
+  const agent = params["agent"] ?? "";
+  const owner = params["owner"] ?? agent;
+  const named = params["call"];
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  const { agents } = useOrg();
   const pane = usePane({ name: "personas.list", initial: 320, min: 260, max: 480, side: "left" });
   // Two panes on one screen, each on its own element: `--pane` is set per grid, and the inner one
   // is the runs'. The floor does the same with the call it watches.
   const runs = usePane({ name: "personas.runs", initial: 340, min: 280, max: 560, side: "right" });
-  const { personas, asking, setPersonas } = usePersonas(agent);
+  const { personas, asking, setPersonas, reread } = usePersonas(agent);
   // What every caller has done, read once here for the overview's standing.
-  const standings = useRunStandings(agent, personas === null ? null : personas.map((one) => one.name));
+  const standings = useRunStandings(personas);
   const adding = search.get("new") === "1";
   const editing = search.get("edit") === "1";
-  const open = named ?? undefined;
-  const chosen = personas?.find((one) => one.name === open);
+  const chosen = named === undefined ? undefined : personas?.find((one) => one.agent === owner && one.name === named);
   // The caller being READ, which is the only state the runs pane stands beside.
   const reading = chosen !== undefined && !adding && !editing ? chosen : null;
+  // Whom a new caller may be written for: the agent in view, or any agent of the org.
+  const owners = agent === "" ? [...new Set([...agents.map((one) => one.slug), ...(personas ?? []).map((one) => one.agent)])].sort() : [agent];
 
-  const go = (name: string | null, how: "" | "edit" | "new" = ""): void => {
+  const go = (persona: Pick<Persona, "agent" | "name"> | null, how: "" | "edit" | "new" = ""): void => {
     const asked = how === "" ? "" : `?${how}=1`;
-    void navigate(`${base}/personas${name === null ? "" : `/${encodeURIComponent(name)}`}${asked}`);
+    void navigate(`${persona === null ? rowAt(agent, "personas") : ownedAt(agent, "personas", persona.agent, persona.name)}${asked}`);
   };
-  const saved = (read: Persona[], name: string): void => {
-    setPersonas(read);
-    go(name);
+  // A write answers with its agent's list: one agent in view takes it whole, every agent reads all again.
+  const saved = (read: Persona[], written: Pick<Persona, "agent" | "name">): void => {
+    if (agent === "") reread();
+    else setPersonas(read);
+    go(written);
   };
 
   return (
     <div className="psn" style={pane.style}>
       {pane.handle}
-      <RosterSide agent={agent} personas={personas} asking={asking} open={chosen?.name} onNew={() => go(null, "new")} />
+      <RosterSide agent={agent} personas={personas} asking={asking} open={chosen} onNew={() => go(null, "new")} />
       {/* The runs stand beside a caller being READ: while the form is open the screen is about
           writing one, and the pane would only squeeze the fields. */}
       <div className={reading === null ? "psn-right" : "psn-right psn-right-runs"} style={runs.style}>
         {reading !== null && runs.handle}
         <main className="psn-main">
           {adding ? (
-            <PersonaEditor key="new" agent={agent} was={undefined} onSaved={saved} onCancel={() => go(open ?? null)} />
+            <PersonaEditor key="new" owners={owners} was={undefined} onSaved={saved} onCancel={() => go(chosen ?? null)} />
           ) : chosen === undefined ? (
             <Overview agent={agent} personas={personas ?? []} standings={standings} onNew={() => go(null, "new")} />
           ) : editing ? (
-            <PersonaEditor key={chosen.name} agent={agent} was={chosen} onSaved={saved} onCancel={() => go(chosen.name)} />
+            <PersonaEditor key={`${chosen.agent}/${chosen.name}`} owners={[chosen.agent]} was={chosen} onSaved={saved} onCancel={() => go(chosen)} />
           ) : (
             <PersonaView
-              key={chosen.name}
-              agent={agent}
+              key={`${chosen.agent}/${chosen.name}`}
+              inView={agent}
               persona={chosen}
-              onEdit={() => go(chosen.name, "edit")}
+              onEdit={() => go(chosen, "edit")}
               onDropped={(read) => {
-                setPersonas(read);
+                if (agent === "") reread();
+                else setPersonas(read);
                 go(null);
               }}
             />
           )}
         </main>
-        {reading !== null && <RunsSide key={reading.name} agent={agent} persona={reading} />}
+        {reading !== null && <RunsSide key={`${reading.agent}/${reading.name}`} inView={agent} persona={reading} />}
       </div>
     </div>
   );

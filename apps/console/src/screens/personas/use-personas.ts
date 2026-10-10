@@ -1,23 +1,30 @@
-/** Hook for an agent's personas, loaded once per agent. */
+/** Hook for one agent's personas, or — "" — every agent's, or — null — none asked for; loaded once per agent and read again on asking. */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useCredentials } from "@pinecall/core/credentials";
-import { readPersonas, type Persona } from "./door";
+import { readEveryPersona, readPersonas, type Persona } from "./door";
 
-export function usePersonas(agent: string): {
+export function usePersonas(agent: string | null): {
   personas: Persona[] | null;
   asking: string | null;
   setPersonas: (personas: Persona[]) => void;
+  reread: () => void;
 } {
   const credentials = useCredentials();
   const [personas, setPersonas] = useState<Persona[] | null>(null);
   const [asking, setAsking] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
 
   useEffect(() => {
+    if (agent === null) {
+      setPersonas(null);
+      setAsking(null);
+      return;
+    }
     let gone = false;
     setAsking("Asking the gateway…");
-    readPersonas(credentials, agent).then(
+    (agent === "" ? readEveryPersona(credentials) : readPersonas(credentials, agent)).then(
       (read) => {
         if (gone) return;
         setPersonas(read);
@@ -30,7 +37,8 @@ export function usePersonas(agent: string): {
     return () => {
       gone = true;
     };
-  }, [credentials, agent]);
+  }, [credentials, agent, round]);
 
-  return { personas, asking, setPersonas };
+  const reread = useCallback(() => setRound((one) => one + 1), []);
+  return { personas, asking, setPersonas, reread };
 }

@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { GatewayError } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
-import { Button, Input, TextArea } from "../../ui";
+import { Button, Input, Select, SelectItem, TextArea } from "../../ui";
 import { writePersona, type Persona, type Written } from "./door";
 
 // Same rule as `pinecall simulate --persona` and the gateway.
@@ -14,19 +14,20 @@ const A_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 type Worded = "about" | "goal" | "style" | "llm" | "tts" | "voice" | "accepts_when" | "declines_when";
 
 export function PersonaEditor({
-  agent,
+  owners,
   was,
   onSaved,
   onCancel,
 }: {
-  /** The agent whose caller this is. */
-  agent: string;
+  /** Whom the caller may be written for: one agent, or — every agent in view, a new caller — the org's. */
+  owners: readonly string[];
   /** The persona being changed; undefined for a new one. */
   was: Persona | undefined;
-  onSaved: (personas: Persona[], name: string) => void;
+  onSaved: (personas: Persona[], written: Pick<Persona, "agent" | "name">) => void;
   onCancel: () => void;
 }): ReactNode {
   const credentials = useCredentials();
+  const [agent, setAgent] = useState(was?.agent ?? owners[0] ?? "");
   // The name goes in the path, the rest in the body.
   const [name, setName] = useState(was?.name ?? "");
   const [written, setWritten] = useState<Written>(() =>
@@ -55,7 +56,7 @@ export function PersonaEditor({
   const set = (field: Worded, value: string): void => setWritten({ ...written, [field]: value });
   const setFact = (at: number, row: [string, string]): void => setFacts(facts.map((one, index) => (index === at ? row : one)));
   const nameOk = A_NAME.test(name);
-  const ready = nameOk && written.goal.trim() !== "" && written.style.trim() !== "";
+  const ready = agent !== "" && nameOk && written.goal.trim() !== "" && written.style.trim() !== "";
 
   const save = async (): Promise<void> => {
     setSaving(true);
@@ -64,7 +65,7 @@ export function PersonaEditor({
       const kept = Object.fromEntries(facts.filter(([what]) => what.trim() !== "").map(([what, said]) => [what.trim(), said.trim()]));
       // Preserve `state` even though the form cannot edit it.
       const body: Written = { ...written, facts: kept, state: was?.state ?? {}, ...(was === undefined || was.name === name ? {} : { was: was.name }) };
-      onSaved(await writePersona(credentials, agent, name, body), name);
+      onSaved(await writePersona(credentials, agent, name, body), { agent, name });
     } catch (failed) {
       setRefused(failed instanceof GatewayError ? failed.message : String(failed));
     } finally {
@@ -84,11 +85,22 @@ export function PersonaEditor({
         <div>
           <h1 className="psn-doc-name">{was === undefined ? "New persona" : `Editing ${was.name}`}</h1>
           <p className="psn-doc-about">
-            Kept by the gateway, one list for the whole org: for this console and for <code>pinecall simulate --persona {name || "<name>"}</code>.
+            Kept by the gateway for {agent === "" ? "the agent you pick" : agent}: for this console and for <code>pinecall simulate --persona {name || "<name>"}</code>.
           </p>
         </div>
       </header>
 
+      {owners.length > 1 && (
+        <Row title="Agent" hint="The agent this caller rings: a persona is written to test one agent, and only that agent's simulations play it.">
+          <Select aria-label="Agent" value={agent} onValueChange={(value) => setAgent(value)}>
+            {owners.map((one) => (
+              <SelectItem key={one} value={one}>
+                {one}
+              </SelectItem>
+            ))}
+          </Select>
+        </Row>
+      )}
       <Row title="Name" hint="What pinecall simulate --persona takes, and how the list names them. Lower-case words joined by hyphens.">
         <Input value={name} spellCheck={false} aria-label="Name" placeholder="price-shopper" onChange={(event) => setName(event.target.value.toLowerCase().replace(/\s+/g, "-"))} />
         {name !== "" && !nameOk && <p className="psn-bad">Only a–z, 0–9 and single hyphens between words.</p>}

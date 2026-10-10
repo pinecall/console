@@ -1,57 +1,77 @@
-/** Simulations: the form down the left, the simulated call beside it — heard live, both sides, and read as it happens. */
+/** Simulations: the form and the simulations already run down the left, the one open beside them — heard live, both sides, and read as it happens. */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 
 import { useListen } from "@pinecall/core/use-listen";
 import { useSupervise } from "@pinecall/core/use-supervise";
+import { rowAt } from "../../lib/harness";
+import { useOrg } from "../../lib/org";
 import { useScopes } from "../../lib/whoami";
 import { Button, usePane } from "../../ui";
+import { Recent } from "./recent";
 import { SimulateForm } from "./simulate-form";
 import { usePersonas } from "../personas/use-personas";
 import { Call } from "../call";
 import "./simulations.css";
 
 /**
- * The screen, under one agent: a simulation is started from the form and watched right here. The
- * URL names the call (`/a/<agent>/simulations/<call>?spoken=1`), so a reload lands on the same
- * call. A spoken one is heard the moment its room opens — the caller the model plays and the
- * agent, one ear on both.
+ * One screen whoever is in view: a simulation is started from the form and watched right here, and
+ * every one already run is listed under the form — the agent in view's, or every agent's — and
+ * opens in the same place. The URL names the call (`/a/<agent>/simulations/<call>?spoken=1`, or
+ * `/simulations/<call>` with every agent in view), so a reload lands on the same call. A spoken one
+ * is heard the moment its room opens — the caller the model plays and the agent, one ear on both.
  */
 export function Simulations(): ReactNode {
-  const agent = useParams()["agent"] ?? "";
+  const inView = useParams()["agent"] ?? "";
   const call = useParams()["call"];
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  const { agents } = useOrg();
   const pane = usePane({ name: "simulations.form", initial: 340, min: 280, max: 520, side: "left" });
   const spoken = search.get("spoken") === "1";
   const preferred = search.get("persona") ?? undefined;
-  // The form offers the agent's own callers: a persona is one agent's.
-  const { personas, asking } = usePersonas(agent);
+  // The agent the caller is put on: the one in view, else the one the link named, else picked.
+  const [picked, setPicked] = useState(search.get("agent") ?? "");
+  const agent = inView !== "" ? inView : picked;
+  // The form offers the agent's own callers: a persona is one agent's. None until one is picked.
+  const { personas, asking } = usePersonas(agent === "" ? null : agent);
+  // Every start reads the list again, so the new one is at its top.
+  const [round, setRound] = useState(0);
 
   const started = (next: string, voice: boolean): void => {
-    void navigate(`/a/${encodeURIComponent(agent)}/simulations/${next}${voice ? "?spoken=1" : ""}`);
+    setRound((one) => one + 1);
+    void navigate(`${rowAt(inView, "simulations")}/${next}${voice ? "?spoken=1" : ""}`);
   };
 
   return (
     <div className="sims" style={pane.style}>
       {pane.handle}
       <aside className="sims-side" aria-label="start a simulation">
-        <SimulateForm agent={agent} personas={personas} asking={asking} preferred={preferred} onStarted={started} />
-        <p className="sims-note">
-          A model plays the persona against the agent, improvising every line from its goal, its manner and its own facts. With Voice on,
-          the call is a real line and you hear both of them here as it happens.
-        </p>
+        <SimulateForm
+          inView={inView}
+          agents={agents.map((one) => one.slug)}
+          agent={agent}
+          onAgent={setPicked}
+          personas={agent === "" ? null : personas}
+          asking={agent === "" ? null : asking}
+          preferred={preferred}
+          onStarted={started}
+        />
+        <Recent inView={inView} open={call} round={round} />
       </aside>
       {call === undefined ? (
-        <div className="sims-nothing">Pick an agent and a persona, then call. The simulation opens here, and you hear it live.</div>
+        <div className="sims-nothing">
+          A model plays a persona against the agent, improvising every line from its goal, its manner and its own facts. Start one on the left, or
+          open one already run: it plays here, and with Voice on you hear both of them live.
+        </div>
       ) : (
         <div className="sims-watch" key={call}>
           {spoken && <Ear call={call} />}
           {/* The desk belongs to a supervisor on somebody's real call: whisper, say, take the
               line, transfer. Nobody is on this one — a model is playing both ends — so the screen
               is the transcript and the one move it has, which is to stop the thing. */}
-          <Call call={call} agent={agent} supervised={false} beside={(over) => <Stop call={call} spoken={spoken} over={over} />} />
+          <Call call={call} supervised={false} beside={(over) => <Stop call={call} spoken={spoken} over={over} />} />
         </div>
       )}
     </div>

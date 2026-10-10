@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { ago } from "../../lib/format";
+import { ownedAt } from "../../lib/harness";
 import { Pill } from "../../ui";
 import type { EvalCase, Listed } from "./door";
 
@@ -18,7 +19,7 @@ export function CaseRoster({ agent, listed, asking, open }: { agent: string; lis
   const every = agent === "";
   const whose = every ? "every agent" : agent;
   const row = (kept: EvalCase): ReactNode => (
-    <Link key={kept.id} to={`/a/${encodeURIComponent(kept.agent)}/cases/${encodeURIComponent(kept.name)}`} className={kept.name === open ? "cs-row cs-row-on" : "cs-row"}>
+    <Link key={kept.id} to={ownedAt(agent, "cases", kept.agent, kept.name)} className={kept.id === open ? "cs-row cs-row-on" : "cs-row"}>
       <span className="cs-row-top">
         {kept.broke.length === 0 ? <Pill tone="gray" small>kept by hand</Pill> : kept.broke.map((one) => <Pill key={one.judge} tone={kept.status === "pending" ? "red" : "muted"} small>{one.judge}</Pill>)}
         <span className="cs-row-age">{ago(kept.created_at)}</span>

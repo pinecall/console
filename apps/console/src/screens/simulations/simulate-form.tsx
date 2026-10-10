@@ -1,7 +1,9 @@
-/** The simulate form: pick a persona, choose the line, and put a synthetic caller on this agent. */
+/** The simulate form: pick the agent and a persona, choose the line, and put a synthetic caller on it. */
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
+
+import { ownedAt, rowAt } from "../../lib/harness";
 
 import { GatewayError } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
@@ -27,14 +29,22 @@ const LOSS_PERCENT = 0;
  * answered by its id, handed to the screen, which watches and plays it.
  */
 export function SimulateForm({
+  inView,
+  agents,
   agent,
+  onAgent,
   personas,
   asking,
   preferred,
   onStarted,
 }: {
-  /** The agent the screen is under: the one the caller is put on. */
+  /** The agent in view, or "" for every agent: with one in view, the form's agent is it. */
+  inView: string;
+  /** The agents a caller may be put on: the ones a process holds right now. */
+  agents: readonly string[];
+  /** The agent the caller is put on; "" while none is picked. */
   agent: string;
+  onAgent: (agent: string) => void;
   /** The agent's callers, as the screen read them; null while asked or refused. */
   personas: Persona[] | null;
   /** Why there are none yet: still asking, or the refusal in the gateway's words. */
@@ -93,15 +103,25 @@ export function SimulateForm({
       <div className="sim-head">
         <span className="sim-title">Simulate a caller</span>
       </div>
-      {personas === null && asking !== null && <p className="sim-note">{asking}</p>}
-      {why !== null && <p className="sim-note">{why}</p>}
-      {personas !== null && why === null && (
+      <Field label="Agent">
+        <Select size="sm" aria-label="Agent" value={agent} disabled={inView !== ""} placeholder="Pick the agent it rings" onValueChange={(value) => onAgent(value)}>
+          {(agents.includes(agent) || agent === "" ? agents : [agent, ...agents]).map((one) => (
+            <SelectItem key={one} value={one}>
+              {one}
+            </SelectItem>
+          ))}
+        </Select>
+      </Field>
+      {agent === "" && <p className="sim-note">{agents.length === 0 ? "No agent is held right now: start one with pinecall start, and it is listed here." : "Pick the agent the caller rings."}</p>}
+      {agent !== "" && personas === null && asking !== null && <p className="sim-note">{asking}</p>}
+      {agent !== "" && why !== null && <p className="sim-note">{why}</p>}
+      {agent !== "" && personas !== null && why === null && (
         <>
           <Field
             label={
               <span className="sim-label-row">
                 Persona
-                <Link className="sim-manage" to={`/a/${encodeURIComponent(agent)}/personas${persona === "" ? "" : `/${encodeURIComponent(persona)}`}`}>
+                <Link className="sim-manage" to={persona === "" ? rowAt(inView, "personas") : ownedAt(inView, "personas", agent, persona)}>
                   Manage
                 </Link>
               </span>

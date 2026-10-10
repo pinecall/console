@@ -71,8 +71,8 @@
 
 .psn-row {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 10px 14px;
   border-left: 2px solid transparent;
   color: inherit;
@@ -88,10 +88,25 @@
   background: var(--ground);
 }
 
-.psn-row-top {
+.psn-row-words {
+  min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.psn-group + .psn-group {
+  margin-top: 6px;
+}
+
+.psn-group-title {
+  margin: 0;
+  padding: 8px 14px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-5);
 }
 
 .psn-row-name {

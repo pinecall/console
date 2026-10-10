@@ -6,7 +6,8 @@ import { Link } from "react-router";
 import { ago, duration } from "../../lib/format";
 import { Button, Card, CardHead, Empty, Item, Page, PageHead, Pill, Stat, Stats, TableHead, TableRow } from "../../ui";
 import type { Persona, PersonaRun } from "./door";
-import type { Standing, Standings } from "./use-run-standings";
+import { rowAt, whoseIs } from "../../lib/harness";
+import { standingOf, type Standing, type Standings } from "./use-run-standings";
 
 const COLUMNS = "minmax(0,1fr) minmax(0,1fr) 92px 70px 104px";
 
@@ -21,9 +22,10 @@ const A_SCREENFUL = 12;
  * because that is the one thing on this screen somebody can act on.
  */
 export function Overview({ agent, personas, standings, onNew }: { agent: string; personas: Persona[]; standings: Standings; onNew: () => void }): ReactNode {
-  const base = `/a/${encodeURIComponent(agent)}`;
+  const simulations = rowAt(agent, "simulations");
+  const whose = whoseIs(agent);
   const runs = everyRun(standings.by);
-  const never = personas.filter((one) => standings.by[one.name]?.total === 0);
+  const never = personas.filter((one) => standings.by[standingOf(one)]?.total === 0);
   const newest = runs[0];
 
   if (personas.length === 0) {
@@ -36,7 +38,7 @@ export function Overview({ agent, personas, standings, onNew }: { agent: string;
         title="Personas"
         lede={
           <>
-            The synthetic callers written for {agent}. A model plays one and improvises every line — in Simulations, or in{" "}
+            The synthetic callers written for {whose}. A model plays one and improvises every line — in Simulations, or in{" "}
             <span className="ui-fixed">pinecall simulate</span>.
           </>
         }
@@ -50,15 +52,15 @@ export function Overview({ agent, personas, standings, onNew }: { agent: string;
       </Stats>
 
       <Card>
-        <CardHead title="Latest runs" meta={`newest first, whichever caller — a row opens the conversation`} />
+        <CardHead title="Latest runs" meta={`newest first, whichever caller — a row opens it in Simulations`} />
         {standings.read && runs.length === 0 && (
           <Empty>
-            No caller has called {agent} yet. <Link to={`${base}/simulations`}>Simulations</Link> puts one on it, and <span className="ui-fixed">pinecall simulate --persona</span> does the same from a terminal.
+            No caller has called {whose} yet. <Link to={simulations}>Simulations</Link> puts one on it, and <span className="ui-fixed">pinecall simulate --persona</span> does the same from a terminal.
           </Empty>
         )}
         {runs.length > 0 && <TableHead columns={COLUMNS} padding="9px 16px" labels={["Caller", "Agent", "When", "Turns>", "How it went"]} />}
         {runs.slice(0, A_SCREENFUL).map((run) => (
-          <TableRow key={run.call} columns={COLUMNS} to={`/calls/${run.call}`}>
+          <TableRow key={run.call} columns={COLUMNS} to={`${simulations}/${run.call}`}>
             <span className="psn-over-name">{run.persona}</span>
             <span className="psn-over-goal">{run.agent}</span>
             <span className="psn-over-when">{ago(run.started_at)}</span>
@@ -75,11 +77,11 @@ export function Overview({ agent, personas, standings, onNew }: { agent: string;
           <CardHead title="Never called" meta="written, and still only a description" />
           {never.map((one) => (
             <Item
-              key={one.name}
+              key={standingOf(one)}
               name={one.name}
               sub={one.goal}
-              to={`${base}/simulations?persona=${encodeURIComponent(one.name)}`}
-              end={<span className="psn-over-when">Call {agent} as them →</span>}
+              to={`${simulations}?agent=${encodeURIComponent(one.agent)}&persona=${encodeURIComponent(one.name)}`}
+              end={<span className="psn-over-when">Call {one.agent} as them →</span>}
             />
           ))}
         </Card>
@@ -129,10 +131,9 @@ function Verdict({ run }: { run: PersonaRun }): ReactNode {
   );
 }
 
-// Every caller's newest runs in one list, newest first. The name each was played as travels with
-// it, because a row on this table says which caller it was and the run itself does not.
-function everyRun(by: Record<string, Standing>): (PersonaRun & { persona: string })[] {
-  return Object.entries(by)
-    .flatMap(([persona, standing]) => standing.newest.map((run) => ({ ...run, persona })))
+// Every caller's newest runs in one list, newest first; each run names the caller it was.
+function everyRun(by: Record<string, Standing>): PersonaRun[] {
+  return Object.values(by)
+    .flatMap((standing) => standing.newest)
     .sort((one, other) => other.started_at - one.started_at);
 }

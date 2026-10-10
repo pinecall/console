@@ -6,6 +6,7 @@ import { GatewayError } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { Button, ButtonLink } from "../../ui";
 import { dayAndTime } from "../../lib/format";
+import { rowAt } from "../../lib/harness";
 import { dropPersona, type Persona } from "./door";
 
 // Unset is the runtime's choice, which is not the same as nothing: it picks the model, and a voice
@@ -13,13 +14,13 @@ import { dropPersona, type Persona } from "./door";
 const THE_RUNTIMES = "the runtime's choice";
 
 export function PersonaView({
-  agent,
+  inView,
   persona,
   onEdit,
   onDropped,
 }: {
-  /** The agent this screen is under: where "Use in a simulation" puts the caller. */
-  agent: string;
+  /** The agent in view, or "" for every agent: where "Use in a simulation" opens Simulations. */
+  inView: string;
   persona: Persona;
   onEdit: () => void;
   onDropped: (personas: Persona[]) => void;
@@ -39,7 +40,7 @@ export function PersonaView({
     setArmed(false);
     setRefused(null);
     try {
-      onDropped(await dropPersona(credentials, agent, persona.name));
+      onDropped(await dropPersona(credentials, persona.agent, persona.name));
     } catch (failed) {
       setRefused(failed instanceof GatewayError ? failed.message : String(failed));
       setDropping(false);
@@ -54,7 +55,7 @@ export function PersonaView({
           {persona.about !== "" && <p className="psn-doc-about">{persona.about}</p>}
         </div>
         <div className="psn-doc-actions">
-          <ButtonLink kind="primary" size="sm" to={`/a/${encodeURIComponent(agent)}/simulations?persona=${encodeURIComponent(persona.name)}`}>
+          <ButtonLink kind="primary" size="sm" to={`${rowAt(inView, "simulations")}?agent=${encodeURIComponent(persona.agent)}&persona=${encodeURIComponent(persona.name)}`}>
             Use in a simulation
           </ButtonLink>
           <Button size="sm" onClick={onEdit}>

@@ -20,9 +20,10 @@ export async function readEveryPersona(credentials: Credentials): Promise<Person
   return PersonaListSchema.parse(await read(credentials, "/v1/personas")).personas;
 }
 
-/** One page of every simulated call of the world, newest first; `before` is the previous page's `next`. */
-export async function readSimulations(credentials: Credentials, before?: string): Promise<PersonaRunList> {
-  return PersonaRunListSchema.parse(await read(credentials, "/v1/simulations", before === undefined ? {} : { before }));
+/** One page of the world's simulated calls, one agent's or — "" — every agent's, newest first; `before` is the previous page's `next`. */
+export async function readSimulations(credentials: Credentials, agent: string, before?: string): Promise<PersonaRunList> {
+  const params = { ...(agent === "" ? {} : { agent }), ...(before === undefined ? {} : { before }) };
+  return PersonaRunListSchema.parse(await read(credentials, "/v1/simulations", params));
 }
 
 /** Create, replace or rename a persona; resolves to the updated list. */

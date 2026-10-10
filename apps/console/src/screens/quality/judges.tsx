@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { GatewayError } from "@pinecall/core/api";
 import { useCredentials } from "@pinecall/core/credentials";
 import { percent } from "../../lib/format";
-import { Button, Card, CardHead, Empty, Refused, TableHead, TableRow, TextAction } from "../../ui";
+import { Avatar, Button, Card, CardHead, Empty, Refused, TableHead, TableRow, TextAction } from "../../ui";
 import { BEFORE_DAYS, NOW_DAYS, type Drifted, type JudgeDrift } from "./drift";
 import { dropJudge, type Judge, type Whose } from "./judges-door";
 import { NewJudge } from "./new-judge";
@@ -37,7 +37,8 @@ export function Judges({ agent, rates, read, drifted }: { agent: string; rates: 
   const [writing, setWriting] = useState(false);
   const whose: Whose = agent === "" ? null : agent;
   const drift = drifted === null ? null : new Map(drifted.drift.judges.map((judge) => [judge.judge, judge]));
-  const columns = drift === null ? "150px minmax(0,2fr) 140px 120px 96px 56px" : "150px minmax(0,2fr) 140px 96px 74px 74px 64px 56px";
+  // A judge is a row of a list: its face, its name and the question it asks under it, then the facts.
+  const columns = drift === null ? "minmax(0,3fr) 140px 130px 80px 56px" : "minmax(0,3fr) 130px 110px 74px 74px 64px 56px";
 
   const groups: { title: string; rows: Row[] }[] = [
     { title: "The panel · the runtime's", rows: PANEL.map((judge) => ({ name: judge.name, asks: judge.asks, by: judge.by, on: judge.on, drops: undefined })) },
@@ -67,7 +68,7 @@ export function Judges({ agent, rates, read, drifted }: { agent: string; rates: 
       />
       {writing && <NewJudge whose={whose} onSaved={saved} onClose={() => setWriting(false)} />}
       <Refused>{general.error ?? own.error}</Refused>
-      <TableHead columns={columns} labels={drift === null ? ["Judge", "Asks", "Answered by", "Runs on", "Held>", ""] : ["Judge", "Asks", "Answered by", "Runs on", `${NOW_DAYS} days>`, `${BEFORE_DAYS} days>`, "Drift>", ""]} />
+      <TableHead columns={columns} labels={drift === null ? ["Judge", "Answered by", "Runs on", "Held>", ""] : ["Judge", "Answered by", "Runs on", `${NOW_DAYS} days>`, `${BEFORE_DAYS} days>`, "Drift>", ""]} />
       {groups.map((group) => (
         <Group key={group.title} title={group.title} rows={group.rows} columns={columns} rates={rates} drift={drift} threshold={drifted?.threshold ?? null} onDropped={(judges) => (agent === "" ? general : own).setJudges(judges)} />
       ))}
@@ -114,8 +115,13 @@ function Group({
         const judged = drift?.get(row.name);
         return (
           <TableRow key={row.name} columns={columns}>
-            <span className="qly-name">{row.name}</span>
-            <span className="qly-asks">{row.asks}</span>
+            <span className="qly-judge">
+              <Avatar size={28} name={row.name} />
+              <span className="qly-judge-words">
+                <span className="qly-name">{row.name}</span>
+                <span className="qly-asks">{row.asks}</span>
+              </span>
+            </span>
             <span className="ui-cell-faint">{row.by}</span>
             <span className="ui-cell-faint">{row.on}</span>
             {drift === null ? (
